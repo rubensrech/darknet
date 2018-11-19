@@ -1,7 +1,10 @@
 #include <stdio.h>
 #include <math.h>
-void col2im_add_pixel(float *im, int height, int width, int channels,
-                        int row, int col, int channel, int pad, float val)
+
+#include "col2im.h"
+
+void col2im_add_pixel(real *im, int height, int width, int channels,
+                        int row, int col, int channel, int pad, real val)
 {
     row -= pad;
     col -= pad;
@@ -11,9 +14,9 @@ void col2im_add_pixel(float *im, int height, int width, int channels,
     im[col + width*(row + height*channel)] += val;
 }
 //This one might be too, can't remember.
-void col2im_cpu(float* data_col,
+void col2im_cpu(real* data_col,
          int channels,  int height,  int width,
-         int ksize,  int stride, int pad, float* data_im) 
+         int ksize,  int stride, int pad, real* data_im) 
 {
     int c,h,w;
     int height_col = (height + 2*pad - ksize) / stride + 1;
