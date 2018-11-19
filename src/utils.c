@@ -476,15 +476,15 @@ float *parse_fields(char *line, int n)
     return field;
 }
 
-float sum_array(float *a, int n)
+real sum_array(real *a, int n)
 {
     int i;
-    float sum = 0;
+    real sum = 0;
     for(i = 0; i < n; ++i) sum += a[i];
     return sum;
 }
 
-float mean_array(float *a, int n)
+real mean_array(real *a, int n)
 {
     return sum_array(a,n)/n;
 }
@@ -504,20 +504,20 @@ void mean_arrays(float **a, int n, int els, float *avg)
     }
 }
 
-void print_statistics(float *a, int n)
+void print_statistics(real *a, int n)
 {
-    float m = mean_array(a, n);
-    float v = variance_array(a, n);
+    real m = mean_array(a, n);
+    real v = variance_array(a, n);
     printf("MSE: %.6f, Mean: %.6f, Variance: %.6f\n", mse_array(a, n), m, v);
 }
 
-float variance_array(float *a, int n)
+real variance_array(real *a, int n)
 {
     int i;
-    float sum = 0;
-    float mean = mean_array(a, n);
+    real sum = 0;
+    real mean = mean_array(a, n);
     for(i = 0; i < n; ++i) sum += (a[i] - mean)*(a[i]-mean);
-    float variance = sum/n;
+    real variance = sum/n;
     return variance;
 }
 
@@ -535,27 +535,27 @@ float constrain(float min, float max, float a)
     return a;
 }
 
-float dist_array(float *a, float *b, int n, int sub)
+real dist_array(real *a, real *b, int n, int sub)
 {
     int i;
-    float sum = 0;
+    real sum = 0;
     for(i = 0; i < n; i += sub) sum += pow(a[i]-b[i], 2);
     return sqrt(sum);
 }
 
-float mse_array(float *a, int n)
+real mse_array(real *a, int n)
 {
     int i;
-    float sum = 0;
+    real sum = 0;
     for(i = 0; i < n; ++i) sum += a[i]*a[i];
     return sqrt(sum/n);
 }
 
-void normalize_array(float *a, int n)
+void normalize_array(real *a, int n)
 {
     int i;
-    float mu = mean_array(a,n);
-    float sigma = sqrt(variance_array(a,n));
+    real mu = mean_array(a,n);
+    real sigma = sqrt(variance_array(a,n));
     for(i = 0; i < n; ++i){
         a[i] = (a[i] - mu)/sigma;
     }
@@ -563,7 +563,7 @@ void normalize_array(float *a, int n)
     sigma = sqrt(variance_array(a,n));
 }
 
-void translate_array(float *a, int n, float s)
+void translate_array(real *a, int n, real s)
 {
     int i;
     for(i = 0; i < n; ++i){
@@ -571,17 +571,17 @@ void translate_array(float *a, int n, float s)
     }
 }
 
-float mag_array(float *a, int n)
+real mag_array(real *a, int n)
 {
     int i;
-    float sum = 0;
+    real sum = 0;
     for(i = 0; i < n; ++i){
         sum += a[i]*a[i];   
     }
     return sqrt(sum);
 }
 
-void scale_array(float *a, int n, float s)
+void scale_array(real *a, int n, real s)
 {
     int i;
     for(i = 0; i < n; ++i){
@@ -589,11 +589,11 @@ void scale_array(float *a, int n, float s)
     }
 }
 
-int sample_array(float *a, int n)
+int sample_array(real *a, int n)
 {
-    float sum = sum_array(a, n);
+    real sum = sum_array(a, n);
     scale_array(a, n, 1./sum);
-    float r = rand_uniform(0, 1);
+    real r = rand_uniform(0, 1);
     int i;
     for(i = 0; i < n; ++i){
         r = r - a[i];
@@ -616,11 +616,11 @@ int max_int_index(int *a, int n)
     return max_i;
 }
 
-int max_index(float *a, int n)
+int max_index(real *a, int n)
 {
     if(n <= 0) return -1;
     int i, max_i = 0;
-    float max = a[0];
+    real max = a[0];
     for(i = 1; i < n; ++i){
         if(a[i] > max){
             max = a[i];
