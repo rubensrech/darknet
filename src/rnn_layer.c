@@ -36,8 +36,8 @@ layer make_rnn_layer(int batch, int inputs, int outputs, int steps, ACTIVATION a
     l.steps = steps;
     l.inputs = inputs;
 
-    l.state = calloc(batch*outputs, sizeof(float));
-    l.prev_state = calloc(batch*outputs, sizeof(float));
+    l.state = calloc(batch*outputs, sizeof(real));
+    l.prev_state = calloc(batch*outputs, sizeof(real));
 
     l.input_layer = malloc(sizeof(layer));
     fprintf(stderr, "\t\t");
@@ -107,7 +107,7 @@ void forward_rnn_layer(layer l, network net)
         s.input = l.state;
         forward_connected_layer(self_layer, s);
 
-        float *old_state = l.state;
+        real *old_state = l.state;
         if(net.train) l.state += l.outputs*l.batch;
         if(l.shortcut){
             copy_cpu(l.outputs * l.batch, old_state, 1, l.state, 1);
@@ -250,8 +250,8 @@ void backward_rnn_layer_gpu(layer l, network net)
     increment_layer(&input_layer,  l.steps - 1);
     increment_layer(&self_layer,   l.steps - 1);
     increment_layer(&output_layer, l.steps - 1);
-    float *last_input = input_layer.output_gpu;
-    float *last_self = self_layer.output_gpu;
+    real *last_input = input_layer.output_gpu;
+    real *last_self = self_layer.output_gpu;
     for (i = l.steps-1; i >= 0; --i) {
         fill_gpu(l.outputs * l.batch, 0, l.state_gpu, 1);
         axpy_gpu(l.outputs * l.batch, 1, input_layer.output_gpu, 1, l.state_gpu, 1);
