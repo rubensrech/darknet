@@ -1,6 +1,6 @@
 #include "im2col.h"
 #include <stdio.h>
-float im2col_get_pixel(float *im, int height, int width, int channels,
+real im2col_get_pixel(real *im, int height, int width, int channels,
                         int row, int col, int channel, int pad)
 {
     row -= pad;
@@ -13,9 +13,9 @@ float im2col_get_pixel(float *im, int height, int width, int channels,
 
 //From Berkeley Vision's Caffe!
 //https://github.com/BVLC/caffe/blob/master/LICENSE
-void im2col_cpu(float* data_im,
+void im2col_cpu(real* data_im,
      int channels,  int height,  int width,
-     int ksize,  int stride, int pad, float* data_col) 
+     int ksize,  int stride, int pad, real* data_col) 
 {
     int c,h,w;
     int height_col = (height + 2*pad - ksize) / stride + 1;
