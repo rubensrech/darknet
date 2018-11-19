@@ -138,3 +138,18 @@ float option_find_float(list *l, char *key, float def)
     fprintf(stderr, "%s: Using default '%lf'\n", key, def);
     return def;
 }
+
+real option_find_real_quiet(list *l, char *key, real def)
+{
+    char *v = option_find(l, key);
+    if(v) return atof(v);
+    return def;
+}
+
+real option_find_real(list *l, char *key, real def)
+{
+    char *v = option_find(l, key);
+    if(v) return atof(v);
+    fprintf(stderr, "%s: Using default '%lf'\n", key, def);
+    return def;
+}

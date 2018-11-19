@@ -14,6 +14,9 @@ void option_insert(list *l, char *key, char *val);
 char *option_find(list *l, char *key);
 float option_find_float(list *l, char *key, float def);
 float option_find_float_quiet(list *l, char *key, float def);
+
+real option_find_real_quiet(list *l, char *key, real def);
+real option_find_real(list *l, char *key, real def);
 void option_unused(list *l);
 
 #endif
