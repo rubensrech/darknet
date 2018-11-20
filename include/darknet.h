@@ -497,11 +497,11 @@ typedef struct network{
 typedef struct {
     int w;
     int h;
-    float scale;
-    float rad;
-    float dx;
-    float dy;
-    float aspect;
+    real scale;
+    real rad;
+    real dx;
+    real dy;
+    real aspect;
 } augment_args;
 
 typedef struct {
@@ -686,7 +686,7 @@ void load_weights_upto(network *net, char *filename, int start, int cutoff);
 
 void zero_objectness(layer l);
 void get_region_detections(layer l, int w, int h, int netw, int neth, real thresh, int *map, real tree_thresh, int relative, detection *dets);
-int get_yolo_detections(layer l, int w, int h, int netw, int neth, float thresh, int *map, int relative, detection *dets);
+int get_yolo_detections(layer l, int w, int h, int netw, int neth, real thresh, int *map, int relative, detection *dets);
 void free_network(network *net);
 void set_batch_network(network *net, int b);
 void set_temp_network(network *net, float t);
