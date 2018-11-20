@@ -779,7 +779,7 @@ char *fgetl(FILE *fp);
 void strip(char *s);
 float sec(clock_t clocks);
 void **list_to_array(list *l);
-void top_k(float *a, int n, int k, int *index);
+void top_k(real *a, int n, int k, int *index);
 int *read_map(char *filename);
 void error(const char *s);
 int max_index(real *a, int n);

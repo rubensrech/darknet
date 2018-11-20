@@ -234,7 +234,7 @@ float sec(clock_t clocks)
     return (float)clocks/CLOCKS_PER_SEC;
 }
 
-void top_k(float *a, int n, int k, int *index)
+void top_k(real *a, int n, int k, int *index)
 {
     int i,j;
     for(j = 0; j < k; ++j) index[j] = -1;
