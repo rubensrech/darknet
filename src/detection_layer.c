@@ -26,11 +26,11 @@ detection_layer make_detection_layer(int batch, int inputs, int n, int side, int
     l.w = side;
     l.h = side;
     assert(side*side*((1 + l.coords)*l.n + l.classes) == inputs);
-    l.cost = calloc(1, sizeof(float));
+    l.cost = calloc(1, sizeof(real));
     l.outputs = l.inputs;
     l.truths = l.side*l.side*(1+l.coords+l.classes);
-    l.output = calloc(batch*l.outputs, sizeof(float));
-    l.delta = calloc(batch*l.outputs, sizeof(float));
+    l.output = calloc(batch*l.outputs, sizeof(real));
+    l.delta = calloc(batch*l.outputs, sizeof(real));
 
     l.forward = forward_detection_layer;
     l.backward = backward_detection_layer;
@@ -51,7 +51,7 @@ void forward_detection_layer(const detection_layer l, network net)
 {
     int locations = l.side*l.side;
     int i,j;
-    memcpy(l.output, net.input, l.outputs*l.batch*sizeof(float));
+    memcpy(l.output, net.input, l.outputs*l.batch*sizeof(real));
     //if(l.reorg) reorg(l.output, l.w*l.h, size*l.n, l.batch, 1);
     int b;
     if (l.softmax){
@@ -65,15 +65,15 @@ void forward_detection_layer(const detection_layer l, network net)
         }
     }
     if(net.train){
-        float avg_iou = 0;
-        float avg_cat = 0;
-        float avg_allcat = 0;
-        float avg_obj = 0;
-        float avg_anyobj = 0;
+        real avg_iou = 0;
+        real avg_cat = 0;
+        real avg_allcat = 0;
+        real avg_obj = 0;
+        real avg_anyobj = 0;
         int count = 0;
         *(l.cost) = 0;
         int size = l.inputs * l.batch;
-        memset(l.delta, 0, size * sizeof(float));
+        memset(l.delta, 0, size * sizeof(real));
         for (b = 0; b < l.batch; ++b){
             int index = b*l.inputs;
             for (i = 0; i < locations; ++i) {
@@ -87,8 +87,8 @@ void forward_detection_layer(const detection_layer l, network net)
                 }
 
                 int best_index = -1;
-                float best_iou = 0;
-                float best_rmse = 20;
+                real best_iou = 0;
+                real best_rmse = 20;
 
                 if (!is_obj){
                     continue;
@@ -102,13 +102,13 @@ void forward_detection_layer(const detection_layer l, network net)
                     avg_allcat += l.output[class_index+j];
                 }
 
-                box truth = float_to_box(net.truth + truth_index + 1 + l.classes, 1);
+                box truth = real_to_box(net.truth + truth_index + 1 + l.classes, 1);
                 truth.x /= l.side;
                 truth.y /= l.side;
 
                 for(j = 0; j < l.n; ++j){
                     int box_index = index + locations*(l.classes + l.n) + (i*l.n + j) * l.coords;
-                    box out = float_to_box(l.output + box_index, 1);
+                    box out = real_to_box(l.output + box_index, 1);
                     out.x /= l.side;
                     out.y /= l.side;
 
@@ -117,9 +117,9 @@ void forward_detection_layer(const detection_layer l, network net)
                         out.h = out.h*out.h;
                     }
 
-                    float iou  = box_iou(out, truth);
+                    real iou  = box_iou(out, truth);
                     //iou = 0;
-                    float rmse = box_rmse(out, truth);
+                    real rmse = box_rmse(out, truth);
                     if(best_iou > 0 || iou > 0){
                         if(iou > best_iou){
                             best_iou = iou;
@@ -147,14 +147,14 @@ void forward_detection_layer(const detection_layer l, network net)
                 int box_index = index + locations*(l.classes + l.n) + (i*l.n + best_index) * l.coords;
                 int tbox_index = truth_index + 1 + l.classes;
 
-                box out = float_to_box(l.output + box_index, 1);
+                box out = real_to_box(l.output + box_index, 1);
                 out.x /= l.side;
                 out.y /= l.side;
                 if (l.sqrt) {
                     out.w = out.w*out.w;
                     out.h = out.h*out.h;
                 }
-                float iou  = box_iou(out, truth);
+                real iou  = box_iou(out, truth);
 
                 //printf("%d,", best_index);
                 int p_index = index + locations*l.classes + i*l.n + best_index;
@@ -183,7 +183,7 @@ void forward_detection_layer(const detection_layer l, network net)
         }
 
         if(0){
-            float *costs = calloc(l.batch*locations*l.n, sizeof(float));
+            real *costs = calloc(l.batch*locations*l.n, sizeof(real));
             for (b = 0; b < l.batch; ++b) {
                 int index = b*l.inputs;
                 for (i = 0; i < locations; ++i) {
@@ -195,7 +195,7 @@ void forward_detection_layer(const detection_layer l, network net)
             }
             int indexes[100];
             top_k(costs, l.batch*locations*l.n, 100, indexes);
-            float cutoff = costs[indexes[99]];
+            real cutoff = costs[indexes[99]];
             for (b = 0; b < l.batch; ++b) {
                 int index = b*l.inputs;
                 for (i = 0; i < locations; ++i) {
@@ -222,10 +222,10 @@ void backward_detection_layer(const detection_layer l, network net)
     axpy_cpu(l.batch*l.inputs, 1, l.delta, 1, net.delta, 1);
 }
 
-void get_detection_detections(layer l, int w, int h, float thresh, detection *dets)
+void get_detection_detections(layer l, int w, int h, real thresh, detection *dets)
 {
     int i,j,n;
-    float *predictions = l.output;
+    real *predictions = l.output;
     //int per_cell = 5*num+classes;
     for (i = 0; i < l.side*l.side; ++i){
         int row = i / l.side;
@@ -233,7 +233,7 @@ void get_detection_detections(layer l, int w, int h, float thresh, detection *de
         for(n = 0; n < l.n; ++n){
             int index = i*l.n + n;
             int p_index = l.side*l.side*l.classes + i*l.n + n;
-            float scale = predictions[p_index];
+            real scale = predictions[p_index];
             int box_index = l.side*l.side*(l.classes + l.n) + (i*l.n + n)*4;
             box b;
             b.x = (predictions[box_index + 0] + col) / l.side * w;
@@ -244,7 +244,7 @@ void get_detection_detections(layer l, int w, int h, float thresh, detection *de
             dets[index].objectness = scale;
             for(j = 0; j < l.classes; ++j){
                 int class_index = i*l.classes;
-                float prob = scale*predictions[class_index+j];
+                real prob = scale*predictions[class_index+j];
                 dets[index].prob[j] = (prob > thresh) ? prob : 0;
             }
         }
