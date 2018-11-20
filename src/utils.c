@@ -712,12 +712,12 @@ float rand_scale(float s)
     return 1./scale;
 }
 
-float **one_hot_encode(float *a, int n, int k)
+real **one_hot_encode(real *a, int n, int k)
 {
     int i;
-    float **t = calloc(n, sizeof(float*));
+    real **t = calloc(n, sizeof(real*));
     for(i = 0; i < n; ++i){
-        t[i] = calloc(k, sizeof(float));
+        t[i] = calloc(k, sizeof(real));
         int index = (int)a[i];
         t[i][index] = 1;
     }
