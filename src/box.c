@@ -7,7 +7,7 @@ int nms_comparator(const void *pa, const void *pb)
 {
     detection a = *(detection *)pa;
     detection b = *(detection *)pb;
-    float diff = 0;
+    real diff = 0;
     if(b.sort_class >= 0){
         diff = a.prob[b.sort_class] - b.prob[b.sort_class];
     } else {
@@ -18,7 +18,7 @@ int nms_comparator(const void *pa, const void *pb)
     return 0;
 }
 
-void do_nms_obj(detection *dets, int total, int classes, float thresh)
+void do_nms_obj(detection *dets, int total, int classes, real thresh)
 {
     int i, j, k;
     k = total-1;
@@ -55,7 +55,7 @@ void do_nms_obj(detection *dets, int total, int classes, float thresh)
 }
 
 
-void do_nms_sort(detection *dets, int total, int classes, float thresh)
+void do_nms_sort(detection *dets, int total, int classes, real thresh)
 {
     int i, j, k;
     k = total-1;
@@ -88,7 +88,7 @@ void do_nms_sort(detection *dets, int total, int classes, float thresh)
     }
 }
 
-box float_to_box(float *f, int stride)
+box real_to_box(real *f, int stride)
 {
     box b = {0};
     b.x = f[0];
@@ -103,14 +103,14 @@ dbox derivative(box a, box b)
     dbox d;
     d.dx = 0;
     d.dw = 0;
-    float l1 = a.x - a.w/2;
-    float l2 = b.x - b.w/2;
+    real l1 = a.x - a.w/2;
+    real l2 = b.x - b.w/2;
     if (l1 > l2){
         d.dx -= 1;
         d.dw += .5;
     }
-    float r1 = a.x + a.w/2;
-    float r2 = b.x + b.w/2;
+    real r1 = a.x + a.w/2;
+    real r2 = b.x + b.w/2;
     if(r1 < r2){
         d.dx += 1;
         d.dw += .5;
@@ -126,14 +126,14 @@ dbox derivative(box a, box b)
 
     d.dy = 0;
     d.dh = 0;
-    float t1 = a.y - a.h/2;
-    float t2 = b.y - b.h/2;
+    real t1 = a.y - a.h/2;
+    real t2 = b.y - b.h/2;
     if (t1 > t2){
         d.dy -= 1;
         d.dh += .5;
     }
-    float b1 = a.y + a.h/2;
-    float b2 = b.y + b.h/2;
+    real b1 = a.y + a.h/2;
+    real b2 = b.y + b.h/2;
     if(b1 < b2){
         d.dy += 1;
         d.dh += .5;
@@ -149,39 +149,39 @@ dbox derivative(box a, box b)
     return d;
 }
 
-float overlap(float x1, float w1, float x2, float w2)
+real overlap(real x1, real w1, real x2, real w2)
 {
-    float l1 = x1 - w1/2;
-    float l2 = x2 - w2/2;
-    float left = l1 > l2 ? l1 : l2;
-    float r1 = x1 + w1/2;
-    float r2 = x2 + w2/2;
-    float right = r1 < r2 ? r1 : r2;
+    real l1 = x1 - w1/2;
+    real l2 = x2 - w2/2;
+    real left = l1 > l2 ? l1 : l2;
+    real r1 = x1 + w1/2;
+    real r2 = x2 + w2/2;
+    real right = r1 < r2 ? r1 : r2;
     return right - left;
 }
 
-float box_intersection(box a, box b)
+real box_intersection(box a, box b)
 {
-    float w = overlap(a.x, a.w, b.x, b.w);
-    float h = overlap(a.y, a.h, b.y, b.h);
+    real w = overlap(a.x, a.w, b.x, b.w);
+    real h = overlap(a.y, a.h, b.y, b.h);
     if(w < 0 || h < 0) return 0;
-    float area = w*h;
+    real area = w*h;
     return area;
 }
 
-float box_union(box a, box b)
+real box_union(box a, box b)
 {
-    float i = box_intersection(a, b);
-    float u = a.w*a.h + b.w*b.h - i;
+    real i = box_intersection(a, b);
+    real u = a.w*a.h + b.w*b.h - i;
     return u;
 }
 
-float box_iou(box a, box b)
+real box_iou(box a, box b)
 {
     return box_intersection(a, b)/box_union(a, b);
 }
 
-float box_rmse(box a, box b)
+real box_rmse(box a, box b)
 {
     return sqrt(pow(a.x-b.x, 2) + 
                 pow(a.y-b.y, 2) + 
@@ -191,8 +191,8 @@ float box_rmse(box a, box b)
 
 dbox dintersect(box a, box b)
 {
-    float w = overlap(a.x, a.w, b.x, b.w);
-    float h = overlap(a.y, a.h, b.y, b.h);
+    real w = overlap(a.x, a.w, b.x, b.w);
+    real h = overlap(a.y, a.h, b.y, b.h);
     dbox dover = derivative(a, b);
     dbox di;
 
@@ -229,11 +229,11 @@ void test_dunion()
     box b = {.5, .5, .2, .2};
     dbox di = dunion(a,b);
     printf("Union: %f %f %f %f\n", di.dx, di.dy, di.dw, di.dh);
-    float inter =  box_union(a, b);
-    float xinter = box_union(dxa, b);
-    float yinter = box_union(dya, b);
-    float winter = box_union(dwa, b);
-    float hinter = box_union(dha, b);
+    real inter =  box_union(a, b);
+    real xinter = box_union(dxa, b);
+    real yinter = box_union(dya, b);
+    real winter = box_union(dwa, b);
+    real hinter = box_union(dha, b);
     xinter = (xinter - inter)/(.0001);
     yinter = (yinter - inter)/(.0001);
     winter = (winter - inter)/(.0001);
@@ -251,11 +251,11 @@ void test_dintersect()
     box b = {.5, .5, .2, .2};
     dbox di = dintersect(a,b);
     printf("Inter: %f %f %f %f\n", di.dx, di.dy, di.dw, di.dh);
-    float inter =  box_intersection(a, b);
-    float xinter = box_intersection(dxa, b);
-    float yinter = box_intersection(dya, b);
-    float winter = box_intersection(dwa, b);
-    float hinter = box_intersection(dha, b);
+    real inter =  box_intersection(a, b);
+    real xinter = box_intersection(dxa, b);
+    real yinter = box_intersection(dya, b);
+    real winter = box_intersection(dwa, b);
+    real hinter = box_intersection(dha, b);
     xinter = (xinter - inter)/(.0001);
     yinter = (yinter - inter)/(.0001);
     winter = (winter - inter)/(.0001);
@@ -275,16 +275,16 @@ void test_box()
 
     box b = {.5, 0, .2, .2};
 
-    float iou = box_iou(a,b);
+    real iou = box_iou(a,b);
     iou = (1-iou)*(1-iou);
     printf("%f\n", iou);
     dbox d = diou(a, b);
     printf("%f %f %f %f\n", d.dx, d.dy, d.dw, d.dh);
 
-    float xiou = box_iou(dxa, b);
-    float yiou = box_iou(dya, b);
-    float wiou = box_iou(dwa, b);
-    float hiou = box_iou(dha, b);
+    real xiou = box_iou(dxa, b);
+    real yiou = box_iou(dya, b);
+    real wiou = box_iou(dwa, b);
+    real hiou = box_iou(dha, b);
     xiou = ((1-xiou)*(1-xiou) - iou)/(.00001);
     yiou = ((1-yiou)*(1-yiou) - iou)/(.00001);
     wiou = ((1-wiou)*(1-wiou) - iou)/(.00001);
@@ -294,8 +294,8 @@ void test_box()
 
 dbox diou(box a, box b)
 {
-    float u = box_union(a,b);
-    float i = box_intersection(a,b);
+    real u = box_union(a,b);
+    real i = box_intersection(a,b);
     dbox di = dintersect(a,b);
     dbox du = dunion(a,b);
     dbox dd = {0,0,0,0};
@@ -316,7 +316,7 @@ dbox diou(box a, box b)
 }
 
 
-void do_nms(box *boxes, float **probs, int total, int classes, float thresh)
+void do_nms(box *boxes, real **probs, int total, int classes, real thresh)
 {
     int i, j, k;
     for(i = 0; i < total; ++i){

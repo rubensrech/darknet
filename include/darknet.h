@@ -512,7 +512,7 @@ typedef struct {
 } image;
 
 typedef struct{
-    float x, y, w, h;
+    real x, y, w, h;
 } box;
 
 typedef struct detection{
@@ -728,10 +728,10 @@ void rotate_image_cw(image im, int times);
 double what_time_is_it_now();
 image rotate_image(image m, real rad);
 void visualize_network(network *net);
-float box_iou(box a, box b);
+real box_iou(box a, box b);
 data load_all_cifar10();
 box_label *read_boxes(char *filename, int *n);
-box float_to_box(float *f, int stride);
+box real_to_box(real *f, int stride);
 void draw_detections(image im, detection *dets, int num, real thresh, char **names, image **alphabet, int classes);
 
 matrix network_predict_data(network *net, data test);
@@ -749,8 +749,8 @@ void free_detections(detection *dets, int n);
 void reset_network_state(network *net, int b);
 
 char **get_labels(char *filename);
-void do_nms_obj(detection *dets, int total, int classes, float thresh);
-void do_nms_sort(detection *dets, int total, int classes, float thresh);
+void do_nms_obj(detection *dets, int total, int classes, real thresh);
+void do_nms_sort(detection *dets, int total, int classes, real thresh);
 
 matrix make_matrix(int rows, int cols);
 
