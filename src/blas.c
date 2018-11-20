@@ -306,7 +306,7 @@ void softmax(real *input, int n, real temp, int stride, real *output)
 {
     int i;
     real sum = 0;
-    real largest = -FLT_MAX;
+    real largest = -REAL_MAX;
     for(i = 0; i < n; ++i){
         if(input[i*stride] > largest) largest = input[i*stride];
     }

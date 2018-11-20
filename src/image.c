@@ -748,7 +748,7 @@ int best_3d_shift(image a, image b, int min, int max)
 {
     int i;
     int best = 0;
-    real best_distance = FLT_MAX;
+    real best_distance = REAL_MAX;
     for(i = min; i <= max; i += 2){
         image c = crop_image(b, 0, i, b.w, b.h);
         real d = dist_array(c.data, a.data, a.w*a.h*a.c, 100);
