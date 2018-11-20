@@ -72,16 +72,16 @@ layer make_gru_layer(int batch, int inputs, int outputs, int steps, int batch_no
 
 
     l.outputs = outputs;
-    l.output = calloc(outputs*batch*steps, sizeof(float));
-    l.delta = calloc(outputs*batch*steps, sizeof(float));
-    l.state = calloc(outputs*batch, sizeof(float));
-    l.prev_state = calloc(outputs*batch, sizeof(float));
-    l.forgot_state = calloc(outputs*batch, sizeof(float));
-    l.forgot_delta = calloc(outputs*batch, sizeof(float));
+    l.output = calloc(outputs*batch*steps, sizeof(real));
+    l.delta = calloc(outputs*batch*steps, sizeof(real));
+    l.state = calloc(outputs*batch, sizeof(real));
+    l.prev_state = calloc(outputs*batch, sizeof(real));
+    l.forgot_state = calloc(outputs*batch, sizeof(real));
+    l.forgot_delta = calloc(outputs*batch, sizeof(real));
 
-    l.r_cpu = calloc(outputs*batch, sizeof(float));
-    l.z_cpu = calloc(outputs*batch, sizeof(float));
-    l.h_cpu = calloc(outputs*batch, sizeof(float));
+    l.r_cpu = calloc(outputs*batch, sizeof(real));
+    l.z_cpu = calloc(outputs*batch, sizeof(real));
+    l.h_cpu = calloc(outputs*batch, sizeof(real));
 
     l.forward = forward_gru_layer;
     l.backward = backward_gru_layer;
@@ -324,11 +324,11 @@ void backward_gru_layer_gpu(layer l, network net)
     if(net.delta_gpu) net.delta_gpu += l.inputs*l.batch*(l.steps-1);
     l.output_gpu += l.outputs*l.batch*(l.steps-1);
     l.delta_gpu += l.outputs*l.batch*(l.steps-1);
-    float *end_state = l.output_gpu;
+    real *end_state = l.output_gpu;
     for (i = l.steps-1; i >= 0; --i) {
         if(i != 0) copy_gpu(l.outputs*l.batch, l.output_gpu - l.outputs*l.batch, 1, l.state_gpu, 1);
         else copy_gpu(l.outputs*l.batch, l.prev_state_gpu, 1, l.state_gpu, 1);
-        float *prev_delta_gpu = (i == 0) ? 0 : l.delta_gpu - l.outputs*l.batch;
+        real *prev_delta_gpu = (i == 0) ? 0 : l.delta_gpu - l.outputs*l.batch;
 
         copy_gpu(l.outputs*l.batch, uz.output_gpu, 1, l.z_gpu, 1);
         axpy_gpu(l.outputs*l.batch, 1, wz.output_gpu, 1, l.z_gpu, 1);
