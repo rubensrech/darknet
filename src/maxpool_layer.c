@@ -7,7 +7,7 @@ image get_maxpool_image(maxpool_layer l)
     int h = l.out_h;
     int w = l.out_w;
     int c = l.c;
-    return float_to_image(w,h,c,l.output);
+    return real_to_image(w,h,c,l.output);
 }
 
 image get_maxpool_delta(maxpool_layer l)
@@ -15,7 +15,7 @@ image get_maxpool_delta(maxpool_layer l)
     int h = l.out_h;
     int w = l.out_w;
     int c = l.c;
-    return float_to_image(w,h,c,l.delta);
+    return real_to_image(w,h,c,l.delta);
 }
 
 maxpool_layer make_maxpool_layer(int batch, int h, int w, int c, int size, int stride, int padding)
@@ -36,8 +36,8 @@ maxpool_layer make_maxpool_layer(int batch, int h, int w, int c, int size, int s
     l.stride = stride;
     int output_size = l.out_h * l.out_w * l.out_c * batch;
     l.indexes = calloc(output_size, sizeof(int));
-    l.output =  calloc(output_size, sizeof(float));
-    l.delta =   calloc(output_size, sizeof(float));
+    l.output =  calloc(output_size, sizeof(real));
+    l.delta =   calloc(output_size, sizeof(real));
     l.forward = forward_maxpool_layer;
     l.backward = backward_maxpool_layer;
     #ifdef GPU
@@ -63,11 +63,11 @@ void resize_maxpool_layer(maxpool_layer *l, int w, int h)
     int output_size = l->outputs * l->batch;
 
     l->indexes = realloc(l->indexes, output_size * sizeof(int));
-    l->output = realloc(l->output, output_size * sizeof(float));
-    l->delta = realloc(l->delta, output_size * sizeof(float));
+    l->output = realloc(l->output, output_size * sizeof(real));
+    l->delta = realloc(l->delta, output_size * sizeof(real));
 
     #ifdef GPU
-    cuda_free((float *)l->indexes_gpu);
+    cuda_free((real *)l->indexes_gpu);
     cuda_free(l->output_gpu);
     cuda_free(l->delta_gpu);
     l->indexes_gpu = cuda_make_int_array(0, output_size);
@@ -91,7 +91,7 @@ void forward_maxpool_layer(const maxpool_layer l, network net)
             for(i = 0; i < h; ++i){
                 for(j = 0; j < w; ++j){
                     int out_index = j + w*(i + h*(k + c*b));
-                    float max = -FLT_MAX;
+                    real max = -REAL_MAX;
                     int max_i = -1;
                     for(n = 0; n < l.size; ++n){
                         for(m = 0; m < l.size; ++m){
@@ -100,7 +100,7 @@ void forward_maxpool_layer(const maxpool_layer l, network net)
                             int index = cur_w + l.w*(cur_h + l.h*(k + b*l.c));
                             int valid = (cur_h >= 0 && cur_h < l.h &&
                                          cur_w >= 0 && cur_w < l.w);
-                            float val = (valid != 0) ? net.input[index] : -FLT_MAX;
+                            real val = (valid != 0) ? net.input[index] : -FLT_MAX;
                             max_i = (val > max) ? index : max_i;
                             max   = (val > max) ? val   : max;
                         }
