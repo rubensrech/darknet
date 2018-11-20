@@ -98,13 +98,13 @@ typedef enum{
 
 typedef struct{
     int batch;
-    float learning_rate;
-    float momentum;
-    float decay;
+    real learning_rate;
+    real momentum;
+    real decay;
     int adam;
-    float B1;
-    float B2;
-    float eps;
+    real B1;
+    real B2;
+    real eps;
     int t;
 } update_args;
 
