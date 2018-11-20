@@ -527,7 +527,7 @@ typedef struct detection{
 
 typedef struct matrix{
     int rows, cols;
-    float **vals;
+    real **vals;
 } matrix;
 
 
@@ -579,8 +579,8 @@ typedef struct load_args{
 
 typedef struct{
     int id;
-    float x,y,w,h;
-    float left, right, top, bottom;
+    real x,y,w,h;
+    real left, right, top, bottom;
 } box_label;
 
 
@@ -648,11 +648,11 @@ image get_label(image **characters, char *string, int size);
 void draw_label(image a, int r, int c, image label, const real *rgb);
 void save_image(image im, const char *name);
 void save_image_options(image im, const char *name, IMTYPE f, int quality);
-void get_next_batch(data d, int n, int offset, float *X, float *y);
+void get_next_batch(data d, int n, int offset, real *X, real *y);
 void grayscale_image_3c(image im);
 void normalize_image(image p);
 void matrix_to_csv(matrix m);
-float train_network_sgd(network *net, data d, int n);
+real train_network_sgd(network *net, data d, int n);
 void rgbgr_image(image im);
 data copy_data(data d);
 data concat_data(data d1, data d2);
@@ -661,8 +661,8 @@ float matrix_topk_accuracy(matrix truth, matrix guess, int k);
 void matrix_add_matrix(matrix from, matrix to);
 void scale_matrix(matrix m, float scale);
 matrix csv_to_matrix(char *filename);
-float *network_accuracies(network *net, data d, int n);
-float train_network_datum(network *net);
+real *network_accuracies(network *net, data d, int n);
+real train_network_datum(network *net);
 image make_random_image(int w, int h, int c);
 
 void denormalize_connected_layer(layer l);
@@ -690,7 +690,7 @@ void get_region_detections(layer l, int w, int h, int netw, int neth, real thres
 int get_yolo_detections(layer l, int w, int h, int netw, int neth, real thresh, int *map, int relative, detection *dets);
 void free_network(network *net);
 void set_batch_network(network *net, int b);
-void set_temp_network(network *net, float t);
+void set_temp_network(network *net, real t);
 image load_image(char *filename, int w, int h, int c);
 image load_image_color(char *filename, int w, int h);
 image make_image(int w, int h, int c);
@@ -709,7 +709,7 @@ void test_resize(char *filename);
 int show_image(image p, const char *name, int ms);
 image copy_image(image p);
 void draw_box_width(image a, int x1, int y1, int x2, int y2, int w, real r, real g, real b);
-float get_current_rate(network *net);
+real get_current_rate(network *net);
 void composite_3d(char *f1, char *f2, char *out, int delta);
 data load_data_old(char **paths, int n, int m, char **labels, int k, int w, int h);
 size_t get_current_batch(network *net);
@@ -720,7 +720,7 @@ void top_predictions(network *net, int n, int *index);
 void flip_image(image a);
 image real_to_image(int w, int h, int c, real *data);
 void ghost_image(image source, image dest, int dx, int dy);
-float network_accuracy(network *net, data d);
+real network_accuracy(network *net, data d);
 void random_distort_image(image im, real hue, real saturation, real exposure);
 void fill_image(image m, real s);
 image grayscale_image(image im);
@@ -737,13 +737,13 @@ void draw_detections(image im, detection *dets, int num, real thresh, char **nam
 matrix network_predict_data(network *net, data test);
 image **load_alphabet();
 image get_network_image(network *net);
-float *network_predict(network *net, float *input);
+real *network_predict(network *net, real *input);
 
 int network_width(network *net);
 int network_height(network *net);
-float *network_predict_image(network *net, image im);
+real *network_predict_image(network *net, image im);
 void network_detect(network *net, image im, float thresh, float hier_thresh, float nms, detection *dets);
-detection *get_network_boxes(network *net, int w, int h, float thresh, float hier, int *map, int relative, int *num);
+detection *get_network_boxes(network *net, int w, int h, real thresh, real hier, int *map, int relative, int *num);
 void free_detections(detection *dets, int n);
 
 void reset_network_state(network *net, int b);
@@ -761,7 +761,7 @@ void make_window(char *name, int w, int h, int fullscreen);
 #endif
 
 void free_image(image m);
-float train_network(network *net, data d);
+real train_network(network *net, data d);
 pthread_t load_data_in_thread(load_args args);
 void load_data_blocking(load_args args);
 list *get_paths(char *filename);
