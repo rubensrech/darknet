@@ -19,7 +19,7 @@ char *get_layer_string(LAYER_TYPE a);
 network *make_network(int n);
 
 
-float network_accuracy_multi(network *net, data d, int n);
+real network_accuracy_multi(network *net, data d, int n);
 int get_predicted_class_network(network *net);
 void print_network(network *net);
 int resize_network(network *net, int w, int h);
