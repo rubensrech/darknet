@@ -44,7 +44,7 @@ layer make_crnn_layer(int batch, int h, int w, int c, int hidden_filters, int ou
     l.hidden = h * w * hidden_filters;
     l.outputs = l.out_h * l.out_w * l.out_c;
 
-    l.state = calloc(l.hidden*batch*(steps+1), sizeof(float));
+    l.state = calloc(l.hidden*batch*(steps+1), sizeof(real));
 
     l.input_layer = malloc(sizeof(layer));
     fprintf(stderr, "\t\t");
@@ -109,7 +109,7 @@ void forward_crnn_layer(layer l, network net)
         s.input = l.state;
         forward_convolutional_layer(self_layer, s);
 
-        float *old_state = l.state;
+        real *old_state = l.state;
         if(net.train) l.state += l.hidden*l.batch;
         if(l.shortcut){
             copy_cpu(l.hidden * l.batch, old_state, 1, l.state, 1);
@@ -221,7 +221,7 @@ void forward_crnn_layer_gpu(layer l, network net)
         s.input_gpu = l.state_gpu;
         forward_convolutional_layer_gpu(self_layer, s);
 
-        float *old_state = l.state_gpu;
+        real *old_state = l.state_gpu;
         if(net.train) l.state_gpu += l.hidden*l.batch;
         if(l.shortcut){
             copy_gpu(l.hidden * l.batch, old_state, 1, l.state_gpu, 1);
