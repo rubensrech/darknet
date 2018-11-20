@@ -18,10 +18,10 @@ softmax_layer make_softmax_layer(int batch, int inputs, int groups)
     l.groups = groups;
     l.inputs = inputs;
     l.outputs = inputs;
-    l.loss = calloc(inputs*batch, sizeof(float));
-    l.output = calloc(inputs*batch, sizeof(float));
-    l.delta = calloc(inputs*batch, sizeof(float));
-    l.cost = calloc(1, sizeof(float));
+    l.loss = calloc(inputs*batch, sizeof(real));
+    l.output = calloc(inputs*batch, sizeof(real));
+    l.delta = calloc(inputs*batch, sizeof(real));
+    l.cost = calloc(1, sizeof(real));
 
     l.forward = forward_softmax_layer;
     l.backward = backward_softmax_layer;
