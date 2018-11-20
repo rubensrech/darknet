@@ -116,9 +116,9 @@ matrix hold_out_matrix(matrix *m, int n)
     return h;
 }
 
-float *pop_column(matrix *m, int c)
+real *pop_column(matrix *m, int c)
 {
-    float *col = calloc(m->rows, sizeof(float));
+    real *col = calloc(m->rows, sizeof(real));
     int i, j;
     for(i = 0; i < m->rows; ++i){
         col[i] = m->vals[i][c];
