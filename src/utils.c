@@ -456,9 +456,9 @@ int count_fields(char *line)
     return count;
 }
 
-float *parse_fields(char *line, int n)
+real *parse_fields(char *line, int n)
 {
-    float *field = calloc(n, sizeof(float));
+    real *field = calloc(n, sizeof(real));
     char *c, *p, *end;
     int count = 0;
     int done = 0;

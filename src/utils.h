@@ -36,7 +36,7 @@ char *fgetl(FILE *fp);
 list *parse_csv_line(char *line);
 char *copy_string(char *s);
 int count_fields(char *line);
-float *parse_fields(char *line, int n);
+real *parse_fields(char *line, int n);
 void translate_array(real *a, int n, real s);
 float constrain(float min, float max, float a);
 int constrain_int(int a, int min, int max);
