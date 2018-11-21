@@ -640,7 +640,7 @@ void forward_network_gpu(network *net);
 void backward_network_gpu(network *net);
 void update_network_gpu(network *net);
 
-float train_networks(network **nets, int n, data d, int interval);
+real train_networks(network **nets, int n, data d, int interval);
 void sync_nets(network **nets, int n, int interval);
 void harmless_update_network_gpu(network *net);
 #endif
@@ -769,7 +769,7 @@ void hierarchy_predictions(real *predictions, int n, tree *hier, int only_leaves
 void change_leaves(tree *t, char *leaf_list);
 
 int find_int_arg(int argc, char **argv, char *arg, int def);
-float find_float_arg(int argc, char **argv, char *arg, float def);
+real find_real_arg(int argc, char **argv, char *arg, real def);
 int find_arg(int argc, char* argv[], char *arg);
 char *find_char_arg(int argc, char **argv, char *arg, char *def);
 char *basecfg(char *cfgfile);
@@ -777,7 +777,7 @@ void find_replace(char *str, char *orig, char *rep, char *output);
 void free_ptrs(void **ptrs, int n);
 char *fgetl(FILE *fp);
 void strip(char *s);
-float sec(clock_t clocks);
+real sec(clock_t clocks);
 void **list_to_array(list *l);
 void top_k(real *a, int n, int k, int *index);
 int *read_map(char *filename);
@@ -796,8 +796,8 @@ real sum_array(real *a, int n);
 void normalize_array(real *a, int n);
 int *read_intlist(char *s, int *n, int d);
 size_t rand_size_t();
-float rand_normal();
-float rand_uniform(float min, float max);
+real rand_normal();
+real rand_uniform(real min, real max);
 
 #ifdef __cplusplus
 }

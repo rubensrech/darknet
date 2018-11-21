@@ -49,7 +49,7 @@ int *read_intlist(char *gpu_list, int *ngpus, int d)
             gpu_list = strchr(gpu_list, ',')+1;
         }
     } else {
-        gpus = calloc(1, sizeof(float));
+        gpus = calloc(1, sizeof(real));
         *gpus = d;
         *ngpus = 1;
     }
@@ -145,7 +145,7 @@ int find_int_arg(int argc, char **argv, char *arg, int def)
     return def;
 }
 
-float find_float_arg(int argc, char **argv, char *arg, float def)
+real find_real_arg(int argc, char **argv, char *arg, real def)
 {
     int i;
     for(i = 0; i < argc-1; ++i){
@@ -200,7 +200,7 @@ char int_to_alphanum(int i)
     return (i < 10) ? i + 48 : i + 87;
 }
 
-void pm(int M, int N, float *A)
+void pm(int M, int N, real *A)
 {
     int i,j;
     for(i =0 ; i < M; ++i){
@@ -229,9 +229,9 @@ void find_replace(char *str, char *orig, char *rep, char *output)
     sprintf(output, "%s%s%s", buffer, rep, p+strlen(orig));
 }
 
-float sec(clock_t clocks)
+real sec(clock_t clocks)
 {
-    return (float)clocks/CLOCKS_PER_SEC;
+    return (real)clocks/CLOCKS_PER_SEC;
 }
 
 void top_k(real *a, int n, int k, int *index)
@@ -489,11 +489,11 @@ real mean_array(real *a, int n)
     return sum_array(a,n)/n;
 }
 
-void mean_arrays(float **a, int n, int els, float *avg)
+void mean_arrays(real **a, int n, int els, real *avg)
 {
     int i;
     int j;
-    memset(avg, 0, els*sizeof(float));
+    memset(avg, 0, els*sizeof(real));
     for(j = 0; j < n; ++j){
         for(i = 0; i < els; ++i){
             avg[i] += a[j][i];
@@ -528,7 +528,7 @@ int constrain_int(int a, int min, int max)
     return a;
 }
 
-float constrain(float min, float max, float a)
+real constrain(real min, real max, real a)
 {
     if (a < min) return min;
     if (a > max) return max;
@@ -651,7 +651,7 @@ int rand_int(int min, int max)
 }
 
 // From http://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform
-float rand_normal()
+real rand_normal()
 {
     static int haveSpare = 0;
     static double rand1, rand2;
@@ -673,12 +673,12 @@ float rand_normal()
 }
 
 /*
-   float rand_normal()
+   real rand_normal()
    {
    int n = 12;
    int i;
-   float sum= 0;
-   for(i = 0; i < n; ++i) sum += (float)rand()/RAND_MAX;
+   real sum= 0;
+   for(i = 0; i < n; ++i) sum += (real)rand()/RAND_MAX;
    return sum-n/2.;
    }
  */
@@ -695,19 +695,19 @@ size_t rand_size_t()
         ((size_t)(rand()&0xff) << 0);
 }
 
-float rand_uniform(float min, float max)
+real rand_uniform(real min, real max)
 {
     if(max < min){
-        float swap = min;
+        real swap = min;
         min = max;
         max = swap;
     }
-    return ((float)rand()/RAND_MAX * (max - min)) + min;
+    return ((real)rand()/RAND_MAX * (max - min)) + min;
 }
 
-float rand_scale(float s)
+real rand_scale(real s)
 {
-    float scale = rand_uniform(1, s);
+    real scale = rand_uniform(1, s);
     if(rand()%2) return scale;
     return 1./scale;
 }
