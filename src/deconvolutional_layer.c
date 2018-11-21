@@ -152,8 +152,8 @@ layer make_deconvolutional_layer(int batch, int h, int w, int c, int n, int size
     #ifdef CUDNN
         cudnnCreateTensorDescriptor(&l.dstTensorDesc);
         cudnnCreateTensorDescriptor(&l.normTensorDesc);
-        cudnnSetTensor4dDescriptor(l.dstTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, l.batch, l.out_c, l.out_h, l.out_w); 
-        cudnnSetTensor4dDescriptor(l.normTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, 1, l.out_c, 1, 1); 
+        cudnnSetTensor4dDescriptor(l.dstTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_REAL, l.batch, l.out_c, l.out_h, l.out_w); 
+        cudnnSetTensor4dDescriptor(l.normTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_REAL, 1, l.out_c, 1, 1); 
     #endif
 #endif
 
@@ -212,8 +212,8 @@ void resize_deconvolutional_layer(layer *l, int h, int w)
         l->x_norm_gpu = cuda_make_array(l->output, l->batch*l->outputs);
     }
     #ifdef CUDNN
-        cudnnSetTensor4dDescriptor(l->dstTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, l->batch, l->out_c, l->out_h, l->out_w); 
-        cudnnSetTensor4dDescriptor(l->normTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, 1, l->out_c, 1, 1); 
+        cudnnSetTensor4dDescriptor(l->dstTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_REAL, l->batch, l->out_c, l->out_h, l->out_w); 
+        cudnnSetTensor4dDescriptor(l->normTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_REAL, 1, l->out_c, 1, 1); 
     #endif
 #endif
     l->workspace_size = get_workspace_size(*l);
