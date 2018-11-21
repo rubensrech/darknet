@@ -14,7 +14,7 @@ void free_matrix(matrix m)
     free(m.vals);
 }
 
-float matrix_topk_accuracy(matrix truth, matrix guess, int k)
+real matrix_topk_accuracy(matrix truth, matrix guess, int k)
 {
     int *indexes = calloc(k, sizeof(int));
     int n = truth.cols;
@@ -31,10 +31,10 @@ float matrix_topk_accuracy(matrix truth, matrix guess, int k)
         }
     }
     free(indexes);
-    return (float)correct/truth.rows;
+    return (real)correct/truth.rows;
 }
 
-void scale_matrix(matrix m, float scale)
+void scale_matrix(matrix m, real scale)
 {
     int i,j;
     for(i = 0; i < m.rows; ++i){
@@ -49,15 +49,15 @@ matrix resize_matrix(matrix m, int size)
     int i;
     if (m.rows == size) return m;
     if (m.rows < size) {
-        m.vals = realloc(m.vals, size*sizeof(float*));
+        m.vals = realloc(m.vals, size*sizeof(real*));
         for (i = m.rows; i < size; ++i) {
-            m.vals[i] = calloc(m.cols, sizeof(float));
+            m.vals[i] = calloc(m.cols, sizeof(real));
         }
     } else if (m.rows > size) {
         for (i = size; i < m.rows; ++i) {
             free(m.vals[i]);
         }
-        m.vals = realloc(m.vals, size*sizeof(float*));
+        m.vals = realloc(m.vals, size*sizeof(real*));
     }
     m.rows = size;
     return m;
@@ -79,10 +79,10 @@ matrix copy_matrix(matrix m)
     matrix c = {0};
     c.rows = m.rows;
     c.cols = m.cols;
-    c.vals = calloc(c.rows, sizeof(float *));
+    c.vals = calloc(c.rows, sizeof(real *));
     int i;
     for(i = 0; i < c.rows; ++i){
-        c.vals[i] = calloc(c.cols, sizeof(float));
+        c.vals[i] = calloc(c.cols, sizeof(real));
         copy_cpu(c.cols, m.vals[i], 1, c.vals[i], 1);
     }
     return c;
@@ -94,9 +94,9 @@ matrix make_matrix(int rows, int cols)
     matrix m;
     m.rows = rows;
     m.cols = cols;
-    m.vals = calloc(m.rows, sizeof(float *));
+    m.vals = calloc(m.rows, sizeof(real *));
     for(i = 0; i < m.rows; ++i){
-        m.vals[i] = calloc(m.cols, sizeof(float));
+        m.vals[i] = calloc(m.cols, sizeof(real));
     }
     return m;
 }
@@ -107,7 +107,7 @@ matrix hold_out_matrix(matrix *m, int n)
     matrix h;
     h.rows = n;
     h.cols = m->cols;
-    h.vals = calloc(h.rows, sizeof(float *));
+    h.vals = calloc(h.rows, sizeof(real *));
     for(i = 0; i < n; ++i){
         int index = rand()%m->rows;
         h.vals[i] = m->vals[index];
@@ -142,18 +142,18 @@ matrix csv_to_matrix(char *filename)
 
     int n = 0;
     int size = 1024;
-    m.vals = calloc(size, sizeof(float*));
+    m.vals = calloc(size, sizeof(real*));
     while((line = fgetl(fp))){
         if(m.cols == -1) m.cols = count_fields(line);
         if(n == size){
             size *= 2;
-            m.vals = realloc(m.vals, size*sizeof(float*));
+            m.vals = realloc(m.vals, size*sizeof(real*));
         }
         m.vals[n] = parse_fields(line, m.cols);
         free(line);
         ++n;
     }
-    m.vals = realloc(m.vals, n*sizeof(float*));
+    m.vals = realloc(m.vals, n*sizeof(real*));
     m.rows = n;
     return m;
 }
