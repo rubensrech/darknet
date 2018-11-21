@@ -672,7 +672,7 @@ void rescale_weights(layer l, real scale, real trans);
 void rgbgr_weights(layer l);
 image *get_weights(layer l);
 
-void demo(char *cfgfile, char *weightfile, float thresh, int cam_index, const char *filename, char **names, int classes, int frame_skip, char *prefix, int avg, float hier_thresh, int w, int h, int fps, int fullscreen);
+void demo(char *cfgfile, char *weightfile, real thresh, int cam_index, const char *filename, char **names, int classes, int frame_skip, char *prefix, int avg, real hier_thresh, int w, int h, int fps, int fullscreen);
 void get_detection_detections(layer l, int w, int h, real thresh, detection *dets);
 
 char *option_find_str(list *l, char *key, char *def);
