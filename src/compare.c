@@ -10,7 +10,7 @@
 void train_compare(char *cfgfile, char *weightfile)
 {
     srand(time(0));
-    float avg_loss = -1;
+    real avg_loss = -1;
     char *base = basecfg(cfgfile);
     char *backup_directory = "/home/pjreddie/backup/";
     printf("%s\n", base);
@@ -51,10 +51,10 @@ void train_compare(char *cfgfile, char *weightfile)
         load_thread = load_data_in_thread(args);
         printf("Loaded: %lf seconds\n", sec(clock()-time));
         time=clock();
-        float loss = train_network(net, train);
+        real loss = train_network(net, train);
         if(avg_loss == -1) avg_loss = loss;
         avg_loss = avg_loss*.9 + loss*.1;
-        printf("%.3f: %f, %f avg, %lf seconds, %ld images\n", (float)*net.seen/N, loss, avg_loss, sec(clock()-time), *net.seen);
+        printf("%.3lf: %f, %f avg, %lf seconds, %ld images\n", (real)*net.seen/N, loss, avg_loss, sec(clock()-time), *net.seen);
         free_data(train);
         if(i%100 == 0){
             char buff[256];
@@ -140,7 +140,7 @@ void validate_compare(char *filename, char *weightfile)
             }
         }
         free_matrix(pred);
-        printf("%d: Acc: %f, %lf seconds, %d images\n", i, (float)correct/total, sec(clock()-time), val.X.rows);
+        printf("%d: Acc: %lf, %lf seconds, %d images\n", i, (real)correct/total, sec(clock()-time), val.X.rows);
         free_data(val);
     }
 }
@@ -150,8 +150,8 @@ typedef struct {
     char *filename;
     int class;
     int classes;
-    float elo;
-    float *elos;
+    real elo;
+    real *elos;
 } sortable_bbox;
 
 int total_compares = 0;
@@ -176,10 +176,10 @@ int bbox_comparator(const void *a, const void *b)
 
     image im1 = load_image_color(box1.filename, net.w, net.h);
     image im2 = load_image_color(box2.filename, net.w, net.h);
-    float *X  = calloc(net.w*net.h*net.c, sizeof(float));
-    memcpy(X,                   im1.data, im1.w*im1.h*im1.c*sizeof(float));
-    memcpy(X+im1.w*im1.h*im1.c, im2.data, im2.w*im2.h*im2.c*sizeof(float));
-    float *predictions = network_predict(net, X);
+    real *X  = calloc(net.w*net.h*net.c, sizeof(real));
+    memcpy(X,                   im1.data, im1.w*im1.h*im1.c*sizeof(real));
+    memcpy(X+im1.w*im1.h*im1.c, im2.data, im2.w*im2.h*im2.c*sizeof(real));
+    real *predictions = network_predict(net, X);
     
     free_image(im1);
     free_image(im2);
@@ -193,10 +193,10 @@ int bbox_comparator(const void *a, const void *b)
 void bbox_update(sortable_bbox *a, sortable_bbox *b, int class, int result)
 {
     int k = 32;
-    float EA = 1./(1+pow(10, (b->elos[class] - a->elos[class])/400.));
-    float EB = 1./(1+pow(10, (a->elos[class] - b->elos[class])/400.));
-    float SA = result ? 1 : 0;
-    float SB = result ? 0 : 1;
+    real EA = 1./(1+pow(10, (b->elos[class] - a->elos[class])/400.));
+    real EB = 1./(1+pow(10, (a->elos[class] - b->elos[class])/400.));
+    real SA = result ? 1 : 0;
+    real SB = result ? 0 : 1;
     a->elos[class] += k*(SA - EA);
     b->elos[class] += k*(SB - EB);
 }
@@ -205,10 +205,10 @@ void bbox_fight(network net, sortable_bbox *a, sortable_bbox *b, int classes, in
 {
     image im1 = load_image_color(a->filename, net.w, net.h);
     image im2 = load_image_color(b->filename, net.w, net.h);
-    float *X  = calloc(net.w*net.h*net.c, sizeof(float));
-    memcpy(X,                   im1.data, im1.w*im1.h*im1.c*sizeof(float));
-    memcpy(X+im1.w*im1.h*im1.c, im2.data, im2.w*im2.h*im2.c*sizeof(float));
-    float *predictions = network_predict(net, X);
+    real *X  = calloc(net.w*net.h*net.c, sizeof(real));
+    memcpy(X,                   im1.data, im1.w*im1.h*im1.c*sizeof(real));
+    memcpy(X+im1.w*im1.h*im1.c, im2.data, im2.w*im2.h*im2.c*sizeof(real));
+    real *predictions = network_predict(net, X);
     ++total_compares;
 
     int i;
@@ -280,7 +280,7 @@ void BattleRoyaleWithCheese(char *filename, char *weightfile)
         boxes[i].filename = paths[i];
         boxes[i].net = net;
         boxes[i].classes = classes;
-        boxes[i].elos = calloc(classes, sizeof(float));;
+        boxes[i].elos = calloc(classes, sizeof(real));;
         for(j = 0; j < classes; ++j){
             boxes[i].elos[j] = 1500;
         }
