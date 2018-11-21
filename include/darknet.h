@@ -564,12 +564,12 @@ typedef struct load_args{
     int scale;
     int center;
     int coords;
-    float jitter;
-    float angle;
-    float aspect;
-    float saturation;
-    float exposure;
-    float hue;
+    real jitter;
+    real angle;
+    real aspect;
+    real saturation;
+    real exposure;
+    real hue;
     data *d;
     image *im;
     image *resized;
