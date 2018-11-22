@@ -3,11 +3,11 @@
 #include <sys/time.h>
 #include <assert.h>
 
-void extend_data_truth(data *d, int n, float val)
+void extend_data_truth(data *d, int n, real val)
 {
     int i, j;
     for(i = 0; i < d->y.rows; ++i){
-        d->y.vals[i] = realloc(d->y.vals[i], (d->y.cols+n)*sizeof(float));
+        d->y.vals[i] = realloc(d->y.vals[i], (d->y.cols+n)*sizeof(real));
         for(j = 0; j < n; ++j){
             d->y.vals[i][d->y.cols + j] = val;
         }
@@ -20,13 +20,13 @@ matrix network_loss_data(network *net, data test)
     int i,b;
     int k = 1;
     matrix pred = make_matrix(test.X.rows, k);
-    float *X = calloc(net->batch*test.X.cols, sizeof(float));
-    float *y = calloc(net->batch*test.y.cols, sizeof(float));
+    real *X = calloc(net->batch*test.X.cols, sizeof(real));
+    real *y = calloc(net->batch*test.y.cols, sizeof(real));
     for(i = 0; i < test.X.rows; i += net->batch){
         for(b = 0; b < net->batch; ++b){
             if(i+b == test.X.rows) break;
-            memcpy(X+b*test.X.cols, test.X.vals[i+b], test.X.cols*sizeof(float));
-            memcpy(y+b*test.y.cols, test.y.vals[i+b], test.y.cols*sizeof(float));
+            memcpy(X+b*test.X.cols, test.X.vals[i+b], test.X.cols*sizeof(real));
+            memcpy(y+b*test.y.cols, test.y.vals[i+b], test.y.cols*sizeof(real));
         }
 
         network orig = *net;
@@ -37,11 +37,11 @@ matrix network_loss_data(network *net, data test)
         forward_network(net);
         *net = orig;
 
-        float *delta = net->layers[net->n-1].output;
+        real *delta = net->layers[net->n-1].output;
         for(b = 0; b < net->batch; ++b){
             if(i+b == test.X.rows) break;
             int t = max_index(y + b*test.y.cols, 1000);
-            float err = sum_array(delta + b*net->outputs, net->outputs);
+            real err = sum_array(delta + b*net->outputs, net->outputs);
             pred.vals[i+b][0] = -err;
             //pred.vals[i+b][0] = 1-delta[b*net->outputs + t];
         }
@@ -55,8 +55,8 @@ void train_attention(char *datacfg, char *cfgfile, char *weightfile, int *gpus, 
 {
     int i, j;
 
-    float avg_cls_loss = -1;
-    float avg_att_loss = -1;
+    real avg_cls_loss = -1;
+    real avg_att_loss = -1;
     char *base = basecfg(cfgfile);
     printf("%s\n", base);
     printf("%d\n", ngpus);
@@ -137,8 +137,8 @@ void train_attention(char *datacfg, char *cfgfile, char *weightfile, int *gpus, 
         printf("Loaded: %lf seconds\n", what_time_is_it_now()-time);
         time = what_time_is_it_now();
 
-        float aloss = 0;
-        float closs = 0;
+        real aloss = 0;
+        real closs = 0;
         int z;
         for (i = 0; i < divs*divs/ngpus; ++i) {
 #pragma omp parallel for
@@ -176,12 +176,12 @@ void train_attention(char *datacfg, char *cfgfile, char *weightfile, int *gpus, 
         }
         free_data(best);
         printf("\n");
-        image im = float_to_image(64,64,3,resized.X.vals[0]);
+        image im = real_to_image(64,64,3,resized.X.vals[0]);
         //show_image(im, "orig");
         //cvWaitKey(100);
         /*
-           image im1 = float_to_image(64,64,3,tiles[i].X.vals[0]);
-           image im2 = float_to_image(64,64,3,resized.X.vals[0]);
+           image im1 = real_to_image(64,64,3,tiles[i].X.vals[0]);
+           image im2 = real_to_image(64,64,3,resized.X.vals[0]);
            show_image(im1, "tile");
            show_image(im2, "res");
          */
@@ -205,7 +205,7 @@ void train_attention(char *datacfg, char *cfgfile, char *weightfile, int *gpus, 
         avg_cls_loss = avg_cls_loss*.9 + closs*.1;
         avg_att_loss = avg_att_loss*.9 + aloss*.1;
 
-        printf("%ld, %.3f: Att: %f, %f avg, Class: %f, %f avg, %f rate, %lf seconds, %ld images\n", get_current_batch(net), (float)(*net->seen)/N, aloss, avg_att_loss, closs, avg_cls_loss, get_current_rate(net), what_time_is_it_now()-time, *net->seen);
+        printf("%ld, %.3f: Att: %lf, %f avg, Class: %f, %f avg, %f rate, %lf seconds, %ld images\n", get_current_batch(net), (real)(*net->seen)/N, aloss, avg_att_loss, closs, avg_cls_loss, get_current_rate(net), what_time_is_it_now()-time, *net->seen);
         if(*net->seen/N > epoch){
             epoch = *net->seen/N;
             char buff[256];
@@ -253,13 +253,13 @@ void validate_attention_single(char *datacfg, char *filename, char *weightfile)
     int m = plist->size;
     free_list(plist);
 
-    float avg_acc = 0;
-    float avg_topk = 0;
+    real avg_acc = 0;
+    real avg_topk = 0;
     int *indexes = calloc(topk, sizeof(int));
     int divs = 4;
     int size = 2;
     int extra = 0;
-    float *avgs = calloc(classes, sizeof(float));
+    real *avgs = calloc(classes, sizeof(real));
     int *inds = calloc(divs*divs, sizeof(int));
 
     for(i = 0; i < m; ++i){
@@ -278,7 +278,7 @@ void validate_attention_single(char *datacfg, char *filename, char *weightfile)
         //show_image(im, "orig");
         //show_image(crop, "cropped");
         //cvWaitKey(0);
-        float *pred = network_predict(net, rcrop.data);
+        real *pred = network_predict(net, rcrop.data);
         //pred[classes + 56] = 0;
         for(j = 0; j < divs*divs; ++j){
             printf("%.2f ", pred[classes + j]);
@@ -296,7 +296,7 @@ void validate_attention_single(char *datacfg, char *filename, char *weightfile)
             int x = col * crop.w / divs - (net->w - crop.w/divs)/2;
             printf("%d %d %d %d\n", row, col, y, x);
             image tile = crop_image(crop, x, y, net->w, net->h);
-            float *pred = network_predict(net, tile.data);
+            real *pred = network_predict(net, tile.data);
             axpy_cpu(classes, 1., pred, 1, avgs, 1);
             show_image(tile, "tile");
             //cvWaitKey(10);
@@ -341,8 +341,8 @@ void validate_attention_multi(char *datacfg, char *filename, char *weightfile)
     int m = plist->size;
     free_list(plist);
 
-    float avg_acc = 0;
-    float avg_topk = 0;
+    real avg_acc = 0;
+    real avg_topk = 0;
     int *indexes = calloc(topk, sizeof(int));
 
     for(i = 0; i < m; ++i){
@@ -354,12 +354,12 @@ void validate_attention_multi(char *datacfg, char *filename, char *weightfile)
                 break;
             }
         }
-        float *pred = calloc(classes, sizeof(float));
+        real *pred = calloc(classes, sizeof(real));
         image im = load_image_color(paths[i], 0, 0);
         for(j = 0; j < nscales; ++j){
             image r = resize_min(im, scales[j]);
             resize_network(net, r.w, r.h);
-            float *p = network_predict(net, r.data);
+            real *p = network_predict(net, r.data);
             if(net->hierarchy) hierarchy_predictions(p, net->outputs, net->hierarchy, 1 , 1);
             axpy_cpu(classes, 1, p, 1, pred, 1);
             flip_image(r);
@@ -412,9 +412,9 @@ void predict_attention(char *datacfg, char *cfgfile, char *weightfile, char *fil
         //resize_network(&net, r.w, r.h);
         //printf("%d %d\n", r.w, r.h);
 
-        float *X = r.data;
+        real *X = r.data;
         time=clock();
-        float *predictions = network_predict(net, X);
+        real *predictions = network_predict(net, X);
         if(net->hierarchy) hierarchy_predictions(predictions, net->outputs, net->hierarchy, 1, 1);
         top_k(predictions, net->outputs, top, indexes);
         fprintf(stderr, "%s: Predicted in %f seconds.\n", input, sec(clock()-time));
