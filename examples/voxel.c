@@ -43,7 +43,7 @@ void train_voxel(char *cfgfile, char *weightfile)
     srand(time(0));
     char *base = basecfg(cfgfile);
     printf("%s\n", base);
-    float avg_loss = -1;
+    real avg_loss = -1;
     network net = parse_network_cfg(cfgfile);
     if(weightfile){
         load_weights(&net, weightfile);
@@ -81,7 +81,7 @@ void train_voxel(char *cfgfile, char *weightfile)
         printf("Loaded: %lf seconds\n", sec(clock()-time));
 
         time=clock();
-        float loss = train_network(net, train);
+        real loss = train_network(net, train);
         if (avg_loss < 0) avg_loss = loss;
         avg_loss = avg_loss*.9 + loss*.1;
 
@@ -129,7 +129,7 @@ void test_voxel(char *cfgfile, char *weightfile, char *filename)
         resize_network(&net, im.w, im.h);
         printf("%d %d\n", im.w, im.h);
 
-        float *X = im.data;
+        real *X = im.data;
         time=clock();
         network_predict(net, X);
         image out = get_network_image(net);
