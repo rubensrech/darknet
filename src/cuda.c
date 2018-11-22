@@ -87,10 +87,10 @@ cublasHandle_t blas_handle()
     return handle[i];
 }
 
-float *cuda_make_array(float *x, size_t n)
+real *cuda_make_array(real *x, size_t n)
 {
-    float *x_gpu;
-    size_t size = sizeof(float)*n;
+    real *x_gpu;
+    size_t size = sizeof(real)*n;
     cudaError_t status = cudaMalloc((void **)&x_gpu, size);
     check_error(status);
     if(x){
@@ -103,7 +103,7 @@ float *cuda_make_array(float *x, size_t n)
     return x_gpu;
 }
 
-void cuda_random(float *x_gpu, size_t n)
+void cuda_random(real *x_gpu, size_t n)
 {
     static curandGenerator_t gen[16];
     static int init[16] = {0};
@@ -117,14 +117,14 @@ void cuda_random(float *x_gpu, size_t n)
     check_error(cudaPeekAtLastError());
 }
 
-float cuda_compare(float *x_gpu, float *x, size_t n, char *s)
+real cuda_compare(real *x_gpu, real *x, size_t n, char *s)
 {
-    float *tmp = calloc(n, sizeof(float));
+    real *tmp = calloc(n, sizeof(real));
     cuda_pull_array(x_gpu, tmp, n);
     //int i;
     //for(i = 0; i < n; ++i) printf("%f %f\n", tmp[i], x[i]);
     axpy_cpu(n, -1, x, 1, tmp, 1);
-    float err = dot_cpu(n, tmp, 1, tmp, 1);
+    real err = dot_cpu(n, tmp, 1, tmp, 1);
     printf("Error %s: %f\n", s, sqrt(err/n));
     free(tmp);
     return err;
@@ -144,31 +144,31 @@ int *cuda_make_int_array(int *x, size_t n)
     return x_gpu;
 }
 
-void cuda_free(float *x_gpu)
+void cuda_free(real *x_gpu)
 {
     cudaError_t status = cudaFree(x_gpu);
     check_error(status);
 }
 
-void cuda_push_array(float *x_gpu, float *x, size_t n)
+void cuda_push_array(real *x_gpu, real *x, size_t n)
 {
-    size_t size = sizeof(float)*n;
+    size_t size = sizeof(real)*n;
     cudaError_t status = cudaMemcpy(x_gpu, x, size, cudaMemcpyHostToDevice);
     check_error(status);
 }
 
-void cuda_pull_array(float *x_gpu, float *x, size_t n)
+void cuda_pull_array(real *x_gpu, real *x, size_t n)
 {
-    size_t size = sizeof(float)*n;
+    size_t size = sizeof(real)*n;
     cudaError_t status = cudaMemcpy(x, x_gpu, size, cudaMemcpyDeviceToHost);
     check_error(status);
 }
 
-float cuda_mag_array(float *x_gpu, size_t n)
+real cuda_mag_array(real *x_gpu, size_t n)
 {
-    float *temp = calloc(n, sizeof(float));
+    real *temp = calloc(n, sizeof(real));
     cuda_pull_array(x_gpu, temp, n);
-    float m = mag_array(temp, n);
+    real m = mag_array(temp, n);
     free(temp);
     return m;
 }
