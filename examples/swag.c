@@ -8,7 +8,7 @@ void train_swag(char *cfgfile, char *weightfile)
     srand(time(0));
     char *base = basecfg(cfgfile);
     printf("%s\n", base);
-    float avg_loss = -1;
+    real avg_loss = -1;
     network net = parse_network_cfg(cfgfile);
     if(weightfile){
         load_weights(&net, weightfile);
@@ -22,7 +22,7 @@ void train_swag(char *cfgfile, char *weightfile)
 
     int side = l.side;
     int classes = l.classes;
-    float jitter = l.jitter;
+    real jitter = l.jitter;
 
     list *plist = get_paths(train_images);
     //int N = plist->size;
@@ -53,7 +53,7 @@ void train_swag(char *cfgfile, char *weightfile)
         printf("Loaded: %lf seconds\n", sec(clock()-time));
 
         time=clock();
-        float loss = train_network(net, train);
+        real loss = train_network(net, train);
         if (avg_loss < 0) avg_loss = loss;
         avg_loss = avg_loss*.9 + loss*.1;
 
