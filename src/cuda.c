@@ -113,7 +113,7 @@ void cuda_random(real *x_gpu, size_t n)
         curandSetPseudoRandomGeneratorSeed(gen[i], time(0));
         init[i] = 1;
     }
-    curandGenerateUniform(gen[i], x_gpu, n);
+    curandGenerateUniformDouble(gen[i], x_gpu, n);
     check_error(cudaPeekAtLastError());
 }
 

@@ -9,6 +9,8 @@ typedef double real;
 #define REAL_MAX __DBL_MAX__
 #define CUDNN_DATA_REAL CUDNN_DATA_DOUBLE
 // float3 -> double3
+// cublasSgemm -> cublasDgemm
+// curandGenerateUniform -> curandGenerateUniformDouble
 
 #ifdef GPU
     #define BLOCK 512
