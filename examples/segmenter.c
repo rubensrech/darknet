@@ -6,7 +6,7 @@ void train_segmenter(char *datacfg, char *cfgfile, char *weightfile, int *gpus, 
 {
     int i;
 
-    float avg_loss = -1;
+    real avg_loss = -1;
     char *base = basecfg(cfgfile);
     printf("%s\n", base);
     printf("%d\n", ngpus);
@@ -81,7 +81,7 @@ void train_segmenter(char *datacfg, char *cfgfile, char *weightfile, int *gpus, 
         printf("Loaded: %lf seconds\n", what_time_is_it_now()-time);
         time = what_time_is_it_now();
 
-        float loss = 0;
+        real loss = 0;
 #ifdef GPU
         if(ngpus == 1){
             loss = train_network(net, train);
@@ -92,8 +92,8 @@ void train_segmenter(char *datacfg, char *cfgfile, char *weightfile, int *gpus, 
         loss = train_network(net, train);
 #endif
         if(display){
-            image tr = float_to_image(net->w/div, net->h/div, 80, train.y.vals[net->batch*(net->subdivisions-1)]);
-            image im = float_to_image(net->w, net->h, net->c, train.X.vals[net->batch*(net->subdivisions-1)]);
+            image tr = real_to_image(net->w/div, net->h/div, 80, train.y.vals[net->batch*(net->subdivisions-1)]);
+            image im = real_to_image(net->w, net->h, net->c, train.X.vals[net->batch*(net->subdivisions-1)]);
             image mask = mask_to_rgb(tr);
             image prmask = mask_to_rgb(pred);
             show_image(im, "input", 1);
@@ -104,7 +104,7 @@ void train_segmenter(char *datacfg, char *cfgfile, char *weightfile, int *gpus, 
         }
         if(avg_loss == -1) avg_loss = loss;
         avg_loss = avg_loss*.9 + loss*.1;
-        printf("%ld, %.3f: %f, %f avg, %f rate, %lf seconds, %ld images\n", get_current_batch(net), (float)(*net->seen)/N, loss, avg_loss, get_current_rate(net), what_time_is_it_now()-time, *net->seen);
+        printf("%ld, %.3f: %f, %f avg, %f rate, %lf seconds, %ld images\n", get_current_batch(net), (real)(*net->seen)/N, loss, avg_loss, get_current_rate(net), what_time_is_it_now()-time, *net->seen);
         free_data(train);
         if(*net->seen/N > epoch){
             epoch = *net->seen/N;
@@ -150,9 +150,9 @@ void predict_segmenter(char *datafile, char *cfg, char *weights, char *filename)
         image im = load_image_color(input, 0, 0);
         image sized = letterbox_image(im, net->w, net->h);
 
-        float *X = sized.data;
+        real *X = sized.data;
         time=clock();
-        float *predictions = network_predict(net, X);
+        real *predictions = network_predict(net, X);
         image pred = get_network_image(net);
         image prmask = mask_to_rgb(pred);
         printf("Predicted: %f\n", predictions[0]);
@@ -178,7 +178,7 @@ void demo_segmenter(char *datacfg, char *cfg, char *weights, int cam_index, cons
     void * cap = open_video_stream(filename, cam_index, 0,0,0);
 
     if(!cap) error("Couldn't connect to webcam.\n");
-    float fps = 0;
+    real fps = 0;
 
     while(1){
         struct timeval tval_before, tval_after, tval_result;
@@ -203,7 +203,7 @@ void demo_segmenter(char *datacfg, char *cfg, char *weights, int cam_index, cons
 
         gettimeofday(&tval_after, NULL);
         timersub(&tval_after, &tval_before, &tval_result);
-        float curr = 1000000.f/((long int)tval_result.tv_usec);
+        real curr = 1000000.f/((long int)tval_result.tv_usec);
         fps = .9*fps + .1*curr;
     }
 #endif
