@@ -10,12 +10,12 @@ extern "C" {
 // src: https://github.com/BVLC/caffe/blob/master/src/caffe/util/im2col.cu
 // You may also want to read: https://github.com/BVLC/caffe/blob/master/LICENSE
 
-__global__ void im2col_gpu_kernel(const int n, const float* data_im,
+__global__ void im2col_gpu_kernel(const int n, const real* data_im,
         const int height, const int width, const int ksize,
         const int pad,
         const int stride,
         const int height_col, const int width_col,
-        float *data_col) {
+        real *data_col) {
     int index = blockIdx.x*blockDim.x+threadIdx.x;
     for(; index < n; index += blockDim.x*gridDim.x){
         int w_out = index % width_col;
@@ -25,9 +25,9 @@ __global__ void im2col_gpu_kernel(const int n, const float* data_im,
         int channel_out = channel_in * ksize * ksize;
         int h_in = h_out * stride - pad;
         int w_in = w_out * stride - pad;
-        float* data_col_ptr = data_col;
+        real* data_col_ptr = data_col;
         data_col_ptr += (channel_out * height_col + h_out) * width_col + w_out;
-        const float* data_im_ptr = data_im;
+        const real* data_im_ptr = data_im;
         data_im_ptr += (channel_in * height + h_in) * width + w_in;
         for (int i = 0; i < ksize; ++i) {
             for (int j = 0; j < ksize; ++j) {
@@ -45,9 +45,9 @@ __global__ void im2col_gpu_kernel(const int n, const float* data_im,
     }
 }
 
-void im2col_gpu(float *im,
+void im2col_gpu(real *im,
          int channels, int height, int width,
-         int ksize, int stride, int pad, float *data_col){
+         int ksize, int stride, int pad, real *data_col){
     // We are going to launch channels * height_col * width_col kernels, each
     // kernel responsible for copying a single-channel grid.
     int height_col = (height + 2 * pad - ksize) / stride + 1;

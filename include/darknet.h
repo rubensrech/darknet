@@ -8,6 +8,7 @@
 typedef double real;
 #define REAL_MAX __DBL_MAX__
 #define CUDNN_DATA_REAL CUDNN_DATA_DOUBLE
+// float3 -> double3
 
 #ifdef GPU
     #define BLOCK 512
@@ -626,8 +627,8 @@ void softmax(real *input, int n, real temp, int stride, real *output);
 int best_3d_shift_r(image a, image b, int min, int max);
 #ifdef GPU
 void axpy_gpu(int N, real ALPHA, real * X, int INCX, real * Y, int INCY);
-void fill_gpu(int N, float ALPHA, float * X, int INCX);
-void scal_gpu(int N, float ALPHA, float * X, int INCX);
+void fill_gpu(int N, real ALPHA, real * X, int INCX);
+void scal_gpu(int N, real ALPHA, real * X, int INCX);
 void copy_gpu(int N, real * X, int INCX, real * Y, int INCY);
 
 void cuda_set_device(int n);

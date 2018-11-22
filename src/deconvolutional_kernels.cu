@@ -25,9 +25,9 @@ extern "C" void forward_deconvolutional_layer_gpu(layer l, network net)
     fill_gpu(l.outputs*l.batch, 0, l.output_gpu, 1);
 
     for(i = 0; i < l.batch; ++i){
-        float *a = l.weights_gpu;
-        float *b = net.input_gpu + i*l.c*l.h*l.w;
-        float *c = net.workspace;
+        real *a = l.weights_gpu;
+        real *b = net.input_gpu + i*l.c*l.h*l.w;
+        real *c = net.workspace;
 
         gemm_gpu(1,0,m,n,k,1,a,m,b,n,0,c,n);
 
@@ -54,16 +54,16 @@ extern "C" void backward_deconvolutional_layer_gpu(layer l, network net)
         backward_bias_gpu(l.bias_updates_gpu, l.delta_gpu, l.batch, l.n, l.out_w*l.out_h);
     }
 
-    //if(net.delta_gpu) memset(net.delta_gpu, 0, l.batch*l.h*l.w*l.c*sizeof(float));
+    //if(net.delta_gpu) memset(net.delta_gpu, 0, l.batch*l.h*l.w*l.c*sizeof(real));
 
     for(i = 0; i < l.batch; ++i){
         int m = l.c;
         int n = l.size*l.size*l.n;
         int k = l.h*l.w;
 
-        float *a = net.input_gpu + i*m*k;
-        float *b = net.workspace;
-        float *c = l.weight_updates_gpu;
+        real *a = net.input_gpu + i*m*k;
+        real *b = net.workspace;
+        real *c = l.weight_updates_gpu;
 
         im2col_gpu(l.delta_gpu + i*l.outputs, l.out_c, l.out_h, l.out_w, 
                 l.size, l.stride, l.pad, b);
@@ -74,9 +74,9 @@ extern "C" void backward_deconvolutional_layer_gpu(layer l, network net)
             int n = l.h*l.w;
             int k = l.size*l.size*l.n;
 
-            float *a = l.weights_gpu;
-            float *b = net.workspace;
-            float *c = net.delta_gpu + i*n*m;
+            real *a = l.weights_gpu;
+            real *b = net.workspace;
+            real *c = net.delta_gpu + i*n*m;
 
             gemm_gpu(0,0,m,n,k,1,a,k,b,n,1,c,n);
         }
@@ -111,9 +111,9 @@ extern "C" void push_deconvolutional_layer(layer l)
 
 void update_deconvolutional_layer_gpu(layer l, update_args a)
 {
-    float learning_rate = a.learning_rate*l.learning_rate_scale;
-    float momentum = a.momentum;
-    float decay = a.decay;
+    real learning_rate = a.learning_rate*l.learning_rate_scale;
+    real momentum = a.momentum;
+    real decay = a.decay;
     int batch = a.batch;
 
     if(a.adam){

@@ -9,22 +9,22 @@ extern "C" {
 #include "image.h"
 }
 
-__device__ float get_pixel_kernel(float *image, int w, int h, int x, int y, int c)
+__device__ real get_pixel_kernel(real *image, int w, int h, int x, int y, int c)
 {
     if(x < 0 || x >= w || y < 0 || y >= h) return 0;
     return image[x + w*(y + c*h)];
 }
 
-__device__ float3 rgb_to_hsv_kernel(float3 rgb)
+__device__ double3 rgb_to_hsv_kernel(double3 rgb)
 {
-    float r = rgb.x;
-    float g = rgb.y; 
-    float b = rgb.z;
+    real r = rgb.x;
+    real g = rgb.y; 
+    real b = rgb.z;
 
-    float h, s, v;
-    float max = (r > g) ? ( (r > b) ? r : b) : ( (g > b) ? g : b);
-    float min = (r < g) ? ( (r < b) ? r : b) : ( (g < b) ? g : b);
-    float delta = max - min;
+    real h, s, v;
+    real max = (r > g) ? ( (r > b) ? r : b) : ( (g > b) ? g : b);
+    real min = (r < g) ? ( (r < b) ? r : b) : ( (g < b) ? g : b);
+    real delta = max - min;
     v = max;
     if(max == 0){
         s = 0;
@@ -40,17 +40,17 @@ __device__ float3 rgb_to_hsv_kernel(float3 rgb)
         }
         if (h < 0) h += 6;
     }
-    return make_float3(h, s, v);
+    return make_double3(h, s, v);
 }
 
-__device__ float3 hsv_to_rgb_kernel(float3 hsv)
+__device__ double3 hsv_to_rgb_kernel(double3 hsv)
 {
-    float h = hsv.x;
-    float s = hsv.y; 
-    float v = hsv.z;
+    real h = hsv.x;
+    real s = hsv.y; 
+    real v = hsv.z;
 
-    float r, g, b;
-    float f, p, q, t;
+    real r, g, b;
+    real f, p, q, t;
 
     if (s == 0) {
         r = g = b = v;
@@ -77,25 +77,25 @@ __device__ float3 hsv_to_rgb_kernel(float3 hsv)
     r = (r < 0) ? 0 : ((r > 1) ? 1 : r);
     g = (g < 0) ? 0 : ((g > 1) ? 1 : g);
     b = (b < 0) ? 0 : ((b > 1) ? 1 : b);
-    return make_float3(r, g, b);
+    return make_double3(r, g, b);
 }
 
-__device__ float bilinear_interpolate_kernel(float *image, int w, int h, float x, float y, int c)
+__device__ real bilinear_interpolate_kernel(real *image, int w, int h, real x, real y, int c)
 {
     int ix = (int) floorf(x);
     int iy = (int) floorf(y);
 
-    float dx = x - ix;
-    float dy = y - iy;
+    real dx = x - ix;
+    real dy = y - iy;
 
-    float val = (1-dy) * (1-dx) * get_pixel_kernel(image, w, h, ix, iy, c) + 
+    real val = (1-dy) * (1-dx) * get_pixel_kernel(image, w, h, ix, iy, c) + 
         dy     * (1-dx) * get_pixel_kernel(image, w, h, ix, iy+1, c) + 
         (1-dy) *   dx   * get_pixel_kernel(image, w, h, ix+1, iy, c) +
         dy     *   dx   * get_pixel_kernel(image, w, h, ix+1, iy+1, c);
     return val;
 }
 
-__global__ void levels_image_kernel(float *image, float *rand, int batch, int w, int h, int train, float saturation, float exposure, float translate, float scale, float shift)
+__global__ void levels_image_kernel(real *image, real *rand, int batch, int w, int h, int train, real saturation, real exposure, real translate, real scale, real shift)
 {
     int size = batch * w * h;
     int id = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
@@ -104,13 +104,13 @@ __global__ void levels_image_kernel(float *image, float *rand, int batch, int w,
     id /= w;
     int y = id % h;
     id /= h;
-    float rshift = rand[0];
-    float gshift = rand[1];
-    float bshift = rand[2];
-    float r0 = rand[8*id + 0];
-    float r1 = rand[8*id + 1];
-    float r2 = rand[8*id + 2];
-    float r3 = rand[8*id + 3];
+    real rshift = rand[0];
+    real gshift = rand[1];
+    real bshift = rand[2];
+    real r0 = rand[8*id + 0];
+    real r1 = rand[8*id + 1];
+    real r2 = rand[8*id + 2];
+    real r3 = rand[8*id + 3];
 
     saturation = r0*(saturation - 1) + 1;
     saturation = (r1 > .5f) ? 1.f/saturation : saturation;
@@ -119,12 +119,12 @@ __global__ void levels_image_kernel(float *image, float *rand, int batch, int w,
 
     size_t offset = id * h * w * 3;
     image += offset;
-    float r = image[x + w*(y + h*0)];
-    float g = image[x + w*(y + h*1)];
-    float b = image[x + w*(y + h*2)];
-    float3 rgb = make_float3(r,g,b);
+    real r = image[x + w*(y + h*0)];
+    real g = image[x + w*(y + h*1)];
+    real b = image[x + w*(y + h*2)];
+    double3 rgb = make_double3(r,g,b);
     if(train){
-        float3 hsv = rgb_to_hsv_kernel(rgb);
+        double3 hsv = rgb_to_hsv_kernel(rgb);
         hsv.y *= saturation;
         hsv.z *= exposure;
         rgb = hsv_to_rgb_kernel(hsv);
@@ -136,13 +136,13 @@ __global__ void levels_image_kernel(float *image, float *rand, int batch, int w,
     image[x + w*(y + h*2)] = rgb.z*scale + translate + (bshift - .5f)*shift;
 }
 
-__global__ void forward_crop_layer_kernel(float *input, float *rand, int size, int c, int h, int w, int crop_height, int crop_width, int train, int flip, float angle, float *output)
+__global__ void forward_crop_layer_kernel(real *input, real *rand, int size, int c, int h, int w, int crop_height, int crop_width, int train, int flip, real angle, real *output)
 {
     int id = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
     if(id >= size) return;
 
-    float cx = w/2.f;
-    float cy = h/2.f;
+    real cx = w/2.f;
+    real cy = h/2.f;
 
     int count = id;
     int j = id % crop_width;
@@ -153,13 +153,13 @@ __global__ void forward_crop_layer_kernel(float *input, float *rand, int size, i
     id /= c;
     int b = id;
 
-    float r4 = rand[8*b + 4];
-    float r5 = rand[8*b + 5];
-    float r6 = rand[8*b + 6];
-    float r7 = rand[8*b + 7];
+    real r4 = rand[8*b + 4];
+    real r5 = rand[8*b + 5];
+    real r6 = rand[8*b + 6];
+    real r7 = rand[8*b + 7];
 
-    float dw = (w - crop_width)*r4;
-    float dh = (h - crop_height)*r5;
+    real dw = (w - crop_width)*r4;
+    real dh = (h - crop_height)*r5;
     flip = (flip && (r6 > .5f));
     angle = 2*angle*r7 - angle;
     if(!train){
@@ -171,11 +171,11 @@ __global__ void forward_crop_layer_kernel(float *input, float *rand, int size, i
 
     input += w*h*c*b;
 
-    float x = (flip) ? w - dw - j - 1 : j + dw;    
-    float y = i + dh;
+    real x = (flip) ? w - dw - j - 1 : j + dw;    
+    real y = i + dh;
 
-    float rx = cosf(angle)*(x-cx) - sinf(angle)*(y-cy) + cx;
-    float ry = sinf(angle)*(x-cx) + cosf(angle)*(y-cy) + cy;
+    real rx = cosf(angle)*(x-cx) - sinf(angle)*(y-cy) + cx;
+    real ry = sinf(angle)*(x-cx) + cosf(angle)*(y-cy) + cy;
 
     output[count] = bilinear_interpolate_kernel(input, w, h, rx, ry, k);
 }
@@ -184,10 +184,10 @@ extern "C" void forward_crop_layer_gpu(crop_layer layer, network net)
 {
     cuda_random(layer.rand_gpu, layer.batch*8);
 
-    float radians = layer.angle*3.14159265f/180.f;
+    real radians = layer.angle*3.14159265f/180.f;
 
-    float scale = 2;
-    float translate = -1;
+    real scale = 2;
+    real translate = -1;
     if(layer.noadjust){
         scale = 1;
         translate = 0;
@@ -205,9 +205,9 @@ extern "C" void forward_crop_layer_gpu(crop_layer layer, network net)
 
 /*
        cuda_pull_array(layer.output_gpu, layer.output, size);
-       image im = float_to_image(layer.crop_width, layer.crop_height, layer.c, layer.output + 0*(size/layer.batch));
-       image im2 = float_to_image(layer.crop_width, layer.crop_height, layer.c, layer.output + 1*(size/layer.batch));
-       image im3 = float_to_image(layer.crop_width, layer.crop_height, layer.c, layer.output + 2*(size/layer.batch));
+       image im = real_to_image(layer.crop_width, layer.crop_height, layer.c, layer.output + 0*(size/layer.batch));
+       image im2 = real_to_image(layer.crop_width, layer.crop_height, layer.c, layer.output + 1*(size/layer.batch));
+       image im3 = real_to_image(layer.crop_width, layer.crop_height, layer.c, layer.output + 2*(size/layer.batch));
 
        translate_image(im, -translate);
        scale_image(im, 1/scale);

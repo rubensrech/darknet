@@ -13,25 +13,25 @@ extern "C" {
 #include "cuda.h"
 }
 
-__global__ void binarize_kernel(float *x, int n, float *binary)
+__global__ void binarize_kernel(real *x, int n, real *binary)
 {
     int i = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
     if (i >= n) return;
     binary[i] = (x[i] >= 0) ? 1 : -1;
 }
 
-void binarize_gpu(float *x, int n, float *binary)
+void binarize_gpu(real *x, int n, real *binary)
 {
     binarize_kernel<<<cuda_gridsize(n), BLOCK>>>(x, n, binary);
     check_error(cudaPeekAtLastError());
 }
 
-__global__ void binarize_input_kernel(float *input, int n, int size, float *binary)
+__global__ void binarize_input_kernel(real *input, int n, int size, real *binary)
 {
     int s = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
     if (s >= size) return;
     int i = 0;
-    float mean = 0;
+    real mean = 0;
     for(i = 0; i < n; ++i){
         mean += fabsf(input[i*size + s]);
     }
@@ -41,19 +41,19 @@ __global__ void binarize_input_kernel(float *input, int n, int size, float *bina
     }
 }
 
-void binarize_input_gpu(float *input, int n, int size, float *binary)
+void binarize_input_gpu(real *input, int n, int size, real *binary)
 {
     binarize_input_kernel<<<cuda_gridsize(size), BLOCK>>>(input, n, size, binary);
     check_error(cudaPeekAtLastError());
 }
 
 
-__global__ void binarize_weights_kernel(float *weights, int n, int size, float *binary)
+__global__ void binarize_weights_kernel(real *weights, int n, int size, real *binary)
 {
     int f = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
     if (f >= n) return;
     int i = 0;
-    float mean = 0;
+    real mean = 0;
     for(i = 0; i < size; ++i){
         mean += fabsf(weights[f*size + i]);
     }
@@ -64,7 +64,7 @@ __global__ void binarize_weights_kernel(float *weights, int n, int size, float *
     }
 }
 
-void binarize_weights_gpu(float *weights, int n, int size, float *binary)
+void binarize_weights_gpu(real *weights, int n, int size, real *binary)
 {
     binarize_weights_kernel<<<cuda_gridsize(n), BLOCK>>>(weights, n, size, binary);
     check_error(cudaPeekAtLastError());
@@ -86,7 +86,7 @@ void forward_convolutional_layer_gpu(convolutional_layer l, network net)
     }
 
 #ifdef CUDNN
-    float one = 1;
+    real one = 1;
     cudnnConvolutionForward(cudnn_handle(),
                 &one,
                 l.srcTensorDesc,
@@ -108,10 +108,10 @@ void forward_convolutional_layer_gpu(convolutional_layer l, network net)
     int n = l.out_w*l.out_h;
     for(i = 0; i < l.batch; ++i){
         for(j = 0; j < l.groups; ++j){
-            float *a = l.weights_gpu + j*l.nweights/l.groups;
-            float *b = net.workspace;
-            float *c = l.output_gpu + (i*l.groups + j)*n*m;
-            float *im = net.input_gpu + (i*l.groups + j)*l.c/l.groups*l.h*l.w;
+            real *a = l.weights_gpu + j*l.nweights/l.groups;
+            real *b = net.workspace;
+            real *c = l.output_gpu + (i*l.groups + j)*n*m;
+            real *im = net.input_gpu + (i*l.groups + j)*l.c/l.groups*l.h*l.w;
 
             if (l.size == 1){
                 b = im;
@@ -134,7 +134,7 @@ void forward_convolutional_layer_gpu(convolutional_layer l, network net)
     if(l.binary || l.xnor) swap_binary(&l);
 }
 
-__global__ void smooth_kernel(float *x, int n, int w, int h, int c, int size, float rate, float *delta)
+__global__ void smooth_kernel(real *x, int n, int w, int h, int c, int size, real rate, real *delta)
 {
     int id = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
     if(id >= n) return;
@@ -164,7 +164,7 @@ __global__ void smooth_kernel(float *x, int n, int w, int h, int c, int size, fl
     }
 }
 
-extern "C" void smooth_layer(layer l, int size, float rate)
+extern "C" void smooth_layer(layer l, int size, real rate)
 {
     int h = l.out_h;
     int w = l.out_w;
@@ -190,11 +190,11 @@ void backward_convolutional_layer_gpu(convolutional_layer l, network net)
     } else {
         backward_bias_gpu(l.bias_updates_gpu, l.delta_gpu, l.batch, l.n, l.out_w*l.out_h);
     }
-    float *original_input = net.input_gpu;
+    real *original_input = net.input_gpu;
 
     if(l.xnor) net.input_gpu = l.binary_input_gpu;
 #ifdef CUDNN
-    float one = 1;
+    real one = 1;
     cudnnConvolutionBackwardFilter(cudnn_handle(),
             &one,
             l.srcTensorDesc,
@@ -236,12 +236,12 @@ void backward_convolutional_layer_gpu(convolutional_layer l, network net)
     int i, j;
     for(i = 0; i < l.batch; ++i){
         for(j = 0; j < l.groups; ++j){
-            float *a = l.delta_gpu + (i*l.groups + j)*m*k;
-            float *b = net.workspace;
-            float *c = l.weight_updates_gpu + j*l.nweights/l.groups;
+            real *a = l.delta_gpu + (i*l.groups + j)*m*k;
+            real *b = net.workspace;
+            real *c = l.weight_updates_gpu + j*l.nweights/l.groups;
 
-            float *im  = net.input_gpu+(i*l.groups + j)*l.c/l.groups*l.h*l.w;
-            float *imd = net.delta_gpu+(i*l.groups + j)*l.c/l.groups*l.h*l.w;
+            real *im  = net.input_gpu+(i*l.groups + j)*l.c/l.groups*l.h*l.w;
+            real *imd = net.delta_gpu+(i*l.groups + j)*l.c/l.groups*l.h*l.w;
 
             im2col_gpu(im, l.c/l.groups, l.h, l.w, l.size, l.stride, l.pad, b);
             gemm_gpu(0,1,m,n,k,1,a,k,b,k,1,c,n);
@@ -298,9 +298,9 @@ void push_convolutional_layer(layer l)
 
 void update_convolutional_layer_gpu(layer l, update_args a)
 {
-    float learning_rate = a.learning_rate*l.learning_rate_scale;
-    float momentum = a.momentum;
-    float decay = a.decay;
+    real learning_rate = a.learning_rate*l.learning_rate_scale;
+    real momentum = a.momentum;
+    real decay = a.decay;
     int batch = a.batch;
 
     if(a.adam){
