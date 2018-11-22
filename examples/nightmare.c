@@ -4,28 +4,28 @@
 
 // ./darknet nightmare cfg/extractor.recon.cfg ~/trained/yolo-coco.conv frame6.png -reconstruct -iters 500 -i 3 -lambda .1 -rate .01 -smooth 2
 
-float abs_mean(float *x, int n)
+real abs_mean(real *x, int n)
 {
     int i;
-    float sum = 0;
+    real sum = 0;
     for (i = 0; i < n; ++i){
         sum += fabs(x[i]);
     }
     return sum/n;
 }
 
-void calculate_loss(float *output, float *delta, int n, float thresh)
+void calculate_loss(real *output, real *delta, int n, real thresh)
 {
     int i;
-    float mean = mean_array(output, n); 
-    float var = variance_array(output, n);
+    real mean = mean_array(output, n); 
+    real var = variance_array(output, n);
     for(i = 0; i < n; ++i){
         if(delta[i] > mean + thresh*sqrt(var)) delta[i] = output[i];
         else delta[i] = 0;
     }
 }
 
-void optimize_picture(network *net, image orig, int max_layer, float scale, float rate, float thresh, int norm)
+void optimize_picture(network *net, image orig, int max_layer, real scale, real rate, real thresh, int norm)
 {
     //scale_image(orig, 2);
     //translate_image(orig, -1);
@@ -111,7 +111,7 @@ void optimize_picture(network *net, image orig, int max_layer, float scale, floa
 
 }
 
-void smooth(image recon, image update, float lambda, int num)
+void smooth(image recon, image update, real lambda, int num)
 {
     int i, j, k;
     int ii, jj;
@@ -132,7 +132,7 @@ void smooth(image recon, image update, float lambda, int num)
     }
 }
 
-void reconstruct_picture(network *net, float *features, image recon, image update, float rate, float momentum, float lambda, int smooth_size, int iters)
+void reconstruct_picture(network *net, real *features, image recon, image update, real rate, real momentum, real lambda, int smooth_size, int iters)
 {
     int iter = 0;
     for (iter = 0; iter < iters; ++iter) {
@@ -168,7 +168,7 @@ void reconstruct_picture(network *net, float *features, image recon, image updat
         axpy_cpu(recon.w*recon.h*recon.c, rate, update.data, 1, recon.data, 1);
         scal_cpu(recon.w*recon.h*recon.c, momentum, update.data, 1);
 
-        float mag = mag_array(delta.data, recon.w*recon.h*recon.c);
+        real mag = mag_array(delta.data, recon.w*recon.h*recon.c);
         printf("mag: %f\n", mag);
         //scal_cpu(recon.w*recon.h*recon.c, 600/mag, recon.data, 1);
 
@@ -193,9 +193,9 @@ void run_lsd(int argc, char **argv)
     int norm = find_int_arg(argc, argv, "-norm", 1);
     int rounds = find_int_arg(argc, argv, "-rounds", 1);
     int iters = find_int_arg(argc, argv, "-iters", 10);
-    float rate = find_float_arg(argc, argv, "-rate", .04);
-    float momentum = find_float_arg(argc, argv, "-momentum", .9);
-    float lambda = find_float_arg(argc, argv, "-lambda", .01);
+    real rate = find_real_arg(argc, argv, "-rate", .04);
+    real momentum = find_real_arg(argc, argv, "-momentum", .9);
+    real lambda = find_real_arg(argc, argv, "-lambda", .01);
     char *prefix = find_char_arg(argc, argv, "-prefix", 0);
     int reconstruct = find_arg(argc, argv, "-reconstruct");
     int smooth_size = find_int_arg(argc, argv, "-smooth", 1);
@@ -208,7 +208,7 @@ void run_lsd(int argc, char **argv)
     set_batch_network(&net, 1);
     image im = load_image_color(input, 0, 0);
 
-    float *features = 0;
+    real *features = 0;
     image update;
     if (reconstruct){
         im = letterbox_image(im, net->w, net->h);
@@ -303,12 +303,12 @@ void run_nightmare(int argc, char **argv)
     int rounds = find_int_arg(argc, argv, "-rounds", 1);
     int iters = find_int_arg(argc, argv, "-iters", 10);
     int octaves = find_int_arg(argc, argv, "-octaves", 4);
-    float zoom = find_float_arg(argc, argv, "-zoom", 1.);
-    float rate = find_float_arg(argc, argv, "-rate", .04);
-    float thresh = find_float_arg(argc, argv, "-thresh", 1.);
-    float rotate = find_float_arg(argc, argv, "-rotate", 0);
-    float momentum = find_float_arg(argc, argv, "-momentum", .9);
-    float lambda = find_float_arg(argc, argv, "-lambda", .01);
+    real zoom = find_real_arg(argc, argv, "-zoom", 1.);
+    real rate = find_real_arg(argc, argv, "-rate", .04);
+    real thresh = find_real_arg(argc, argv, "-thresh", 1.);
+    real rotate = find_real_arg(argc, argv, "-rotate", 0);
+    real momentum = find_real_arg(argc, argv, "-momentum", .9);
+    real lambda = find_real_arg(argc, argv, "-lambda", .01);
     char *prefix = find_char_arg(argc, argv, "-prefix", 0);
     int reconstruct = find_arg(argc, argv, "-reconstruct");
     int smooth_size = find_int_arg(argc, argv, "-smooth", 1);
@@ -320,7 +320,7 @@ void run_nightmare(int argc, char **argv)
     set_batch_network(net, 1);
     image im = load_image_color(input, 0, 0);
     if(0){
-        float scale = 1;
+        real scale = 1;
         if(im.w > 512 || im.h > 512){
             if(im.w > im.h) scale = 512.0/im.w;
             else scale = 512.0/im.h;
@@ -331,7 +331,7 @@ void run_nightmare(int argc, char **argv)
     }
     //im = letterbox_image(im, net->w, net->h);
 
-    float *features = 0;
+    real *features = 0;
     image update;
     if (reconstruct){
         net->n = max_layer;
