@@ -27,7 +27,7 @@ void fix_data_captcha(data d, int mask)
 void train_captcha(char *cfgfile, char *weightfile)
 {
     srand(time(0));
-    float avg_loss = -1;
+    real avg_loss = -1;
     char *base = basecfg(cfgfile);
     printf("%s\n", base);
     network *net = load_network(cfgfile, weightfile, 0);
@@ -69,7 +69,7 @@ void train_captcha(char *cfgfile, char *weightfile)
         fix_data_captcha(train, solved);
 
         /*
-           image im = float_to_image(256, 256, 3, train.X.vals[114]);
+           image im = real_to_image(256, 256, 3, train.X.vals[114]);
            show_image(im, "training");
            cvWaitKey(0);
          */
@@ -77,7 +77,7 @@ void train_captcha(char *cfgfile, char *weightfile)
         load_thread = load_data_in_thread(args);
         printf("Loaded: %lf seconds\n", sec(clock()-time));
         time=clock();
-        float loss = train_network(net, train);
+        real loss = train_network(net, train);
         if(avg_loss == -1) avg_loss = loss;
         avg_loss = avg_loss*.9 + loss*.1;
         printf("%d: %f, %f avg, %lf seconds, %ld images\n", i, loss, avg_loss, sec(clock()-time), *net->seen);
@@ -111,8 +111,8 @@ void test_captcha(char *cfgfile, char *weightfile, char *filename)
             strtok(input, "\n");
         }
         image im = load_image_color(input, net->w, net->h);
-        float *X = im.data;
-        float *predictions = network_predict(net, X);
+        real *X = im.data;
+        real *predictions = network_predict(net, X);
         top_predictions(net, 26, indexes);
         //printf("%s: Predicted in %f seconds.\n", input, sec(clock()-time));
         for(i = 0; i < 26; ++i){
@@ -142,8 +142,8 @@ void valid_captcha(char *cfgfile, char *weightfile, char *filename)
     for(i = 0; i < N; ++i){
         if (i%100 == 0) fprintf(stderr, "%d\n", i);
         image im = load_image_color(paths[i], net->w, net->h);
-        float *X = im.data;
-        float *predictions = network_predict(net, X);
+        real *X = im.data;
+        real *predictions = network_predict(net, X);
         //printf("%s: Predicted in %f seconds.\n", input, sec(clock()-time));
         int truth = -1;
         for(j = 0; j < 13; ++j){
@@ -168,7 +168,7 @@ void valid_captcha(char *cfgfile, char *weightfile, char *filename)
 /*
    void train_captcha(char *cfgfile, char *weightfile)
    {
-   float avg_loss = -1;
+   real avg_loss = -1;
    srand(time(0));
    char *base = basecfg(cfgfile);
    printf("%s\n", base);
@@ -191,7 +191,7 @@ void valid_captcha(char *cfgfile, char *weightfile, char *filename)
    scale_data_rows(train, 1./128);
    printf("Loaded: %lf seconds\n", sec(clock()-time));
    time=clock();
-   float loss = train_network(net, train);
+   real loss = train_network(net, train);
    net->seen += imgs;
    if(avg_loss == -1) avg_loss = loss;
    avg_loss = avg_loss*.9 + loss*.1;
@@ -221,9 +221,9 @@ void valid_captcha(char *cfgfile, char *weightfile, char *filename)
    strtok(filename, "\n");
    image im = load_image_color(filename, 300, 57);
    scale_image(im, 1./255.);
-   float *X = im.data;
-   float *predictions = network_predict(net, X);
-   image out  = float_to_image(300, 57, 1, predictions);
+   real *X = im.data;
+   real *predictions = network_predict(net, X);
+   image out  = real_to_image(300, 57, 1, predictions);
    show_image(out, "decoded");
 #ifdef OPENCV
 cvWaitKey(0);
@@ -234,7 +234,7 @@ free_image(im);
 
 void encode_captcha(char *cfgfile, char *weightfile)
 {
-float avg_loss = -1;
+real avg_loss = -1;
 srand(time(0));
 char *base = basecfg(cfgfile);
 printf("%s\n", base);
@@ -256,7 +256,7 @@ while(1){
     scale_data_rows(train, 1./255);
     printf("Loaded: %lf seconds\n", sec(clock()-time));
     time=clock();
-    float loss = train_network(net, train);
+    real loss = train_network(net, train);
     net->seen += imgs;
     if(avg_loss == -1) avg_loss = loss;
     avg_loss = avg_loss*.9 + loss*.1;
@@ -302,7 +302,7 @@ void validate_captcha(char *cfgfile, char *weightfile)
         }
         accuracy += allcorrect;
     }
-    printf("Word Accuracy: %f, Char Accuracy %f\n", (float)accuracy/imgs, (float)correct/total);
+    printf("Word Accuracy: %f, Char Accuracy %f\n", (real)accuracy/imgs, (real)correct/total);
     free_data(valid);
 }
 
@@ -325,8 +325,8 @@ void test_captcha(char *cfgfile, char *weightfile)
         image im = load_image_color(filename, 200, 60);
         translate_image(im, -128);
         scale_image(im, 1/128.);
-        float *X = im.data;
-        float *predictions = network_predict(net, X);
+        real *X = im.data;
+        real *predictions = network_predict(net, X);
         print_letters(predictions, 10);
         free_image(im);
     }
