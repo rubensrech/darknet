@@ -153,6 +153,7 @@ test:
 	# examples/dice.c
 	# examples/swag.c
 	# examples/voxel.c
+	# examples/writing.c
 
 	gcc -c examples/art.c -I include/ -o tmp.o
 	gcc -c examples/captcha.c -I include/ -o tmp.o
@@ -169,3 +170,4 @@ test:
 	gcc -c examples/segmenter.c -I include/ -o tmp.o
 	gcc -c examples/super.c -I include/ -o tmp.o
 	gcc -c examples/tag.c -I include/ -o tmp.o
+	gcc -c examples/yolo.c -I include/ -o tmp.o
