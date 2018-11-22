@@ -7,8 +7,8 @@
 int inverted = 1;
 int noi = 1;
 static const int nind = 10;
-int legal_go(float *b, float *ko, int p, int r, int c);
-int check_ko(float *x, float *ko);
+int legal_go(real *b, real *ko, int p, int r, int c);
+int check_ko(real *x, real *ko);
 
 typedef struct {
     char **data;
@@ -50,10 +50,10 @@ moves load_go_moves(char *filename)
     return m;
 }
 
-void string_to_board(char *s, float *board)
+void string_to_board(char *s, real *board)
 {
     int i, j;
-    memset(board, 0, 2*19*19*sizeof(float));
+    memset(board, 0, 2*19*19*sizeof(real));
     int count = 0;
     for(i = 0; i < 91; ++i){
         char c = s[i];
@@ -68,7 +68,7 @@ void string_to_board(char *s, float *board)
     }
 }
 
-void board_to_string(char *s, float *board)
+void board_to_string(char *s, real *board)
 {
     int i, j;
     memset(s, 0, (19*19/4+1)*sizeof(char));
@@ -85,7 +85,7 @@ void board_to_string(char *s, float *board)
     }
 }
 
-static int occupied(float *b, int i)
+static int occupied(real *b, int i)
 {
     if (b[i]) return 1;
     if (b[i+19*19]) return -1;
@@ -99,8 +99,8 @@ data random_go_moves(moves m, int n)
     d.y = make_matrix(n, 19*19+2);
     int i, j;
     for(i = 0; i < n; ++i){
-        float *board = d.X.vals[i];
-        float *label = d.y.vals[i];
+        real *board = d.X.vals[i];
+        real *label = d.y.vals[i];
         char *b = m.data[rand()%m.n];
         int player = b[0] - '0';
         int result = b[1] - '0';
@@ -118,8 +118,8 @@ data random_go_moves(moves m, int n)
 
         int flip = rand()%2;
         int rotate = rand()%4;
-        image in = float_to_image(19, 19, 3, board);
-        image out = float_to_image(19, 19, 1, label);
+        image in = real_to_image(19, 19, 3, board);
+        image out = real_to_image(19, 19, 1, label);
         if(flip){
             flip_image(in);
             flip_image(out);
@@ -134,7 +134,7 @@ data random_go_moves(moves m, int n)
 void train_go(char *cfgfile, char *weightfile, char *filename, int *gpus, int ngpus, int clear)
 {
     int i;
-    float avg_loss = -1;
+    real avg_loss = -1;
     char *base = basecfg(cfgfile);
     printf("%s\n", base);
     printf("%d\n", ngpus);
@@ -169,7 +169,7 @@ void train_go(char *cfgfile, char *weightfile, char *filename, int *gpus, int ng
         printf("Loaded: %lf seconds\n", what_time_is_it_now() - time);
         time=what_time_is_it_now();
 
-        float loss = 0;
+        real loss = 0;
 #ifdef GPU
         if(ngpus == 1){
             loss = train_network(net, train);
@@ -183,7 +183,7 @@ void train_go(char *cfgfile, char *weightfile, char *filename, int *gpus, int ng
 
         if(avg_loss == -1) avg_loss = loss;
         avg_loss = avg_loss*.95 + loss*.05;
-        printf("%ld, %.3f: %f, %f avg, %f rate, %lf seconds, %ld images\n", get_current_batch(net), (float)(*net->seen)/N, loss, avg_loss, get_current_rate(net), what_time_is_it_now()-time, *net->seen);
+        printf("%ld, %.3lf: %lf, %lf avg, %lf rate, %lf seconds, %ld images\n", get_current_batch(net), (real)(*net->seen)/N, loss, avg_loss, get_current_rate(net), what_time_is_it_now()-time, *net->seen);
         if(*net->seen/N > epoch){
             epoch = *net->seen/N;
             char buff[256];
@@ -209,7 +209,7 @@ void train_go(char *cfgfile, char *weightfile, char *filename, int *gpus, int ng
     free(base);
 }
 
-static void propagate_liberty(float *board, int *lib, int *visited, int row, int col, int side)
+static void propagate_liberty(real *board, int *lib, int *visited, int row, int col, int side)
 {
     if (row < 0 || row > 18 || col < 0 || col > 18) return;
     int index = row*19 + col;
@@ -224,7 +224,7 @@ static void propagate_liberty(float *board, int *lib, int *visited, int row, int
 }
 
 
-static int *calculate_liberties(float *board)
+static int *calculate_liberties(real *board)
 {
     int *lib = calloc(19*19, sizeof(int));
     int visited[19*19];
@@ -244,7 +244,7 @@ static int *calculate_liberties(float *board)
     return lib;
 }
 
-void print_board(FILE *stream, float *board, int player, int *indexes)
+void print_board(FILE *stream, real *board, int player, int *indexes)
 {
     int i,j,n;
     fprintf(stream, "   ");
@@ -283,31 +283,31 @@ void print_board(FILE *stream, float *board, int player, int *indexes)
     }
 }
 
-void flip_board(float *board)
+void flip_board(real *board)
 {
     int i;
     for(i = 0; i < 19*19; ++i){
-        float swap = board[i];
+        real swap = board[i];
         board[i] = board[i+19*19];
         board[i+19*19] = swap;
         board[i+19*19*2] = 1-board[i+19*19*2];
     }
 }
 
-float predict_move2(network *net, float *board, float *move, int multi)
+real predict_move2(network *net, real *board, real *move, int multi)
 {
-    float *output = network_predict(net, board);
+    real *output = network_predict(net, board);
     copy_cpu(19*19+1, output, 1, move, 1);
-    float result = output[19*19 + 1];
+    real result = output[19*19 + 1];
     int i;
     if(multi){
-        image bim = float_to_image(19, 19, 3, board);
+        image bim = real_to_image(19, 19, 3, board);
         for(i = 1; i < 8; ++i){
             rotate_image_cw(bim, i);
             if(i >= 4) flip_image(bim);
 
-            float *output = network_predict(net, board);
-            image oim = float_to_image(19, 19, 1, output);
+            real *output = network_predict(net, board);
+            image oim = real_to_image(19, 19, 1, output);
             result += output[19*19 + 1];
 
             if(i >= 4) flip_image(oim);
@@ -327,7 +327,7 @@ float predict_move2(network *net, float *board, float *move, int multi)
     return result;
 }
 
-static void remove_connected(float *b, int *lib, int p, int r, int c)
+static void remove_connected(real *b, int *lib, int p, int r, int c)
 {
     if (r < 0 || r >= 19 || c < 0 || c >= 19) return;
     if (occupied(b, r*19 + c) != p) return;
@@ -341,7 +341,7 @@ static void remove_connected(float *b, int *lib, int p, int r, int c)
 }
 
 
-void move_go(float *b, int p, int r, int c)
+void move_go(real *b, int p, int r, int c)
 {
     int *l = calculate_liberties(b);
     if(p > 0) b[r*19 + c] = 1;
@@ -353,22 +353,22 @@ void move_go(float *b, int p, int r, int c)
     free(l);
 }
 
-int compare_board(float *a, float *b)
+int compare_board(real *a, real *b)
 {
-    if(memcmp(a, b, 19*19*3*sizeof(float)) == 0) return 1;
+    if(memcmp(a, b, 19*19*3*sizeof(real)) == 0) return 1;
     return 0;
 }
 
 typedef struct mcts_tree{
-    float *board;
+    real *board;
     struct mcts_tree **children;
-    float *prior;
+    real *prior;
     int *visit_count;
-    float *value;
-    float *mean;
-    float *prob;
+    real *value;
+    real *mean;
+    real *prob;
     int total_count;
-    float result;
+    real result;
     int done;
     int pass;
 } mcts_tree;
@@ -390,25 +390,25 @@ void free_mcts(mcts_tree *root)
     free(root);
 }
 
-float *network_predict_rotations(network *net, float *next)
+real *network_predict_rotations(network *net, real *next)
 {
     int n = net->batch;
-    float *in = calloc(19*19*3*n, sizeof(float));
-    image im = float_to_image(19, 19, 3, next);
+    real *in = calloc(19*19*3*n, sizeof(real));
+    image im = real_to_image(19, 19, 3, next);
     int i,j;
     int *inds = random_index_order(0, 8);
     for(j = 0; j < n; ++j){
         i = inds[j];
         rotate_image_cw(im, i);
         if(i >= 4) flip_image(im);
-        memcpy(in + 19*19*3*j, im.data, 19*19*3*sizeof(float));
+        memcpy(in + 19*19*3*j, im.data, 19*19*3*sizeof(real));
         if(i >= 4) flip_image(im);
         rotate_image_cw(im, -i);
     }
-    float *pred = network_predict(net, in);
+    real *pred = network_predict(net, in);
     for(j = 0; j < n; ++j){
         i = inds[j];
-        image im = float_to_image(19, 19, 1, pred + j*(19*19 + 2));
+        image im = real_to_image(19, 19, 1, pred + j*(19*19 + 2));
         if(i >= 4) flip_image(im);
         rotate_image_cw(im, -i);
         if(j > 0){
@@ -421,21 +421,21 @@ float *network_predict_rotations(network *net, float *next)
     return pred;
 }
 
-mcts_tree *expand(float *next, float *ko, network *net)
+mcts_tree *expand(real *next, real *ko, network *net)
 {
     mcts_tree *root = calloc(1, sizeof(mcts_tree));
     root->board = next;
     root->children = calloc(19*19+1, sizeof(mcts_tree*));
-    root->prior = calloc(19*19 + 1, sizeof(float));
-    root->prob = calloc(19*19 + 1, sizeof(float));
-    root->mean = calloc(19*19 + 1, sizeof(float));
-    root->value = calloc(19*19 + 1, sizeof(float));
+    root->prior = calloc(19*19 + 1, sizeof(real));
+    root->prob = calloc(19*19 + 1, sizeof(real));
+    root->mean = calloc(19*19 + 1, sizeof(real));
+    root->value = calloc(19*19 + 1, sizeof(real));
     root->visit_count = calloc(19*19 + 1, sizeof(int));
     root->total_count = 1;
     int i;
-    float *pred = network_predict_rotations(net, next);
+    real *pred = network_predict_rotations(net, next);
     copy_cpu(19*19+1, pred, 1, root->prior, 1);
-    float val = 2*pred[19*19 + 1] - 1;
+    real val = 2*pred[19*19 + 1] - 1;
     root->result = val;
     for(i = 0; i < 19*19+1; ++i) {
         root->visit_count[i] = 0;
@@ -451,18 +451,18 @@ mcts_tree *expand(float *next, float *ko, network *net)
     return root;
 }
 
-float *copy_board(float *board)
+real *copy_board(real *board)
 {
-    float *next = calloc(19*19*3, sizeof(float));
+    real *next = calloc(19*19*3, sizeof(real));
     copy_cpu(19*19*3, board, 1, next, 1);
     return next;
 }
 
-float select_mcts(mcts_tree *root, network *net, float *prev, float cpuct)
+real select_mcts(mcts_tree *root, network *net, real *prev, real cpuct)
 {
     if(root->done) return -root->result;
     int i;
-    float max = -1000;
+    real max = -1000;
     int max_i = 0;
     for(i = 0; i < 19*19+1; ++i){
         root->prob[i] = root->mean[i] + cpuct*root->prior[i] * sqrt(root->total_count) / (1. + root->visit_count[i]);
@@ -471,7 +471,7 @@ float select_mcts(mcts_tree *root, network *net, float *prev, float cpuct)
             max_i = i;
         }
     }
-    float val;
+    real val;
     i = max_i;
     root->visit_count[i]++;
     root->total_count++;
@@ -487,7 +487,7 @@ float select_mcts(mcts_tree *root, network *net, float *prev, float cpuct)
             //printf("Detected ko\n");
             //getchar();
         } else {
-            float *next = copy_board(root->board);
+            real *next = copy_board(root->board);
             if (max_i < 19*19) {
                 move_go(next, 1, max_i / 19, max_i % 19);
             }
@@ -507,7 +507,7 @@ float select_mcts(mcts_tree *root, network *net, float *prev, float cpuct)
     return -val;
 }
 
-mcts_tree *run_mcts(mcts_tree *tree, network *net, float *board, float *ko, int player, int n, float cpuct, float secs)
+mcts_tree *run_mcts(mcts_tree *tree, network *net, real *board, real *ko, int player, int n, real cpuct, real secs)
 {
     int i;
     double t = what_time_is_it_now();
@@ -540,16 +540,16 @@ mcts_tree *move_mcts(mcts_tree *tree, int index)
 }
 
 typedef struct {
-    float value;
-    float mcts;
+    real value;
+    real mcts;
     int row;
     int col;
 } move;
 
-move pick_move(mcts_tree *tree, float temp, int player)
+move pick_move(mcts_tree *tree, real temp, int player)
 {
     int i;
-    float probs[19*19+1] = {0};
+    real probs[19*19+1] = {0};
     move m = {0};
     double sum = 0;
     /*
@@ -584,7 +584,7 @@ move pick_move(mcts_tree *tree, float temp, int player)
 }
 
 /*
-   float predict_move(network *net, float *board, float *move, int multi, float *ko, float temp)
+   real predict_move(network *net, real *board, real *move, int multi, real *ko, real temp)
    {
 
    int i;
@@ -605,13 +605,13 @@ move pick_move(mcts_tree *tree, float temp, int player)
    fprintf(stderr, "%d %d, Result: %f, Prior: %f, Prob: %f, Mean Value: %f, Child Result: %f, Visited: %d\n", ind/19, ind%19, root->result, root->prior[ind], root->prob[ind], root->mean[ind], (root->children[ind])?root->children[ind]->result:0, root->visit_count[ind]);
    if(root->result < -.9 && root->mean[max_i] < -.9) return -1000.f;
 
-   float val = root->result;
+   real val = root->result;
    free_mcts(root);
    return val;
    }
  */
 
-static int makes_safe_go(float *b, int *lib, int p, int r, int c){
+static int makes_safe_go(real *b, int *lib, int p, int r, int c){
     if (r < 0 || r >= 19 || c < 0 || c >= 19) return 0;
     if (occupied(b,r*19 + c) == -p){
         if (lib[r*19 + c] > 1) return 0;
@@ -622,7 +622,7 @@ static int makes_safe_go(float *b, int *lib, int p, int r, int c){
     return 0;
 }
 
-int suicide_go(float *b, int p, int r, int c)
+int suicide_go(real *b, int p, int r, int c)
 {
     int *l = calculate_liberties(b);
     int safe = 0;
@@ -634,20 +634,20 @@ int suicide_go(float *b, int p, int r, int c)
     return !safe;
 }
 
-int check_ko(float *x, float *ko)
+int check_ko(real *x, real *ko)
 {
     if(!ko) return 0;
-    float curr[19*19*3];
+    real curr[19*19*3];
     copy_cpu(19*19*3, x, 1, curr, 1);
     if(curr[19*19*2] != ko[19*19*2]) flip_board(curr);
     if(compare_board(curr, ko)) return 1;
     return 0;
 }
 
-int legal_go(float *b, float *ko, int p, int r, int c)
+int legal_go(real *b, real *ko, int p, int r, int c)
 {
     if (occupied(b, r*19+c)) return 0;
-    float curr[19*19*3];
+    real curr[19*19*3];
     copy_cpu(19*19*3, b, 1, curr, 1);
     move_go(curr, p, r, c);
     if(check_ko(curr, ko)) return 0;
@@ -656,10 +656,10 @@ int legal_go(float *b, float *ko, int p, int r, int c)
 }
 
 /*
-   move generate_move(mcts_tree *root, network *net, int player, float *board, int multi, float temp, float *ko, int print)
+   move generate_move(mcts_tree *root, network *net, int player, real *board, int multi, real temp, real *ko, int print)
    {
    move m = {0};
-//root = run_mcts(tree, network *net, float *board, float *ko, int n, float cpuct)
+//root = run_mcts(tree, network *net, real *board, real *ko, int n, real cpuct)
 int i, j;
 int empty = 1;
 for(i = 0; i < 19*19; ++i){
@@ -676,9 +676,9 @@ m.col = 15;
 return m;
 }
 
-float move[362];
+real move[362];
 if (player < 0) flip_board(board);
-float result = predict_move(net, board, move, multi, ko, temp);
+real result = predict_move(net, board, move, multi, ko, temp);
 if (player < 0) flip_board(board);
 if(result == -1000.f) return -2;
 
@@ -739,8 +739,8 @@ void valid_go(char *cfgfile, char *weightfile, int multi, char *filename)
     set_batch_network(net, 1);
     printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
 
-    float *board = calloc(19*19*3, sizeof(float));
-    float *move = calloc(19*19+2, sizeof(float));
+    real *board = calloc(19*19*3, sizeof(real));
+    real *move = calloc(19*19+2, sizeof(real));
     // moves m = load_go_moves("/home/pjreddie/backup/go.test");
     moves m = load_go_moves(filename);
 
@@ -759,11 +759,11 @@ void valid_go(char *cfgfile, char *weightfile, int multi, char *filename)
         predict_move2(net, board, move, multi);
         int index = max_index(move, 19*19+1);
         if(index == truth) ++correct;
-        printf("%d Accuracy %f\n", i, (float) correct/(i+1));
+        printf("%d Accuracy %lf\n", i, (real) correct/(i+1));
     }
 }
 
-int print_game(float *board, FILE *fp)
+int print_game(real *board, FILE *fp)
 {
     int i, j;
     int count = 3;
@@ -797,7 +797,7 @@ int stdin_ready()
     return 0;
 }
 
-mcts_tree *ponder(mcts_tree *tree, network *net, float *b, float *ko, int player, float cpuct)
+mcts_tree *ponder(mcts_tree *tree, network *net, real *b, real *ko, int player, real cpuct)
 {
     double t = what_time_is_it_now();
     int count = 0;
@@ -810,16 +810,16 @@ mcts_tree *ponder(mcts_tree *tree, network *net, float *b, float *ko, int player
     return tree;
 }
 
-void engine_go(char *filename, char *weightfile, int mcts_iters, float secs, float temp, float cpuct, int anon, int resign)
+void engine_go(char *filename, char *weightfile, int mcts_iters, real secs, real temp, real cpuct, int anon, int resign)
 {
     mcts_tree *root = 0;
     network *net = load_network(filename, weightfile, 0);
     set_batch_network(net, 1);
     srand(time(0));
-    float *board = calloc(19*19*3, sizeof(float));
+    real *board = calloc(19*19*3, sizeof(real));
     flip_board(board);
-    float *one = calloc(19*19*3, sizeof(float));
-    float *two = calloc(19*19*3, sizeof(float));
+    real *one = calloc(19*19*3, sizeof(real));
+    real *two = calloc(19*19*3, sizeof(real));
     int ponder_player = 0;
     int passed = 0;
     int move_num = 0;
@@ -830,7 +830,7 @@ void engine_go(char *filename, char *weightfile, int mcts_iters, float secs, flo
     int black_stones_left = 0;
     int white_time_left = 0;
     int white_stones_left = 0;
-    float orig_time = secs;
+    real orig_time = secs;
     int old_ponder = 0;
     while(1){
         if(ponder_player){
@@ -911,7 +911,7 @@ void engine_go(char *filename, char *weightfile, int mcts_iters, float secs, flo
                 printf("?%s unacceptable size\n\n", ids);
             } else {
                 root = move_mcts(root, -1);
-                memset(board, 0, 3*19*19*sizeof(float));
+                memset(board, 0, 3*19*19*sizeof(real));
                 flip_board(board);
                 move_num = 0;
                 printf("=%s \n\n", ids);
@@ -928,14 +928,14 @@ void engine_go(char *filename, char *weightfile, int mcts_iters, float secs, flo
             root = move_mcts(root, -1);
         } else if (!strcmp(buff, "clear_board")){
             passed = 0;
-            memset(board, 0, 3*19*19*sizeof(float));
+            memset(board, 0, 3*19*19*sizeof(real));
             flip_board(board);
             move_num = 0;
             root = move_mcts(root, -1);
             printf("=%s \n\n", ids);
         } else if (!strcmp(buff, "komi")){
-            float komi = 0;
-            scanf("%f", &komi);
+            real komi = 0;
+            scanf("%lf", &komi);
             printf("=%s \n\n", ids);
         } else if (!strcmp(buff, "showboard")){
             printf("=%s \n", ids);
@@ -973,7 +973,7 @@ void engine_go(char *filename, char *weightfile, int mcts_iters, float secs, flo
             r = 19 - r;
             fprintf(stderr, "move: %d %d\n", r, c);
 
-            float *swap = two;
+            real *swap = two;
             two = one;
             one = swap;
             move_go(board, player, r, c);
@@ -1025,7 +1025,7 @@ void engine_go(char *filename, char *weightfile, int mcts_iters, float secs, flo
                 int row = m.row;
                 int col = m.col;
 
-                float *swap = two;
+                real *swap = two;
                 two = one;
                 one = swap;
 
@@ -1101,12 +1101,12 @@ void test_go(char *cfg, char *weights, int multi)
     network *net = load_network(cfg, weights, 0);
     set_batch_network(net, 1);
     srand(time(0));
-    float *board = calloc(19*19*3, sizeof(float));
+    real *board = calloc(19*19*3, sizeof(real));
     flip_board(board);
-    float *move = calloc(19*19+1, sizeof(float));
+    real *move = calloc(19*19+1, sizeof(real));
     int color = 1;
     while(1){
-        float result = predict_move2(net, board, move, multi);
+        real result = predict_move2(net, board, move, multi);
         printf("%.2f%% Win Chance\n", (result+1)/2*100);
 
         int indexes[nind];
@@ -1184,7 +1184,7 @@ void test_go(char *cfg, char *weights, int multi)
     }
 }
 
-float score_game(float *board)
+real score_game(real *board)
 {
     int i;
     FILE *f = fopen("game.txt", "w");
@@ -1197,11 +1197,11 @@ float score_game(float *board)
         free(fgetl(p));
     }
     char *l = 0;
-    float score = 0;
+    real score = 0;
     char player = 0;
     while((l = fgetl(p))){
         fprintf(stderr, "%s  \t", l);
-        int n = sscanf(l, "= %c+%f", &player, &score);
+        int n = sscanf(l, "= %c+%lf", &player, &score);
         free(l);
         if (n == 2) break;
     }
@@ -1232,27 +1232,27 @@ void self_go(char *filename, char *weightfile, char *f2, char *w2, int multi)
     int count = 0;
     //set_batch_network(net, 1);
     //set_batch_network(net2, 1);
-    float *board = calloc(19*19*3, sizeof(float));
+    real *board = calloc(19*19*3, sizeof(real));
     flip_board(board);
-    float *one = calloc(19*19*3, sizeof(float));
-    float *two = calloc(19*19*3, sizeof(float));
+    real *one = calloc(19*19*3, sizeof(real));
+    real *two = calloc(19*19*3, sizeof(real));
     int done = 0;
     int player = 1;
     int p1 = 0;
     int p2 = 0;
     int total = 0;
-    float temp = .1;
+    real temp = .1;
     int mcts_iters = 500;
-    float cpuct = 5;
+    real cpuct = 5;
     while(1){
         if (done){
             tree1 = move_mcts(tree1, -1);
             tree2 = move_mcts(tree2, -1);
-            float score = score_game(board);
+            real score = score_game(board);
             if((score > 0) == (total%2==0)) ++p1;
             else ++p2;
             ++total;
-            fprintf(stderr, "Total: %d, Player 1: %f, Player 2: %f\n", total, (float)p1/total, (float)p2/total);
+            fprintf(stderr, "Total: %d, Player 1: %f, Player 2: %f\n", total, (real)p1/total, (real)p2/total);
             sleep(1);
             /*
                int i = (score > 0)? 0 : 1;
@@ -1264,7 +1264,7 @@ void self_go(char *filename, char *weightfile, char *f2, char *w2, int multi)
                printf("\n");
                }
              */
-            memset(board, 0, 3*19*19*sizeof(float));
+            memset(board, 0, 3*19*19*sizeof(real));
             flip_board(board);
             player = 1;
             done = 0;
@@ -1299,7 +1299,7 @@ void self_go(char *filename, char *weightfile, char *f2, char *w2, int multi)
         int row = m.row;
         int col = m.col;
 
-        float *swap = two;
+        real *swap = two;
         two = one;
         one = swap;
 
@@ -1357,9 +1357,9 @@ void run_go(int argc, char **argv)
     int anon = find_arg(argc, argv, "-anon");
     int iters = find_int_arg(argc, argv, "-iters", 500);
     int resign = find_int_arg(argc, argv, "-resign", 175);
-    float cpuct = find_float_arg(argc, argv, "-cpuct", 5);
-    float temp = find_float_arg(argc, argv, "-temp", .1);
-    float time = find_float_arg(argc, argv, "-time", 0);
+    real cpuct = find_real_arg(argc, argv, "-cpuct", 5);
+    real temp = find_real_arg(argc, argv, "-temp", .1);
+    real time = find_real_arg(argc, argv, "-time", 0);
     if(0==strcmp(argv[2], "train")) train_go(cfg, weights, c2, gpus, ngpus, clear);
     else if(0==strcmp(argv[2], "valid")) valid_go(cfg, weights, multi, c2);
     else if(0==strcmp(argv[2], "self")) self_go(cfg, weights, c2, w2, multi);
