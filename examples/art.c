@@ -22,14 +22,14 @@ void demo_art(char *cfgfile, char *weightfile, int cam_index)
         image in = get_image_from_stream(cap);
         image in_s = resize_image(in, net->w, net->h);
 
-        float *p = network_predict(net, in_s.data);
+        real *p = network_predict(net, in_s.data);
 
         printf("\033[2J");
         printf("\033[1;1H");
 
-        float score = 0;
+        real score = 0;
         for(i = 0; i < n; ++i){
-            float s = p[idx[i]];
+            real s = p[idx[i]];
             if (s > score) score = s;
         }
         score = score;
