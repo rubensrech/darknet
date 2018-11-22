@@ -171,3 +171,4 @@ test:
 	gcc -c examples/super.c -I include/ -o tmp.o
 	gcc -c examples/tag.c -I include/ -o tmp.o
 	gcc -c examples/yolo.c -I include/ -o tmp.o
+	gcc -c examples/darknet.c -I include/ -o tmp.o

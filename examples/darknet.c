@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 extern void predict_classifier(char *datacfg, char *cfgfile, char *weightfile, char *filename, int top);
-extern void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filename, float thresh, float hier_thresh, char *outfile, int fullscreen);
+extern void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filename, real thresh, real hier_thresh, char *outfile, int fullscreen);
 extern void run_yolo(int argc, char **argv);
 extern void run_detector(int argc, char **argv);
 extern void run_coco(int argc, char **argv);
@@ -127,8 +127,8 @@ void speed(char *cfgfile, int tics)
     double t = what_time_is_it_now() - time;
     long ops = numops(net);
     printf("\n%d evals, %f Seconds\n", tics, t);
-    printf("Floating Point Operations: %.2f Bn\n", (float)ops/1000000000.);
-    printf("FLOPS: %.2f Bn\n", (float)ops/1000000000.*tics/t);
+    printf("Double Precision Operations: %.2f Bn\n", (real)ops/1000000000.);
+    printf("FLOPS: %.2f Bn\n", (real)ops/1000000000.*tics/t);
     printf("Speed: %f sec/eval\n", t/tics);
     printf("Speed: %f Hz\n", tics/t);
 }
@@ -138,8 +138,8 @@ void operations(char *cfgfile)
     gpu_index = -1;
     network *net = parse_network_cfg(cfgfile);
     long ops = numops(net);
-    printf("Floating Point Operations: %ld\n", ops);
-    printf("Floating Point Operations: %.2f Bn\n", (float)ops/1000000000.);
+    printf("Double Precision Operations: %ld\n", ops);
+    printf("Double Precision Operations: %.2f Bn\n", (real)ops/1000000000.);
 }
 
 void oneoff(char *cfgfile, char *weightfile, char *outfile)
@@ -266,12 +266,12 @@ layer normalize_layer(layer l, int n)
 {
     int j;
     l.batch_normalize=1;
-    l.scales = calloc(n, sizeof(float));
+    l.scales = calloc(n, sizeof(real));
     for(j = 0; j < n; ++j){
         l.scales[j] = 1;
     }
-    l.rolling_mean = calloc(n, sizeof(float));
-    l.rolling_variance = calloc(n, sizeof(float));
+    l.rolling_mean = calloc(n, sizeof(real));
+    l.rolling_variance = calloc(n, sizeof(real));
     return l;
 }
 
@@ -430,7 +430,7 @@ int main(int argc, char **argv)
     } else if (0 == strcmp(argv[1], "detector")){
         run_detector(argc, argv);
     } else if (0 == strcmp(argv[1], "detect")){
-        float thresh = find_float_arg(argc, argv, "-thresh", .5);
+        real thresh = find_real_arg(argc, argv, "-thresh", .5);
         char *filename = (argc > 4) ? argv[4]: 0;
         char *outfile = find_char_arg(argc, argv, "-out", 0);
         int fullscreen = find_arg(argc, argv, "-fullscreen");

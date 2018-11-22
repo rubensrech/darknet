@@ -743,7 +743,7 @@ real *network_predict(network *net, real *input);
 int network_width(network *net);
 int network_height(network *net);
 real *network_predict_image(network *net, image im);
-void network_detect(network *net, image im, float thresh, float hier_thresh, float nms, detection *dets);
+void network_detect(network *net, image im, real thresh, real hier_thresh, real nms, detection *dets);
 detection *get_network_boxes(network *net, int w, int h, real thresh, real hier, int *map, int relative, int *num);
 void free_detections(detection *dets, int n);
 
