@@ -625,10 +625,10 @@ void softmax(real *input, int n, real temp, int stride, real *output);
 
 int best_3d_shift_r(image a, image b, int min, int max);
 #ifdef GPU
-void axpy_gpu(int N, float ALPHA, float * X, int INCX, float * Y, int INCY);
+void axpy_gpu(int N, real ALPHA, real * X, int INCX, real * Y, int INCY);
 void fill_gpu(int N, float ALPHA, float * X, int INCX);
 void scal_gpu(int N, float ALPHA, float * X, int INCX);
-void copy_gpu(int N, float * X, int INCX, float * Y, int INCY);
+void copy_gpu(int N, real * X, int INCX, real * Y, int INCY);
 
 void cuda_set_device(int n);
 void cuda_free(real *x_gpu);
