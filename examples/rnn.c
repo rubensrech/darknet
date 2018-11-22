@@ -3,9 +3,9 @@
 #include <math.h>
 
 typedef struct {
-    float *x;
-    float *y;
-} float_pair;
+    real *x;
+    real *y;
+} real_pair;
 
 unsigned char **load_files(char *filename, int *n)
 {
@@ -67,10 +67,10 @@ char **read_tokens(char *filename, size_t *read)
 }
 
 
-float_pair get_rnn_token_data(int *tokens, size_t *offsets, int characters, size_t len, int batch, int steps)
+real_pair get_rnn_token_data(int *tokens, size_t *offsets, int characters, size_t len, int batch, int steps)
 {
-    float *x = calloc(batch * steps * characters, sizeof(float));
-    float *y = calloc(batch * steps * characters, sizeof(float));
+    real *x = calloc(batch * steps * characters, sizeof(real));
+    real *y = calloc(batch * steps * characters, sizeof(real));
     int i,j;
     for(i = 0; i < batch; ++i){
         for(j = 0; j < steps; ++j){
@@ -87,17 +87,17 @@ float_pair get_rnn_token_data(int *tokens, size_t *offsets, int characters, size
             }
         }
     }
-    float_pair p;
+    real_pair p;
     p.x = x;
     p.y = y;
     return p;
 }
 
-float_pair get_seq2seq_data(char **source, char **dest, int n, int characters, size_t len, int batch, int steps)
+real_pair get_seq2seq_data(char **source, char **dest, int n, int characters, size_t len, int batch, int steps)
 {
     int i,j;
-    float *x = calloc(batch * steps * characters, sizeof(float));
-    float *y = calloc(batch * steps * characters, sizeof(float));
+    real *x = calloc(batch * steps * characters, sizeof(real));
+    real *y = calloc(batch * steps * characters, sizeof(real));
     for(i = 0; i < batch; ++i){
         int index = rand()%n;
         //int slen = strlen(source[index]);
@@ -118,16 +118,16 @@ float_pair get_seq2seq_data(char **source, char **dest, int n, int characters, s
             }
         }
     }
-    float_pair p;
+    real_pair p;
     p.x = x;
     p.y = y;
     return p;
 }
 
-float_pair get_rnn_data(unsigned char *text, size_t *offsets, int characters, size_t len, int batch, int steps)
+real_pair get_rnn_data(unsigned char *text, size_t *offsets, int characters, size_t len, int batch, int steps)
 {
-    float *x = calloc(batch * steps * characters, sizeof(float));
-    float *y = calloc(batch * steps * characters, sizeof(float));
+    real *x = calloc(batch * steps * characters, sizeof(real));
+    real *y = calloc(batch * steps * characters, sizeof(real));
     int i,j;
     for(i = 0; i < batch; ++i){
         for(j = 0; j < steps; ++j){
@@ -148,7 +148,7 @@ float_pair get_rnn_data(unsigned char *text, size_t *offsets, int characters, si
             }
         }
     }
-    float_pair p;
+    real_pair p;
     p.x = x;
     p.y = y;
     return p;
@@ -170,7 +170,7 @@ void train_char_rnn(char *cfgfile, char *weightfile, char *filename, int clear, 
     char *backup_directory = "/home/pjreddie/backup/";
     char *base = basecfg(cfgfile);
     fprintf(stderr, "%s\n", base);
-    float avg_loss = -1;
+    real avg_loss = -1;
     network *net = load_network(cfgfile, weightfile, clear);
 
     int inputs = net->inputs;
@@ -191,7 +191,7 @@ void train_char_rnn(char *cfgfile, char *weightfile, char *filename, int clear, 
     while(get_current_batch(net) < net->max_batches){
         i += 1;
         time=clock();
-        float_pair p;
+        real_pair p;
         if(tokenized){
             p = get_rnn_token_data(tokens, offsets, inputs, size, streams, steps);
         }else{
@@ -200,14 +200,14 @@ void train_char_rnn(char *cfgfile, char *weightfile, char *filename, int clear, 
 
         copy_cpu(net->inputs*net->batch, p.x, 1, net->input, 1);
         copy_cpu(net->truths*net->batch, p.y, 1, net->truth, 1);
-        float loss = train_network_datum(net) / (batch);
+        real loss = train_network_datum(net) / (batch);
         free(p.x);
         free(p.y);
         if (avg_loss < 0) avg_loss = loss;
         avg_loss = avg_loss*.9 + loss*.1;
 
         size_t chars = get_current_batch(net)*batch;
-        fprintf(stderr, "%d: %f, %f avg, %f rate, %lf seconds, %f epochs\n", i, loss, avg_loss, get_current_rate(net), sec(clock()-time), (float) chars/size);
+        fprintf(stderr, "%d: %f, %f avg, %f rate, %lf seconds, %f epochs\n", i, loss, avg_loss, get_current_rate(net), sec(clock()-time), (real) chars/size);
 
         for(j = 0; j < streams; ++j){
             //printf("%d\n", j);
@@ -242,7 +242,7 @@ void print_symbol(int n, char **tokens){
     }
 }
 
-void test_char_rnn(char *cfgfile, char *weightfile, int num, char *seed, float temp, int rseed, char *token_file)
+void test_char_rnn(char *cfgfile, char *weightfile, int num, char *seed, real temp, int rseed, char *token_file)
 {
     char **tokens = 0;
     if(token_file){
@@ -261,7 +261,7 @@ void test_char_rnn(char *cfgfile, char *weightfile, int num, char *seed, float t
     for(i = 0; i < net->n; ++i) net->layers[i].temperature = temp;
     int c = 0;
     int len = strlen(seed);
-    float *input = calloc(inputs, sizeof(float));
+    real *input = calloc(inputs, sizeof(real));
 
     /*
        fill_cpu(inputs, 0, input, 1);
@@ -282,7 +282,7 @@ void test_char_rnn(char *cfgfile, char *weightfile, int num, char *seed, float t
     print_symbol(c, tokens);
     for(i = 0; i < num; ++i){
         input[c] = 1;
-        float *out = network_predict(net, input);
+        real *out = network_predict(net, input);
         input[c] = 0;
         for(j = 32; j < 127; ++j){
             //printf("%d %c %f\n",j, j, out[j]);
@@ -296,7 +296,7 @@ void test_char_rnn(char *cfgfile, char *weightfile, int num, char *seed, float t
     printf("\n");
 }
 
-void test_tactic_rnn_multi(char *cfgfile, char *weightfile, int num, float temp, int rseed, char *token_file)
+void test_tactic_rnn_multi(char *cfgfile, char *weightfile, int num, real temp, int rseed, char *token_file)
 {
     char **tokens = 0;
     if(token_file){
@@ -314,8 +314,8 @@ void test_tactic_rnn_multi(char *cfgfile, char *weightfile, int num, float temp,
     int i, j;
     for(i = 0; i < net->n; ++i) net->layers[i].temperature = temp;
     int c = 0;
-    float *input = calloc(inputs, sizeof(float));
-    float *out = 0;
+    real *input = calloc(inputs, sizeof(real));
+    real *out = 0;
 
     while(1){
         reset_network_state(net, 0);
@@ -341,7 +341,7 @@ void test_tactic_rnn_multi(char *cfgfile, char *weightfile, int num, float temp,
     }
 }
 
-void test_tactic_rnn(char *cfgfile, char *weightfile, int num, float temp, int rseed, char *token_file)
+void test_tactic_rnn(char *cfgfile, char *weightfile, int num, real temp, int rseed, char *token_file)
 {
     char **tokens = 0;
     if(token_file){
@@ -359,8 +359,8 @@ void test_tactic_rnn(char *cfgfile, char *weightfile, int num, float temp, int r
     int i, j;
     for(i = 0; i < net->n; ++i) net->layers[i].temperature = temp;
     int c = 0;
-    float *input = calloc(inputs, sizeof(float));
-    float *out = 0;
+    real *input = calloc(inputs, sizeof(real));
+    real *out = 0;
 
     while((c = getc(stdin)) != EOF){
         input[c] = 1;
@@ -395,7 +395,7 @@ void valid_tactic_rnn(char *cfgfile, char *weightfile, char *seed)
     int words = 1;
     int c;
     int len = strlen(seed);
-    float *input = calloc(inputs, sizeof(float));
+    real *input = calloc(inputs, sizeof(real));
     int i;
     for(i = 0; i < len; ++i){
         c = seed[i];
@@ -403,9 +403,9 @@ void valid_tactic_rnn(char *cfgfile, char *weightfile, char *seed)
         network_predict(net, input);
         input[(int)c] = 0;
     }
-    float sum = 0;
+    real sum = 0;
     c = getc(stdin);
-    float log2 = log(2);
+    real log2 = log(2);
     int in = 0;
     while(c != EOF){
         int next = getc(stdin);
@@ -413,7 +413,7 @@ void valid_tactic_rnn(char *cfgfile, char *weightfile, char *seed)
         if(next < 0 || next >= 255) error("Out of range character");
 
         input[c] = 1;
-        float *out = network_predict(net, input);
+        real *out = network_predict(net, input);
         input[c] = 0;
 
         if(c == '.' && next == '\n') in = 0;
@@ -444,7 +444,7 @@ void valid_char_rnn(char *cfgfile, char *weightfile, char *seed)
     int words = 1;
     int c;
     int len = strlen(seed);
-    float *input = calloc(inputs, sizeof(float));
+    real *input = calloc(inputs, sizeof(real));
     int i;
     for(i = 0; i < len; ++i){
         c = seed[i];
@@ -452,9 +452,9 @@ void valid_char_rnn(char *cfgfile, char *weightfile, char *seed)
         network_predict(net, input);
         input[(int)c] = 0;
     }
-    float sum = 0;
+    real sum = 0;
     c = getc(stdin);
-    float log2 = log(2);
+    real log2 = log(2);
     while(c != EOF){
         int next = getc(stdin);
         if(next == EOF) break;
@@ -462,7 +462,7 @@ void valid_char_rnn(char *cfgfile, char *weightfile, char *seed)
         ++count;
         if(next == ' ' || next == '\n' || next == '\t') ++words;
         input[c] = 1;
-        float *out = network_predict(net, input);
+        real *out = network_predict(net, input);
         input[c] = 0;
         sum += log(out[next])/log2;
         c = next;
@@ -480,7 +480,7 @@ void vec_char_rnn(char *cfgfile, char *weightfile, char *seed)
 
     int c;
     int seed_len = strlen(seed);
-    float *input = calloc(inputs, sizeof(float));
+    real *input = calloc(inputs, sizeof(real));
     int i;
     char *line;
     while((line=fgetl(stdin)) != 0){
@@ -525,7 +525,7 @@ void run_char_rnn(int argc, char **argv)
     char *filename = find_char_arg(argc, argv, "-file", "data/shakespeare.txt");
     char *seed = find_char_arg(argc, argv, "-seed", "\n\n");
     int len = find_int_arg(argc, argv, "-len", 1000);
-    float temp = find_float_arg(argc, argv, "-temp", .7);
+    real temp = find_real_arg(argc, argv, "-temp", .7);
     int rseed = find_int_arg(argc, argv, "-srand", time(0));
     int clear = find_arg(argc, argv, "-clear");
     int tokenized = find_arg(argc, argv, "-tokenized");
