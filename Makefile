@@ -103,3 +103,69 @@ results:
 clean:
 	rm -rf $(OBJS) $(SLIB) $(ALIB) $(EXEC) $(EXECOBJ) $(OBJDIR)/*
 
+
+test:
+	gcc -c src/blas.c -I include/ -o tmp.o
+	gcc -c src/option_list.c -I include/ -o tmp.o
+	gcc -c src/im2col.c -I include/ -o tmp.o
+	gcc -c src/gemm.c -I include/ -o tmp.o
+	gcc -c src/activations.c -I include/ -o tmp.o
+	gcc -c src/col2im.c -I include/ -o tmp.o
+	gcc -c src/local_layer.c -I include/ -o tmp.o
+	gcc -c src/utils.c -I include/ -o tmp.o
+	gcc -c src/image.c -I include/ -o tmp.o
+	gcc -c src/convolutional_layer.c -I include/ -o tmp.o
+	gcc -c src/logistic_layer.c -I include/ -o tmp.o
+	gcc -c src/deconvolutional_layer.c -I include/ -o tmp.o
+	gcc -c src/l2norm_layer.c -I include/ -o tmp.o
+	gcc -c src/activation_layer.c -I include/ -o tmp.o
+	gcc -c src/rnn_layer.c -I include/ -o tmp.o
+	gcc -c src/gru_layer.c -I include/ -o tmp.o
+	gcc -c src/lstm_layer.c -I include/ -o tmp.o
+	gcc -c src/crnn_layer.c -I include/ -o tmp.o
+	gcc -c src/connected_layer.c -I include/ -o tmp.o
+	gcc -c src/crop_layer.c -I include/ -o tmp.o
+	gcc -c src/cost_layer.c -I include/ -o tmp.o
+	gcc -c src/box.c -I include/ -o tmp.o
+	gcc -c src/tree.c -I include/ -o tmp.o
+	gcc -c src/region_layer.c -I include/ -o tmp.o
+	gcc -c src/yolo_layer.c -I include/ -o tmp.o
+	gcc -c src/iseg_layer.c -I include/ -o tmp.o
+	gcc -c src/detection_layer.c -I include/ -o tmp.o
+	gcc -c src/softmax_layer.c -I include/ -o tmp.o
+	gcc -c src/normalization_layer.c -I include/ -o tmp.o
+	gcc -c src/batchnorm_layer.c -I include/ -o tmp.o
+	gcc -c src/maxpool_layer.c -I include/ -o tmp.o
+	gcc -c src/reorg_layer.c -I include/ -o tmp.o
+	gcc -c src/avgpool_layer.c -I include/ -o tmp.o
+	gcc -c src/route_layer.c -I include/ -o tmp.o
+	gcc -c src/upsample_layer.c -I include/ -o tmp.o
+	gcc -c src/shortcut_layer.c -I include/ -o tmp.o
+	gcc -c src/dropout_layer.c -I include/ -o tmp.o
+	gcc -c src/data.c -I include/ -o tmp.o
+	gcc -c src/network.c -I include/ -o tmp.o
+	gcc -c src/matrix.c -I include/ -o tmp.o
+	gcc -c src/parser.c -I include/ -o tmp.o
+	gcc -c src/demo.c -I include/ -o tmp.o
+
+	# Won't compile (even in original version)
+	# examples/attention.c
+	# examples/dice.c
+	# examples/swag.c
+	# examples/voxel.c
+
+	gcc -c examples/art.c -I include/ -o tmp.o
+	gcc -c examples/captcha.c -I include/ -o tmp.o
+	gcc -c examples/cifar.c -I include/ -o tmp.o
+	gcc -c examples/classifier.c -I include/ -o tmp.o
+	gcc -c examples/coco.c -I include/ -o tmp.o
+	gcc -c examples/detector.c -I include/ -o tmp.o
+	gcc -c examples/go.c -I include/ -o tmp.o
+	gcc -c examples/instance-segmenter.c -I include/ -o tmp.o
+	gcc -c examples/lsd.c -I include/ -o tmp.o
+	gcc -c examples/nightmare.c -I include/ -o tmp.o
+	gcc -c examples/rnn_vid.c -I include/ -o tmp.o
+	gcc -c examples/rnn.c -I include/ -o tmp.o
+	gcc -c examples/segmenter.c -I include/ -o tmp.o
+	gcc -c examples/super.c -I include/ -o tmp.o
+	gcc -c examples/tag.c -I include/ -o tmp.o

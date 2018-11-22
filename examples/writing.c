@@ -4,7 +4,7 @@ void train_writing(char *cfgfile, char *weightfile)
 {
     char *backup_directory = "/home/pjreddie/backup/";
     srand(time(0));
-    float avg_loss = -1;
+    real avg_loss = -1;
     char *base = basecfg(cfgfile);
     printf("%s\n", base);
     network net = parse_network_cfg(cfgfile);
@@ -43,17 +43,17 @@ void train_writing(char *cfgfile, char *weightfile)
         printf("Loaded %lf seconds\n",sec(clock()-time));
 
         time=clock();
-        float loss = train_network(net, train);
+        real loss = train_network(net, train);
 
         /*
-           image pred = float_to_image(64, 64, 1, out);
+           image pred = real_to_image(64, 64, 1, out);
            print_image(pred);
          */
 
         /*
-           image im = float_to_image(256, 256, 3, train.X.vals[0]);
-           image lab = float_to_image(64, 64, 1, train.y.vals[0]);
-           image pred = float_to_image(64, 64, 1, out);
+           image im = real_to_image(256, 256, 3, train.X.vals[0]);
+           image lab = real_to_image(64, 64, 1, train.y.vals[0]);
+           image pred = real_to_image(64, 64, 1, out);
            show_image(im, "image");
            show_image(lab, "label");
            print_image(lab);
@@ -63,7 +63,7 @@ void train_writing(char *cfgfile, char *weightfile)
 
         if(avg_loss == -1) avg_loss = loss;
         avg_loss = avg_loss*.9 + loss*.1;
-        printf("%ld, %.3f: %f, %f avg, %f rate, %lf seconds, %ld images\n", get_current_batch(net), (float)(*net.seen)/N, loss, avg_loss, get_current_rate(net), sec(clock()-time), *net.seen);
+        printf("%ld, %.3f: %f, %f avg, %f rate, %lf seconds, %ld images\n", get_current_batch(net), (real)(*net.seen)/N, loss, avg_loss, get_current_rate(net), sec(clock()-time), *net.seen);
         free_data(train);
         if(get_current_batch(net)%100 == 0){
             char buff[256];
@@ -104,7 +104,7 @@ void test_writing(char *cfgfile, char *weightfile, char *filename)
         image im = load_image_color(input, 0, 0);
         resize_network(&net, im.w, im.h);
         printf("%d %d %d\n", im.h, im.w, im.c);
-        float *X = im.data;
+        real *X = im.data;
         time=clock();
         network_predict(net, X);
         printf("%s: Predicted in %f seconds.\n", input, sec(clock()-time));
