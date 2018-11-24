@@ -571,9 +571,6 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
     image **alphabet = load_alphabet();
 
     // Load neural network
-    // cfgfile = "cfg/yolov3.cfg"
-    // weightfile = "yolov3.weights"
-    // #HERE
     network *net = load_network(cfgfile, weightfile, 0);
     set_batch_network(net, 1);
     srand(2222222);
