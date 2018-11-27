@@ -1100,21 +1100,38 @@ void transpose_matrix(real *a, int rows, int cols)
 
 void load_connected_weights(layer l, FILE *fp, int transpose)
 {
-    fread(l.biases, sizeof(real), l.outputs, fp);
-    fread(l.weights, sizeof(real), l.outputs*l.inputs, fp);
+    int j, n = l.outputs*l.inputs;
+    float *tmpBuffer0 = calloc(l.outputs, sizeof(float));
+    float *tmpBuffer1 = calloc(n, sizeof(float));
+
+    fread(tmpBuffer0, sizeof(float), l.outputs, fp);
+    for (j = 0; j < l.outputs; j++) l.biases[j] = tmpBuffer0[j];
+
+    fread(tmpBuffer1, sizeof(float), l.outputs*l.inputs, fp);
+    for (j = 0; j < n; j++) l.weights[j] = tmpBuffer1[j];
+
     if(transpose){
         transpose_matrix(l.weights, l.inputs, l.outputs);
     }
     //printf("Biases: %f mean %f variance\n", mean_array(l.biases, l.outputs), variance_array(l.biases, l.outputs));
     //printf("Weights: %f mean %f variance\n", mean_array(l.weights, l.outputs*l.inputs), variance_array(l.weights, l.outputs*l.inputs));
     if (l.batch_normalize && (!l.dontloadscales)){
-        fread(l.scales, sizeof(real), l.outputs, fp);
-        fread(l.rolling_mean, sizeof(real), l.outputs, fp);
-        fread(l.rolling_variance, sizeof(real), l.outputs, fp);
+        fread(tmpBuffer0, sizeof(float), l.outputs, fp);
+        for (j = 0; j < l.outputs; j++) l.scales[j] = tmpBuffer0[j];
+
+        fread(tmpBuffer0, sizeof(float), l.outputs, fp);
+        for (j = 0; j < l.outputs; j++) l.rolling_mean[j] = tmpBuffer0[j];
+
+        fread(tmpBuffer0, sizeof(float), l.outputs, fp);
+        for (j = 0; j < l.outputs; j++) l.rolling_variance[j] = tmpBuffer0[j];
         //printf("Scales: %f mean %f variance\n", mean_array(l.scales, l.outputs), variance_array(l.scales, l.outputs));
         //printf("rolling_mean: %f mean %f variance\n", mean_array(l.rolling_mean, l.outputs), variance_array(l.rolling_mean, l.outputs));
         //printf("rolling_variance: %f mean %f variance\n", mean_array(l.rolling_variance, l.outputs), variance_array(l.rolling_variance, l.outputs));
     }
+
+    free(tmpBuffer0);
+    free(tmpBuffer1);
+
 #ifdef GPU
     if(gpu_index >= 0){
         push_connected_layer(l);
@@ -1124,9 +1141,20 @@ void load_connected_weights(layer l, FILE *fp, int transpose)
 
 void load_batchnorm_weights(layer l, FILE *fp)
 {
-    fread(l.scales, sizeof(real), l.c, fp);
-    fread(l.rolling_mean, sizeof(real), l.c, fp);
-    fread(l.rolling_variance, sizeof(real), l.c, fp);
+    float *tmpBuffer = calloc(l.c, sizeof(float));
+    int j;
+
+    fread(tmpBuffer, sizeof(float), l.c, fp);
+    for (j = 0; j < l.c; j++) l.scales[j] = tmpBuffer[j];
+
+    fread(tmpBuffer, sizeof(float), l.c, fp);
+    for (j = 0; j < l.c; j++) l.rolling_mean[j] = tmpBuffer[j];
+
+    fread(tmpBuffer, sizeof(float), l.c, fp);
+    for (j = 0; j < l.c; j++) l.rolling_variance[j] = tmpBuffer[j];
+
+    free(tmpBuffer);
+
 #ifdef GPU
     if(gpu_index >= 0){
         push_batchnorm_layer(l);
@@ -1136,17 +1164,34 @@ void load_batchnorm_weights(layer l, FILE *fp)
 
 void load_convolutional_weights_binary(layer l, FILE *fp)
 {
-    fread(l.biases, sizeof(real), l.n, fp);
+    float *tmpBuffer = calloc(l.n, sizeof(float));
+    int x;
+
+    fread(tmpBuffer, sizeof(float), l.n, fp);
+    for (x = 0; x < l.n; x++) l.biases[x] = tmpBuffer[x];
+
     if (l.batch_normalize && (!l.dontloadscales)){
-        fread(l.scales, sizeof(real), l.n, fp);
-        fread(l.rolling_mean, sizeof(real), l.n, fp);
-        fread(l.rolling_variance, sizeof(real), l.n, fp);
+        fread(tmpBuffer, sizeof(float), l.n, fp);
+        for (x = 0; x < l.n; x++) l.scales[x] = tmpBuffer[x];
+
+        fread(tmpBuffer, sizeof(float), l.n, fp);
+        for (x = 0; x < l.n; x++) l.rolling_mean[x] = tmpBuffer[x];
+
+        fread(tmpBuffer, sizeof(float), l.n, fp);
+        for (x = 0; x < l.n; x++) l.rolling_variance[x] = tmpBuffer[x];
     }
+
+    free(tmpBuffer);
+
     int size = l.c*l.size*l.size;
     int i, j, k;
     for(i = 0; i < l.n; ++i){
         real mean = 0;
-        fread(&mean, sizeof(real), 1, fp);
+        
+        float tmpFloat;
+        fread(&tmpFloat, sizeof(float), 1, fp);
+        mean = tmpFloat;
+
         for(j = 0; j < size/8; ++j){
             int index = i*size + j*8;
             unsigned char c = 0;
@@ -1172,11 +1217,24 @@ void load_convolutional_weights(layer l, FILE *fp)
     }
     if(l.numload) l.n = l.numload;
     int num = l.c/l.groups*l.n*l.size*l.size;
-    fread(l.biases, sizeof(real), l.n, fp);
+
+    float *tmpBuffer0 = calloc(l.n, sizeof(float));
+    float *tmpBuffer1 = calloc(num, sizeof(float));
+    int j;
+
+    fread(tmpBuffer0, sizeof(float), l.n, fp);
+    for(j = 0; j < l.n; ++j) l.biases[j] = tmpBuffer0[j];
+
     if (l.batch_normalize && (!l.dontloadscales)){
-        fread(l.scales, sizeof(real), l.n, fp);
-        fread(l.rolling_mean, sizeof(real), l.n, fp);
-        fread(l.rolling_variance, sizeof(real), l.n, fp);
+        fread(tmpBuffer0, sizeof(float), l.n, fp);
+        for(j = 0; j < l.n; ++j) l.scales[j] = tmpBuffer0[j];
+
+        fread(tmpBuffer0, sizeof(float), l.n, fp);
+        for(j = 0; j < l.n; ++j) l.rolling_mean[j] = tmpBuffer0[j];
+
+        fread(tmpBuffer0, sizeof(float), l.n, fp);
+        for(j = 0; j < l.n; ++j) l.rolling_variance[j] = tmpBuffer0[j];
+
         if(0){
             int i;
             for(i = 0; i < l.n; ++i){
@@ -1204,7 +1262,14 @@ void load_convolutional_weights(layer l, FILE *fp)
             printf("\n");
         }
     }
-    fread(l.weights, sizeof(real), num, fp);
+
+
+    fread(tmpBuffer1, sizeof(float), num, fp);
+    for(j = 0; j < num; ++j) l.weights[j] = tmpBuffer1[j];
+
+    free(tmpBuffer0);
+    free(tmpBuffer1);
+
     //if(l.c == 3) scal_cpu(num, 1./256, l.weights, 1);
     if (l.flipped) {
         transpose_matrix(l.weights, l.c*l.size*l.size, l.n);
@@ -1295,8 +1360,19 @@ void load_weights_upto(network *net, char *filename, int start, int cutoff)
         if(l.type == LOCAL){
             int locations = l.out_w*l.out_h;
             int size = l.size*l.size*l.c*l.n*locations;
-            fread(l.biases, sizeof(real), l.outputs, fp);
-            fread(l.weights, sizeof(real), size, fp);
+
+            float *tmpBuffer0 = calloc(l.outputs, sizeof(float));
+            float *tmpBuffer1 = calloc(size, sizeof(float));
+            int j;
+
+            fread(tmpBuffer0, sizeof(float), l.outputs, fp);
+            for (j = 0; j < l.outputs; j++) l.biases[j] = tmpBuffer0[j];
+
+            fread(tmpBuffer1, sizeof(float), size, fp);
+            for (j = 0; j < size; j++) l.weights[j] = tmpBuffer1[j];
+
+            free(tmpBuffer0);
+            free(tmpBuffer1);
 #ifdef GPU
             if(gpu_index >= 0){
                 push_local_layer(l);
