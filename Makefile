@@ -4,6 +4,8 @@ OPENCV=0
 OPENMP=0
 DEBUG=0
 
+DOUBLE=1
+
 ARCH= -gencode arch=compute_60,code=sm_60 \
       -gencode arch=compute_61,code=sm_61 \
       -gencode arch=compute_62,code=[sm_62,compute_62] \
@@ -58,6 +60,11 @@ CFLAGS+= -DCUDNN
 LDFLAGS+= -lcudnn
 endif
 
+ifeq ($(DOUBLE), 1) 
+COMMON+= -DDOUBLE
+CFLAGS+= -DDOUBLE
+endif
+
 OBJ=gemm.o utils.o cuda.o deconvolutional_layer.o convolutional_layer.o list.o image.o activations.o im2col.o col2im.o blas.o crop_layer.o dropout_layer.o maxpool_layer.o softmax_layer.o data.o matrix.o network.o connected_layer.o cost_layer.o parser.o option_list.o detection_layer.o route_layer.o upsample_layer.o box.o normalization_layer.o avgpool_layer.o layer.o local_layer.o shortcut_layer.o logistic_layer.o activation_layer.o rnn_layer.o gru_layer.o crnn_layer.o demo.o batchnorm_layer.o region_layer.o reorg_layer.o tree.o  lstm_layer.o l2norm_layer.o yolo_layer.o iseg_layer.o image_opencv.o
 EXECOBJA=captcha.o lsd.o super.o art.o tag.o cifar.o go.o rnn.o segmenter.o regressor.o classifier.o coco.o yolo.o detector.o nightmare.o instance-segmenter.o darknet.o
 ifeq ($(GPU), 1) 
@@ -102,73 +109,3 @@ results:
 
 clean:
 	rm -rf $(OBJS) $(SLIB) $(ALIB) $(EXEC) $(EXECOBJ) $(OBJDIR)/*
-
-
-test:
-	gcc -c src/blas.c -I include/ -o tmp.o
-	gcc -c src/option_list.c -I include/ -o tmp.o
-	gcc -c src/im2col.c -I include/ -o tmp.o
-	gcc -c src/gemm.c -I include/ -o tmp.o
-	gcc -c src/activations.c -I include/ -o tmp.o
-	gcc -c src/col2im.c -I include/ -o tmp.o
-	gcc -c src/local_layer.c -I include/ -o tmp.o
-	gcc -c src/utils.c -I include/ -o tmp.o
-	gcc -c src/image.c -I include/ -o tmp.o
-	gcc -c src/convolutional_layer.c -I include/ -o tmp.o
-	gcc -c src/logistic_layer.c -I include/ -o tmp.o
-	gcc -c src/deconvolutional_layer.c -I include/ -o tmp.o
-	gcc -c src/l2norm_layer.c -I include/ -o tmp.o
-	gcc -c src/activation_layer.c -I include/ -o tmp.o
-	gcc -c src/rnn_layer.c -I include/ -o tmp.o
-	gcc -c src/gru_layer.c -I include/ -o tmp.o
-	gcc -c src/lstm_layer.c -I include/ -o tmp.o
-	gcc -c src/crnn_layer.c -I include/ -o tmp.o
-	gcc -c src/connected_layer.c -I include/ -o tmp.o
-	gcc -c src/crop_layer.c -I include/ -o tmp.o
-	gcc -c src/cost_layer.c -I include/ -o tmp.o
-	gcc -c src/box.c -I include/ -o tmp.o
-	gcc -c src/tree.c -I include/ -o tmp.o
-	gcc -c src/region_layer.c -I include/ -o tmp.o
-	gcc -c src/yolo_layer.c -I include/ -o tmp.o
-	gcc -c src/iseg_layer.c -I include/ -o tmp.o
-	gcc -c src/detection_layer.c -I include/ -o tmp.o
-	gcc -c src/softmax_layer.c -I include/ -o tmp.o
-	gcc -c src/normalization_layer.c -I include/ -o tmp.o
-	gcc -c src/batchnorm_layer.c -I include/ -o tmp.o
-	gcc -c src/maxpool_layer.c -I include/ -o tmp.o
-	gcc -c src/reorg_layer.c -I include/ -o tmp.o
-	gcc -c src/avgpool_layer.c -I include/ -o tmp.o
-	gcc -c src/route_layer.c -I include/ -o tmp.o
-	gcc -c src/upsample_layer.c -I include/ -o tmp.o
-	gcc -c src/shortcut_layer.c -I include/ -o tmp.o
-	gcc -c src/dropout_layer.c -I include/ -o tmp.o
-	gcc -c src/data.c -I include/ -o tmp.o
-	gcc -c src/network.c -I include/ -o tmp.o
-	gcc -c src/matrix.c -I include/ -o tmp.o
-	gcc -c src/parser.c -I include/ -o tmp.o
-	gcc -c src/demo.c -I include/ -o tmp.o
-
-	# Won't compile (even in original version)
-	# examples/attention.c
-	# examples/dice.c
-	# examples/swag.c
-	# examples/voxel.c
-	# examples/writing.c
-
-	gcc -c examples/art.c -I include/ -o tmp.o
-	gcc -c examples/captcha.c -I include/ -o tmp.o
-	gcc -c examples/cifar.c -I include/ -o tmp.o
-	gcc -c examples/classifier.c -I include/ -o tmp.o
-	gcc -c examples/coco.c -I include/ -o tmp.o
-	gcc -c examples/detector.c -I include/ -o tmp.o
-	gcc -c examples/go.c -I include/ -o tmp.o
-	gcc -c examples/instance-segmenter.c -I include/ -o tmp.o
-	gcc -c examples/lsd.c -I include/ -o tmp.o
-	gcc -c examples/nightmare.c -I include/ -o tmp.o
-	gcc -c examples/rnn_vid.c -I include/ -o tmp.o
-	gcc -c examples/rnn.c -I include/ -o tmp.o
-	gcc -c examples/segmenter.c -I include/ -o tmp.o
-	gcc -c examples/super.c -I include/ -o tmp.o
-	gcc -c examples/tag.c -I include/ -o tmp.o
-	gcc -c examples/yolo.c -I include/ -o tmp.o
-	gcc -c examples/darknet.c -I include/ -o tmp.o

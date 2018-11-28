@@ -15,7 +15,7 @@ __device__ real get_pixel_kernel(real *image, int w, int h, int x, int y, int c)
     return image[x + w*(y + c*h)];
 }
 
-__device__ double3 rgb_to_hsv_kernel(double3 rgb)
+__device__ real3 rgb_to_hsv_kernel(real3 rgb)
 {
     real r = rgb.x;
     real g = rgb.y; 
@@ -40,10 +40,14 @@ __device__ double3 rgb_to_hsv_kernel(double3 rgb)
         }
         if (h < 0) h += 6;
     }
+#ifdef DOUBLE
     return make_double3(h, s, v);
+#else
+    return make_float3(h, s, v);
+#endif
 }
 
-__device__ double3 hsv_to_rgb_kernel(double3 hsv)
+__device__ real3 hsv_to_rgb_kernel(real3 hsv)
 {
     real h = hsv.x;
     real s = hsv.y; 
@@ -77,7 +81,11 @@ __device__ double3 hsv_to_rgb_kernel(double3 hsv)
     r = (r < 0) ? 0 : ((r > 1) ? 1 : r);
     g = (g < 0) ? 0 : ((g > 1) ? 1 : g);
     b = (b < 0) ? 0 : ((b > 1) ? 1 : b);
+#ifdef DOUBLE
     return make_double3(r, g, b);
+#else
+    return make_float3(r, g, b);
+#endif
 }
 
 __device__ real bilinear_interpolate_kernel(real *image, int w, int h, real x, real y, int c)
@@ -122,9 +130,13 @@ __global__ void levels_image_kernel(real *image, real *rand, int batch, int w, i
     real r = image[x + w*(y + h*0)];
     real g = image[x + w*(y + h*1)];
     real b = image[x + w*(y + h*2)];
-    double3 rgb = make_double3(r,g,b);
+#ifdef DOUBLE
+    real3 rgb = make_double3(r,g,b);
+#else
+    real3 rgb = make_float3(r,g,b);
+#endif
     if(train){
-        double3 hsv = rgb_to_hsv_kernel(rgb);
+        real3 hsv = rgb_to_hsv_kernel(rgb);
         hsv.y *= saturation;
         hsv.z *= exposure;
         rgb = hsv_to_rgb_kernel(hsv);

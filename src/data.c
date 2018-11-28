@@ -145,7 +145,14 @@ box_label *read_boxes(char *filename, int *n)
     int count = 0;
     int size = 64;
     box_label *boxes = calloc(size, sizeof(box_label));
-    while(fscanf(file, "%d %lf %lf %lf %lf", &id, &x, &y, &w, &h) == 5){
+
+#ifdef DOUBLE
+    #define FORMAT_0 "%d %lf %lf %lf %lf"
+#else
+    #define FORMAT_0 "%d %f %f %f %f"
+#endif
+
+    while(fscanf(file, FORMAT_0, &id, &x, &y, &w, &h) == 5){
         if(count == size) {
             size = size * 2;
             boxes = realloc(boxes, size*sizeof(box_label));
@@ -609,8 +616,15 @@ matrix load_regression_labels_paths(char **paths, int n, int k)
         find_replace(labelpath, ".tif", ".txt", labelpath);
 
         FILE *file = fopen(labelpath, "r");
+
+#ifdef DOUBLE
+    #define FORMAT_1 "%lf"
+#else
+    #define FORMAT_1 "%f"
+#endif
+    
         for(j = 0; j < k; ++j){
-            fscanf(file, "%lf", &(y.vals[i][j]));
+            fscanf(file, FORMAT_1, &(y.vals[i][j]));
         }
         fclose(file);
     }
@@ -946,7 +960,13 @@ data load_data_compare(int n, char **paths, int m, int classes, int w, int h)
         find_replace(imlabel1, "jpg", "txt", imlabel1);
         FILE *fp1 = fopen(imlabel1, "r");
 
-        while(fscanf(fp1, "%d %lf", &id, &iou) == 2){
+#ifdef DOUBLE
+    #define FORMAT_2 "%d %lf"
+#else
+    #define FORMAT_2 "%d %f"
+#endif
+
+        while(fscanf(fp1, FORMAT_2, &id, &iou) == 2){
             if (d.y.vals[i][2*id] < iou) d.y.vals[i][2*id] = iou;
         }
 
@@ -954,7 +974,13 @@ data load_data_compare(int n, char **paths, int m, int classes, int w, int h)
         find_replace(imlabel2, "jpg", "txt", imlabel2);
         FILE *fp2 = fopen(imlabel2, "r");
 
-        while(fscanf(fp2, "%d %lf", &id, &iou) == 2){
+#ifdef DOUBLE
+    #define FORMAT_3 "%d %lf"
+#else
+    #define FORMAT_3 "%d %f"
+#endif       
+
+        while(fscanf(fp2, FORMAT_3, &id, &iou) == 2){
             if (d.y.vals[i][2*id + 1] < iou) d.y.vals[i][2*id + 1] = iou;
         }
 

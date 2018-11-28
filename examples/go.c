@@ -935,7 +935,14 @@ void engine_go(char *filename, char *weightfile, int mcts_iters, real secs, real
             printf("=%s \n\n", ids);
         } else if (!strcmp(buff, "komi")){
             real komi = 0;
-            scanf("%lf", &komi);
+
+#ifdef DOUBLE
+    #define FORMAT_4 "%lf"
+#else
+    #define FORMAT_4 "%f"
+#endif            
+
+            scanf(FORMAT_4, &komi);
             printf("=%s \n\n", ids);
         } else if (!strcmp(buff, "showboard")){
             printf("=%s \n", ids);
@@ -1201,7 +1208,14 @@ real score_game(real *board)
     char player = 0;
     while((l = fgetl(p))){
         fprintf(stderr, "%s  \t", l);
-        int n = sscanf(l, "= %c+%lf", &player, &score);
+
+#ifdef DOUBLE
+    #define FORMAT_5 "= %c+%lf"
+#else
+    #define FORMAT_5 "= %c+%f"
+#endif
+
+        int n = sscanf(l, FORMAT_5, &player, &score);
         free(l);
         if (n == 2) break;
     }

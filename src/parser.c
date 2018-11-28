@@ -113,7 +113,14 @@ void parse_data(char *data, real *a, int n)
         while(*++next !='\0' && *next != ',');
         if(*next == '\0') done = 1;
         *next = '\0';
-        sscanf(curr, "%lg", &a[i]);
+
+#ifdef DOUBLE
+    #define FORMAT_4 "%lg"
+#else
+    #define FORMAT_4 "%g"
+#endif
+
+        sscanf(curr, FORMAT_4, &a[i]);
         curr = next+1;
     }
 }

@@ -5,13 +5,6 @@
 #include <string.h>
 #include <pthread.h>
 
-typedef double real;
-#define REAL_MAX __DBL_MAX__
-#define CUDNN_DATA_REAL CUDNN_DATA_DOUBLE
-// float3 -> double3
-// cublasSgemm -> cublasDgemm
-// curandGenerateUniform -> curandGenerateUniformDouble
-
 #ifdef GPU
     #define BLOCK 512
 
@@ -21,6 +14,30 @@ typedef double real;
 
     #ifdef CUDNN
     #include "cudnn.h"
+    #endif
+
+    #ifdef DOUBLE
+        
+    #else
+        
+    #endif
+#endif
+
+#ifdef DOUBLE
+    typedef double real;
+    #define REAL_MAX __DBL_MAX__
+    #define CUDNN_DATA_REAL CUDNN_DATA_DOUBLE
+
+    #ifdef GPU
+        typedef double3 real3;
+    #endif
+#else
+    typedef float real;
+    #define REAL_MAX __FLT_MAX__
+    #define CUDNN_DATA_REAL CUDNN_DATA_FLOAT
+    
+    #ifdef GPU
+        typedef float3 real3;
     #endif
 #endif
 
