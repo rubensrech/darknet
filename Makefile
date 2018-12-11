@@ -5,6 +5,8 @@ OPENMP=0
 DEBUG=0
 
 DOUBLE=1
+# if (input weights are float && DOUBLE=1) FLOAT_WEIGHTS=1 
+FLOAT_WEIGHTS=0
 
 ARCH= -gencode arch=compute_60,code=sm_60 \
       -gencode arch=compute_61,code=sm_61 \
@@ -63,6 +65,11 @@ endif
 ifeq ($(DOUBLE), 1) 
 COMMON+= -DDOUBLE
 CFLAGS+= -DDOUBLE
+endif
+
+ifeq ($(FLOAT_WEIGHTS), 1) 
+COMMON+= -DFLOAT_WEIGHTS
+CFLAGS+= -DFLOAT_WEIGHTS
 endif
 
 OBJ=gemm.o utils.o cuda.o deconvolutional_layer.o convolutional_layer.o list.o image.o activations.o im2col.o col2im.o blas.o crop_layer.o dropout_layer.o maxpool_layer.o softmax_layer.o data.o matrix.o network.o connected_layer.o cost_layer.o parser.o option_list.o detection_layer.o route_layer.o upsample_layer.o box.o normalization_layer.o avgpool_layer.o layer.o local_layer.o shortcut_layer.o logistic_layer.o activation_layer.o rnn_layer.o gru_layer.o crnn_layer.o demo.o batchnorm_layer.o region_layer.o reorg_layer.o tree.o  lstm_layer.o l2norm_layer.o yolo_layer.o iseg_layer.o image_opencv.o
