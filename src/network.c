@@ -1127,3 +1127,42 @@ void pull_network_output(network *net)
 }
 
 #endif
+
+void fuse_conv_batchnorm(network net)
+{
+    int j;
+    for (j = 0; j < net.n; ++j) {
+        layer *l = &net.layers[j];
+
+        if (l->type == CONVOLUTIONAL) {
+            //printf(" Merges Convolutional-%d and batch_norm \n", j);
+
+            if (l->batch_normalize) {
+                int f;
+                for (f = 0; f < l->n; ++f)
+                {
+                    l->biases[f] = l->biases[f] - (double)l->scales[f] * l->rolling_mean[f] / (sqrt((double)l->rolling_variance[f]) + .000001f);
+
+                    const size_t filter_size = l->size*l->size*l->c;
+                    int i;
+                    for (i = 0; i < filter_size; ++i) {
+                        int w_index = f*filter_size + i;
+
+                        l->weights[w_index] = (double)l->weights[w_index] * l->scales[f] / (sqrt((double)l->rolling_variance[f]) + .000001f);
+                    }
+                }
+
+                l->batch_normalize = 0;
+#ifdef GPU
+                if (gpu_index >= 0) {
+                    push_convolutional_layer(*l);
+                }
+#endif
+            }
+        }
+        else {
+            //printf(" Fusion skip layer type: %d \n", l->type);
+        }
+    }
+}
+

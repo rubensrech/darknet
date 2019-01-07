@@ -700,6 +700,11 @@ char *option_find_str(list *l, char *key, char *def);
 int option_find_int(list *l, char *key, int def);
 int option_find_int_quiet(list *l, char *key, int def);
 
+
+void fuse_conv_batchnorm(network net);
+void replace_image_to_label(char *input_path, char *output_path);
+network *parse_network_cfg_custom(char *filename, int batch);
+
 network *parse_network_cfg(char *filename);
 void save_weights(network *net, char *filename);
 void load_weights(network *net, char *filename);
