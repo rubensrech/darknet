@@ -194,6 +194,7 @@ void validate_coco(char *cfg, char *weights)
             int w = val[t].w;
             int h = val[t].h;
             int nboxes = 0;
+            // !!!
             int letterbox = (args.type == LETTERBOX_DATA);
             detection *dets = get_network_boxes(net, w, h, thresh, 0, 0, 0, &nboxes, letterbox);
             if (nms) do_nms_sort(dets, l.side*l.side*l.n, classes, iou_thresh);
@@ -253,7 +254,8 @@ void validate_coco_recall(char *cfgfile, char *weightfile)
         network_predict(net, sized.data);
 
         int nboxes = 0;
-        int letterbox = 0;
+        // !!!
+        int letterbox = 1;
         detection *dets = get_network_boxes(net, orig.w, orig.h, thresh, 0, 0, 1, &nboxes, letterbox);
         if (nms) do_nms_obj(dets, side*side*l.n, 1, nms);
 
@@ -322,7 +324,8 @@ void test_coco(char *cfgfile, char *weightfile, char *filename, real thresh)
         printf("%s: Predicted in %f seconds.\n", input, sec(clock()-time));
 
         int nboxes = 0;
-        int letterbox = 0;
+        // !!!
+        int letterbox = 1;
         detection *dets = get_network_boxes(net, 1, 1, thresh, 0, 0, 0, &nboxes, letterbox);
         if (nms) do_nms_sort(dets, l.side*l.side*l.n, l.classes, nms);
 

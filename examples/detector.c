@@ -334,7 +334,8 @@ void validate_detector_flip(char *datacfg, char *cfgfile, char *weightfile, char
             int w = val[t].w;
             int h = val[t].h;
             int num = 0;
-            int letterbox = 0;
+            // !!!
+            int letterbox = 1;
             detection *dets = get_network_boxes(net, w, h, thresh, .5, map, 0, &num, letterbox);
             if (nms) do_nms_sort(dets, num, classes, nms);
             if (coco){
@@ -461,6 +462,7 @@ void validate_detector(char *datacfg, char *cfgfile, char *weightfile, char *out
             int w = val[t].w;
             int h = val[t].h;
             int nboxes = 0;
+            // !!!
             int letterbox = (args.type == LETTERBOX_DATA);
             detection *dets = get_network_boxes(net, w, h, thresh, .5, map, 0, &nboxes, letterbox);
             if (nms) do_nms_sort(dets, nboxes, classes, nms);
@@ -521,7 +523,8 @@ void validate_detector_recall(char *cfgfile, char *weightfile)
         char *id = basecfg(path);
         network_predict(net, sized.data);
         int nboxes = 0;
-        int letterbox = 0;
+        // !!!
+        int letterbox = 1;
         detection *dets = get_network_boxes(net, sized.w, sized.h, thresh, .5, 0, 1, &nboxes, letterbox);
         if (nms) do_nms_obj(dets, nboxes, 1, nms);
 
@@ -679,11 +682,11 @@ real validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real 
             detection *dets;
             if (args.type == LETTERBOX_DATA) {
                 int letterbox = 1;
-                dets = get_network_boxes(&net, val[t].w, val[t].h, thresh, hier_thresh, 0, 1, &nboxes, letterbox);
+                dets = get_network_boxes(net, val[t].w, val[t].h, thresh, hier_thresh, 0, 1, &nboxes, letterbox);
             }
             else {
                 int letterbox = 0;
-                dets = get_network_boxes(&net, 1, 1, thresh, hier_thresh, 0, 0, &nboxes, letterbox);
+                dets = get_network_boxes(net, 1, 1, thresh, hier_thresh, 0, 0, &nboxes, letterbox);
             }
 
             if (nms) do_nms_sort(dets, nboxes, l.classes, nms);
@@ -967,7 +970,8 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
         // Generate outputs
         printf("%s: Predicted in %f seconds.\n", input, what_time_is_it_now()-time);
         int nboxes = 0;
-        int letterbox = 0;
+        // !!!
+        int letterbox = 1;
         detection *dets = get_network_boxes(net, im.w, im.h, thresh, hier_thresh, 0, 1, &nboxes, letterbox);
         //printf("%d\n", nboxes);
         //if (nms) do_nms_obj(boxes, probs, l.w*l.h*l.n, l.classes, nms);

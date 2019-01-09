@@ -78,7 +78,8 @@ detection *avg_predictions(network *net, int *nboxes)
             count += l.outputs;
         }
     }
-    int letterbox = 0;
+    // !!!
+    int letterbox = 1;
     detection *dets = get_network_boxes(net, buff[0].w, buff[0].h, demo_thresh, demo_hier, 0, 1, nboxes, letterbox);
     return dets;
 }
