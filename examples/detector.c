@@ -1164,7 +1164,7 @@ void network_detect(network *net, image im, real thresh, real hier_thresh, real 
 void run_detector(int argc, char **argv)
 {
     char *prefix = find_char_arg(argc, argv, "-prefix", 0);
-    real thresh = find_real_arg(argc, argv, "-thresh", .25);
+    real thresh = find_real_arg(argc, argv, "-thresh", .5);
     real iou_thresh = find_real_arg(argc, argv, "-iou_thresh", .5);    // 0.5 for mAP
     real hier_thresh = find_real_arg(argc, argv, "-hier", .5);
     int cam_index = find_int_arg(argc, argv, "-c", 0);
