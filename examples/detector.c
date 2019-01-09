@@ -334,7 +334,8 @@ void validate_detector_flip(char *datacfg, char *cfgfile, char *weightfile, char
             int w = val[t].w;
             int h = val[t].h;
             int num = 0;
-            detection *dets = get_network_boxes(net, w, h, thresh, .5, map, 0, &num);
+            int letterbox = 0;
+            detection *dets = get_network_boxes(net, w, h, thresh, .5, map, 0, &num, letterbox);
             if (nms) do_nms_sort(dets, num, classes, nms);
             if (coco){
                 print_cocos(fp, path, dets, num, classes, w, h);
@@ -460,7 +461,8 @@ void validate_detector(char *datacfg, char *cfgfile, char *weightfile, char *out
             int w = val[t].w;
             int h = val[t].h;
             int nboxes = 0;
-            detection *dets = get_network_boxes(net, w, h, thresh, .5, map, 0, &nboxes);
+            int letterbox = (args.type == LETTERBOX_DATA);
+            detection *dets = get_network_boxes(net, w, h, thresh, .5, map, 0, &nboxes, letterbox);
             if (nms) do_nms_sort(dets, nboxes, classes, nms);
             if (coco){
                 print_cocos(fp, path, dets, nboxes, classes, w, h);
@@ -519,7 +521,8 @@ void validate_detector_recall(char *cfgfile, char *weightfile)
         char *id = basecfg(path);
         network_predict(net, sized.data);
         int nboxes = 0;
-        detection *dets = get_network_boxes(net, sized.w, sized.h, thresh, .5, 0, 1, &nboxes);
+        int letterbox = 0;
+        detection *dets = get_network_boxes(net, sized.w, sized.h, thresh, .5, 0, 1, &nboxes, letterbox);
         if (nms) do_nms_obj(dets, nboxes, 1, nms);
 
         char labelpath[4096];
@@ -584,9 +587,6 @@ real validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real 
     char *difficult_valid_images = option_find_str(options, "difficult", NULL);
     char *name_list = option_find_str(options, "names", "data/names.list");
     char **names = get_labels(name_list);
-    char *mapf = option_find_str(options, "map", 0);
-    int *map = 0;
-    if (mapf) map = read_map(mapf);
     FILE* reinforcement_fd = NULL;
 
     network *net;
@@ -594,8 +594,7 @@ real validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real 
     if (weightfile) {
         load_weights(net, weightfile);
     }
-    fuse_conv_batchnorm(*net);
-    // !!!
+    // fuse_conv_batchnorm(*net);
     // calculate_binary_weights(net);
 
     srand(time(0));
@@ -678,8 +677,15 @@ real validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real 
             int nboxes = 0;
             float hier_thresh = 0;
             detection *dets;
-            // !!!
-            dets = get_network_boxes(net, val[t].w, val[t].h, thresh, hier_thresh, 0, 1, &nboxes);
+            if (args.type == LETTERBOX_DATA) {
+                int letterbox = 1;
+                dets = get_network_boxes(&net, val[t].w, val[t].h, thresh, hier_thresh, 0, 1, &nboxes, letterbox);
+            }
+            else {
+                int letterbox = 0;
+                dets = get_network_boxes(&net, 1, 1, thresh, hier_thresh, 0, 0, &nboxes, letterbox);
+            }
+
             if (nms) do_nms_sort(dets, nboxes, l.classes, nms);
 
             char labelpath[4096];
@@ -961,7 +967,8 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
         // Generate outputs
         printf("%s: Predicted in %f seconds.\n", input, what_time_is_it_now()-time);
         int nboxes = 0;
-        detection *dets = get_network_boxes(net, im.w, im.h, thresh, hier_thresh, 0, 1, &nboxes);
+        int letterbox = 0;
+        detection *dets = get_network_boxes(net, im.w, im.h, thresh, hier_thresh, 0, 1, &nboxes, letterbox);
         //printf("%d\n", nboxes);
         //if (nms) do_nms_obj(boxes, probs, l.w*l.h*l.n, l.classes, nms);
         if (nms) do_nms_sort(dets, nboxes, l.classes, nms);

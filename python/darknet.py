@@ -63,7 +63,7 @@ make_image.argtypes = [c_int, c_int, c_int]
 make_image.restype = IMAGE
 
 get_network_boxes = lib.get_network_boxes
-get_network_boxes.argtypes = [c_void_p, c_int, c_int, c_float, c_float, POINTER(c_int), c_int, POINTER(c_int)]
+get_network_boxes.argtypes = [c_void_p, c_int, c_int, c_float, c_float, POINTER(c_int), c_int, POINTER(c_int), c_int]
 get_network_boxes.restype = POINTER(DETECTION)
 
 make_network_boxes = lib.make_network_boxes
@@ -127,7 +127,7 @@ def detect(net, meta, image, thresh=.5, hier_thresh=.5, nms=.45):
     num = c_int(0)
     pnum = pointer(num)
     predict_image(net, im)
-    dets = get_network_boxes(net, im.w, im.h, thresh, hier_thresh, None, 0, pnum)
+    dets = get_network_boxes(net, im.w, im.h, thresh, hier_thresh, None, 0, pnum, 0)
     num = pnum[0]
     if (nms): do_nms_obj(dets, num, meta.classes, nms);
 

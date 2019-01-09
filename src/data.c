@@ -139,7 +139,13 @@ matrix load_image_augment_paths(char **paths, int n, int min, int max, int size,
 box_label *read_boxes(char *filename, int *n)
 {
     FILE *file = fopen(filename, "r");
-    if(!file) file_error(filename);
+    if (!file) {
+        printf("Can't open label file. (This can be normal only if you use MSCOCO): %s \n", filename);
+        //file_error(filename);
+        box_label *boxes = calloc(1, sizeof(box_label));
+        *n = 0;
+        return boxes;
+    }
     real x, y, h, w;
     int id;
     int count = 0;

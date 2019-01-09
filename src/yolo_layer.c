@@ -244,17 +244,22 @@ void backward_yolo_layer(const layer l, network net)
    axpy_cpu(l.batch*l.inputs, 1, l.delta, 1, net.delta, 1);
 }
 
-void correct_yolo_boxes(detection *dets, int n, int w, int h, int netw, int neth, int relative)
+void correct_yolo_boxes(detection *dets, int n, int w, int h, int netw, int neth, int relative, int letter)
 {
     int i;
     int new_w=0;
     int new_h=0;
-    if (((real)netw/w) < ((real)neth/h)) {
-        new_w = netw;
-        new_h = (h * netw)/w;
+    if (letter) {
+        if (((real)netw/w) < ((real)neth/h)) {
+            new_w = netw;
+            new_h = (h * netw)/w;
+        } else {
+            new_h = neth;
+            new_w = (w * neth)/h;
+        }
     } else {
+        new_w = netw;
         new_h = neth;
-        new_w = (w * neth)/h;
     }
     for (i = 0; i < n; ++i){
         box b = dets[i].bbox;
@@ -313,7 +318,7 @@ void avg_flipped_yolo(layer l)
     }
 }
 
-int get_yolo_detections(layer l, int w, int h, int netw, int neth, real thresh, int *map, int relative, detection *dets)
+int get_yolo_detections(layer l, int w, int h, int netw, int neth, float thresh, int *map, int relative, detection *dets, int letter)
 {
     int i,j,n;
     real *predictions = l.output;
@@ -338,7 +343,7 @@ int get_yolo_detections(layer l, int w, int h, int netw, int neth, real thresh, 
             ++count;
         }
     }
-    correct_yolo_boxes(dets, count, w, h, netw, neth, relative);
+    correct_yolo_boxes(dets, count, w, h, netw, neth, relative, letter);
     return count;
 }
 

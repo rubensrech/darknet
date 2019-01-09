@@ -713,7 +713,7 @@ void load_weights_upto(network *net, char *filename, int start, int cutoff);
 
 void zero_objectness(layer l);
 void get_region_detections(layer l, int w, int h, int netw, int neth, real thresh, int *map, real tree_thresh, int relative, detection *dets);
-int get_yolo_detections(layer l, int w, int h, int netw, int neth, real thresh, int *map, int relative, detection *dets);
+int get_yolo_detections(layer l, int w, int h, int netw, int neth, float thresh, int *map, int relative, detection *dets, int letter);
 void free_network(network *net);
 void set_batch_network(network *net, int b);
 void set_temp_network(network *net, real t);
@@ -769,7 +769,7 @@ int network_width(network *net);
 int network_height(network *net);
 real *network_predict_image(network *net, image im);
 void network_detect(network *net, image im, real thresh, real hier_thresh, real nms, detection *dets);
-detection *get_network_boxes(network *net, int w, int h, real thresh, real hier, int *map, int relative, int *num);
+detection *get_network_boxes(network *net, int w, int h, float thresh, float hier, int *map, int relative, int *num, int letter);
 void free_detections(detection *dets, int n);
 
 void reset_network_state(network *net, int b);
