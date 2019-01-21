@@ -936,7 +936,7 @@ void engine_go(char *filename, char *weightfile, int mcts_iters, real secs, real
         } else if (!strcmp(buff, "komi")){
             real komi = 0;
 
-#ifdef DOUBLE
+#if REAL == DOUBLE
     #define FORMAT_4 "%lf"
 #else
     #define FORMAT_4 "%f"
@@ -1209,7 +1209,7 @@ real score_game(real *board)
     while((l = fgetl(p))){
         fprintf(stderr, "%s  \t", l);
 
-#ifdef DOUBLE
+#if REAL == DOUBLE
     #define FORMAT_5 "= %c+%lf"
 #else
     #define FORMAT_5 "= %c+%f"

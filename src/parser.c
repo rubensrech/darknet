@@ -114,7 +114,7 @@ void parse_data(char *data, real *a, int n)
         if(*next == '\0') done = 1;
         *next = '\0';
 
-#ifdef DOUBLE
+#if REAL == DOUBLE
     #define FORMAT_4 "%lg"
 #else
     #define FORMAT_4 "%g"
@@ -1112,7 +1112,7 @@ void transpose_matrix(real *a, int rows, int cols)
 
 void load_connected_weights(layer l, FILE *fp, int transpose)
 {
-#if defined(DOUBLE) && defined(FLOAT_WEIGHTS) 
+#if (defined(DOUBLE) || defined(HALF)) && defined(FLOAT_WEIGHTS) 
     float *tmpBuffer0 = calloc(l.outputs, sizeof(float));
     float *tmpBuffer1 = calloc(l.outputs*l.inputs, sizeof(float));
     int j;
@@ -1133,7 +1133,7 @@ void load_connected_weights(layer l, FILE *fp, int transpose)
     //printf("Weights: %f mean %f variance\n", mean_array(l.weights, l.outputs*l.inputs), variance_array(l.weights, l.outputs*l.inputs));
     if (l.batch_normalize && (!l.dontloadscales)){
 
-#if defined(DOUBLE) && defined(FLOAT_WEIGHTS) 
+#if (defined(DOUBLE) || defined(HALF)) && defined(FLOAT_WEIGHTS)  
         fread(tmpBuffer0, sizeof(float), l.outputs, fp);
         for (j = 0; j < l.outputs; j++) l.scales[j] = tmpBuffer0[j];
         fread(tmpBuffer0, sizeof(float), l.outputs, fp);
@@ -1150,7 +1150,7 @@ void load_connected_weights(layer l, FILE *fp, int transpose)
         //printf("rolling_variance: %f mean %f variance\n", mean_array(l.rolling_variance, l.outputs), variance_array(l.rolling_variance, l.outputs));
     }
 
-#if defined(DOUBLE) && defined(FLOAT_WEIGHTS) 
+#if (defined(DOUBLE) || defined(HALF)) && defined(FLOAT_WEIGHTS) 
         free(tmpBuffer0);
         free(tmpBuffer1);
 #endif
@@ -1164,7 +1164,7 @@ void load_connected_weights(layer l, FILE *fp, int transpose)
 
 void load_batchnorm_weights(layer l, FILE *fp)
 {
-#if defined(DOUBLE) && defined(FLOAT_WEIGHTS) 
+#if (defined(DOUBLE) || defined(HALF)) && defined(FLOAT_WEIGHTS) 
     float *tmpBuffer = calloc(l.c, sizeof(float));
     int j;
 
@@ -1191,7 +1191,7 @@ void load_batchnorm_weights(layer l, FILE *fp)
 
 void load_convolutional_weights_binary(layer l, FILE *fp)
 {
-#if defined(DOUBLE) && defined(FLOAT_WEIGHTS) 
+#if (defined(DOUBLE) || defined(HALF)) && defined(FLOAT_WEIGHTS) 
     float *tmpBuffer = calloc(l.n, sizeof(float));
     int x;
 
@@ -1222,7 +1222,7 @@ void load_convolutional_weights_binary(layer l, FILE *fp)
     for(i = 0; i < l.n; ++i){
         real mean = 0;
         
-#if defined(DOUBLE) && defined(FLOAT_WEIGHTS) 
+#if (defined(DOUBLE) || defined(HALF)) && defined(FLOAT_WEIGHTS) 
         float tmpFloat;
         fread(&tmpFloat, sizeof(float), 1, fp);
         mean = tmpFloat;
@@ -1257,7 +1257,7 @@ void load_convolutional_weights(layer l, FILE *fp)
     int num = l.c/l.groups*l.n*l.size*l.size;
 
 
-#if defined(DOUBLE) && defined(FLOAT_WEIGHTS) 
+#if (defined(DOUBLE) || defined(HALF)) && defined(FLOAT_WEIGHTS) 
     float *tmpBuffer0 = calloc(l.n, sizeof(float));
     float *tmpBuffer1 = calloc(num, sizeof(float));
     int j;
@@ -1436,7 +1436,7 @@ void load_weights_upto(network *net, char *filename, int start, int cutoff)
             int locations = l.out_w*l.out_h;
             int size = l.size*l.size*l.c*l.n*locations;
 
-#if defined(DOUBLE) && defined(FLOAT_WEIGHTS) 
+#if (defined(DOUBLE) || defined(HALF)) && defined(FLOAT_WEIGHTS) 
             float *tmpBuffer0 = calloc(l.outputs, sizeof(float));
             float *tmpBuffer1 = calloc(size, sizeof(float));
             int j;

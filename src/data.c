@@ -152,7 +152,7 @@ box_label *read_boxes(char *filename, int *n)
     int size = 64;
     box_label *boxes = calloc(size, sizeof(box_label));
 
-#ifdef DOUBLE
+#if REAL == DOUBLE
     #define FORMAT_0 "%d %lf %lf %lf %lf"
 #else
     #define FORMAT_0 "%d %f %f %f %f"
@@ -623,7 +623,7 @@ matrix load_regression_labels_paths(char **paths, int n, int k)
 
         FILE *file = fopen(labelpath, "r");
 
-#ifdef DOUBLE
+#if REAL == DOUBLE
     #define FORMAT_1 "%lf"
 #else
     #define FORMAT_1 "%f"
@@ -966,7 +966,7 @@ data load_data_compare(int n, char **paths, int m, int classes, int w, int h)
         find_replace(imlabel1, "jpg", "txt", imlabel1);
         FILE *fp1 = fopen(imlabel1, "r");
 
-#ifdef DOUBLE
+#if REAL == DOUBLE
     #define FORMAT_2 "%d %lf"
 #else
     #define FORMAT_2 "%d %f"
@@ -980,7 +980,7 @@ data load_data_compare(int n, char **paths, int m, int classes, int w, int h)
         find_replace(imlabel2, "jpg", "txt", imlabel2);
         FILE *fp2 = fopen(imlabel2, "r");
 
-#ifdef DOUBLE
+#if REAL == DOUBLE
     #define FORMAT_3 "%d %lf"
 #else
     #define FORMAT_3 "%d %f"

@@ -40,7 +40,7 @@ __device__ real3 rgb_to_hsv_kernel(real3 rgb)
         }
         if (h < 0) h += 6;
     }
-#ifdef DOUBLE
+#if REAL == DOUBLE
     return make_double3(h, s, v);
 #else
     return make_float3(h, s, v);
@@ -81,7 +81,7 @@ __device__ real3 hsv_to_rgb_kernel(real3 hsv)
     r = (r < 0) ? 0 : ((r > 1) ? 1 : r);
     g = (g < 0) ? 0 : ((g > 1) ? 1 : g);
     b = (b < 0) ? 0 : ((b > 1) ? 1 : b);
-#ifdef DOUBLE
+#if REAL == DOUBLE
     return make_double3(r, g, b);
 #else
     return make_float3(r, g, b);
@@ -130,7 +130,7 @@ __global__ void levels_image_kernel(real *image, real *rand, int batch, int w, i
     real r = image[x + w*(y + h*0)];
     real g = image[x + w*(y + h*1)];
     real b = image[x + w*(y + h*2)];
-#ifdef DOUBLE
+#if REAL == DOUBLE
     real3 rgb = make_double3(r,g,b);
 #else
     real3 rgb = make_float3(r,g,b);

@@ -176,7 +176,7 @@ void gemm_gpu(int TA, int TB, int M, int N, int K, real ALPHA,
         real *C_gpu, int ldc)
 {
     cublasHandle_t handle = blas_handle();
-#ifdef DOUBLE
+#if REAL == DOUBLE
     cudaError_t status = cublasDgemm(handle, (TB ? CUBLAS_OP_T : CUBLAS_OP_N), 
             (TA ? CUBLAS_OP_T : CUBLAS_OP_N), N, M, K, &ALPHA, B_gpu, ldb, A_gpu, lda, &BETA, C_gpu, ldc);
 #else
