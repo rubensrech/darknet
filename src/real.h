@@ -34,6 +34,6 @@ typedef struct __device_builtin__ {
     real z;
 } real3;
 
-real3 make_real3();
+__inline__ real3 make_real3(real x, real y, real z);
 
 #endif
