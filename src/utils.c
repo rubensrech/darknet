@@ -43,13 +43,13 @@ int *read_intlist(char *gpu_list, int *ngpus, int d)
         for(i = 0; i < len; ++i){
             if (gpu_list[i] == ',') ++*ngpus;
         }
-        gpus = calloc(*ngpus, sizeof(int));
+        gpus = (int*)calloc(*ngpus, sizeof(int));
         for(i = 0; i < *ngpus; ++i){
             gpus[i] = atoi(gpu_list);
             gpu_list = strchr(gpu_list, ',')+1;
         }
     } else {
-        gpus = calloc(1, sizeof(real));
+        gpus = (int*)calloc(1, sizeof(int));
         *gpus = d;
         *ngpus = 1;
     }
@@ -65,7 +65,7 @@ int *read_map(char *filename)
     if(!file) file_error(filename);
     while((str=fgetl(file))){
         ++n;
-        map = realloc(map, n*sizeof(int));
+        map = (int*)realloc(map, n*sizeof(int));
         map[n-1] = atoi(str);
     }
     return map;
@@ -96,7 +96,7 @@ void shuffle(void *arr, size_t n, size_t size)
 
 int *random_index_order(int min, int max)
 {
-    int *inds = calloc(max-min, sizeof(int));
+    int *inds = (int*)calloc(max-min, sizeof(int));
     int i;
     for(i = min; i < max; ++i){
         inds[i] = i;
@@ -266,7 +266,7 @@ unsigned char *read_file(char *filename)
     size = ftell(fp);
     fseek(fp, 0, SEEK_SET); 
 
-    unsigned char *text = calloc(size+1, sizeof(char));
+    unsigned char *text = (unsigned char*)calloc(size+1, sizeof(char));
     fread(text, 1, size, fp);
     fclose(fp);
     return text;
@@ -336,7 +336,7 @@ char *fgetl(FILE *fp)
 {
     if(feof(fp)) return 0;
     size_t size = 512;
-    char *line = malloc(size*sizeof(char));
+    char *line = (char*)malloc(size*sizeof(char));
     if(!fgets(line, size, fp)){
         free(line);
         return 0;
@@ -347,7 +347,7 @@ char *fgetl(FILE *fp)
     while((line[curr-1] != '\n') && !feof(fp)){
         if(curr == size-1){
             size *= 2;
-            line = realloc(line, size*sizeof(char));
+            line = (char*)realloc(line, size*sizeof(char));
             if(!line) {
                 printf("%ld\n", size);
                 malloc_error();
@@ -422,7 +422,7 @@ void write_all(int fd, char *buffer, size_t bytes)
 
 char *copy_string(char *s)
 {
-    char *copy = malloc(strlen(s)+1);
+    char *copy = (char*)malloc(strlen(s)+1);
     strncpy(copy, s, strlen(s)+1);
     return copy;
 }
@@ -458,7 +458,7 @@ int count_fields(char *line)
 
 real *parse_fields(char *line, int n)
 {
-    real *field = calloc(n, sizeof(real));
+    real *field = (real*)calloc(n, sizeof(real));
     char *c, *p, *end;
     int count = 0;
     int done = 0;
@@ -715,9 +715,9 @@ real rand_scale(real s)
 real **one_hot_encode(real *a, int n, int k)
 {
     int i;
-    real **t = calloc(n, sizeof(real*));
+    real **t = (real**)calloc(n, sizeof(real*));
     for(i = 0; i < n; ++i){
-        t[i] = calloc(k, sizeof(real));
+        t[i] = (real*)calloc(k, sizeof(real));
         int index = (int)a[i];
         t[i][index] = 1;
     }
@@ -728,7 +728,7 @@ real **one_hot_encode(real *a, int n, int k)
 
 void trim(char *str)
 {
-    char *buffer = calloc(8192, sizeof(char));
+    char *buffer = (char*)calloc(8192, sizeof(char));
     sprintf(buffer, "%s", str);
 
     char *p = buffer;
@@ -746,7 +746,7 @@ void trim(char *str)
 
 void find_replace_extension(char *str, char *orig, char *rep, char *output)
 {
-    char *buffer = calloc(8192, sizeof(char));
+    char *buffer = (char*)calloc(8192, sizeof(char));
 
     sprintf(buffer, "%s", str);
     char *p = strstr(buffer, orig);
@@ -765,12 +765,12 @@ void find_replace_extension(char *str, char *orig, char *rep, char *output)
 
 void replace_image_to_label(char *input_path, char *output_path)
 {
-    find_replace(input_path, "/images/train2014/", "/labels/train2014/", output_path);    // COCO
-    find_replace(output_path, "/images/val2014/", "/labels/val2014/", output_path);        // COCO
-    find_replace(output_path, "/JPEGImages/", "/labels/", output_path);    // PascalVOC
-    find_replace(output_path, "\\images\\train2014\\", "\\labels\\train2014\\", output_path);    // COCO
-    find_replace(output_path, "\\images\\val2014\\", "\\labels\\val2014\\", output_path);        // COCO
-    find_replace(output_path, "\\JPEGImages\\", "\\labels\\", output_path);    // PascalVOC
+    find_replace(input_path, (char*)"/images/train2014/", (char*)"/labels/train2014/", output_path);    // COCO
+    find_replace(output_path, (char*)"/images/val2014/", (char*)"/labels/val2014/", output_path);        // COCO
+    find_replace(output_path, (char*)"/JPEGImages/", (char*)"/labels/", output_path);    // PascalVOC
+    find_replace(output_path, (char*)"\\images\\train2014\\", (char*)"\\labels\\train2014\\", output_path);    // COCO
+    find_replace(output_path, (char*)"\\images\\val2014\\", (char*)"\\labels\\val2014\\", output_path);        // COCO
+    find_replace(output_path, (char*)"\\JPEGImages\\", (char*)"\\labels\\", output_path);    // PascalVOC
     //find_replace(output_path, "/images/", "/labels/", output_path);    // COCO
     //find_replace(output_path, "/VOC2007/JPEGImages/", "/VOC2007/labels/", output_path);        // PascalVOC
     //find_replace(output_path, "/VOC2012/JPEGImages/", "/VOC2012/labels/", output_path);        // PascalVOC
@@ -779,14 +779,14 @@ void replace_image_to_label(char *input_path, char *output_path)
     trim(output_path);
 
     // replace only ext of files
-    find_replace_extension(output_path, ".jpg", ".txt", output_path);
-    find_replace_extension(output_path, ".JPG", ".txt", output_path); // error
-    find_replace_extension(output_path, ".jpeg", ".txt", output_path);
-    find_replace_extension(output_path, ".JPEG", ".txt", output_path);
-    find_replace_extension(output_path, ".png", ".txt", output_path);
-    find_replace_extension(output_path, ".PNG", ".txt", output_path);
-    find_replace_extension(output_path, ".bmp", ".txt", output_path);
-    find_replace_extension(output_path, ".BMP", ".txt", output_path);
-    find_replace_extension(output_path, ".ppm", ".txt", output_path);
-    find_replace_extension(output_path, ".PPM", ".txt", output_path);
+    find_replace_extension(output_path, (char*)".jpg", (char*)".txt", output_path);
+    find_replace_extension(output_path, (char*)".JPG", (char*)".txt", output_path); // error
+    find_replace_extension(output_path, (char*)".jpeg", (char*)".txt", output_path);
+    find_replace_extension(output_path, (char*)".JPEG", (char*)".txt", output_path);
+    find_replace_extension(output_path, (char*)".png", (char*)".txt", output_path);
+    find_replace_extension(output_path, (char*)".PNG", (char*)".txt", output_path);
+    find_replace_extension(output_path, (char*)".bmp", (char*)".txt", output_path);
+    find_replace_extension(output_path, (char*)".BMP", (char*)".txt", output_path);
+    find_replace_extension(output_path, (char*)".ppm", (char*)".txt", output_path);
+    find_replace_extension(output_path, (char*)".PPM", (char*)".txt", output_path);
 }
