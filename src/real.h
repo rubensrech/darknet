@@ -10,9 +10,6 @@
     #define REAL_MAX __DBL_MAX__
     #define CUDNN_DATA_REAL CUDNN_DATA_DOUBLE
 
-    #ifdef GPU
-        typedef double3 real3;
-    #endif
 #elif REAL == HALF
     #include <cuda_fp16.h>
     #include "half.hpp"
@@ -20,18 +17,23 @@
     typedef half real;
     #define REAL_MAX real(65504)
     #define CUDNN_DATA_REAL CUDNN_DATA_HALF
-    
-    #ifdef GPU
-        typedef half3 real3;
-    #endif
+
 #else
     typedef float real;
     #define REAL_MAX __FLT_MAX__
     #define CUDNN_DATA_REAL CUDNN_DATA_FLOAT
-    
-    #ifdef GPU
-        typedef float3 real3;
-    #endif
+
 #endif
+
+/* real3
+ * Based on vector_types.h
+ */
+typedef struct __device_builtin__ {
+    real x;
+    real y;
+    real z;
+} real3;
+
+real3 make_real3();
 
 #endif
