@@ -52,7 +52,7 @@ void time_random_matrix(int TA, int TB, int m, int k, int n)
     int i;
     clock_t start = clock(), end;
     for(i = 0; i<10; ++i){
-        gemm_cpu(TA,TB,m,n,k,1.0,a,lda,b,ldb,1.0,c,n);
+        gemm_cpu(TA,TB,m,n,k,real(1),a,lda,b,ldb,real(1),c,n);
     }
     end = clock();
     printf("Matrix Multiplication %dx%d * %dx%d, TA=%d, TB=%d: %lf ms\n",m,k,k,n, TA, TB, (real)(end-start)/CLOCKS_PER_SEC);
@@ -177,10 +177,10 @@ void gemm_gpu(int TA, int TB, int M, int N, int K, real ALPHA,
 {
     cublasHandle_t handle = blas_handle();
 #if REAL == DOUBLE
-    cudaError_t status = cublasDgemm(handle, (TB ? CUBLAS_OP_T : CUBLAS_OP_N), 
+    cudaError_t status = (cudaError_t)cublasDgemm(handle, (TB ? CUBLAS_OP_T : CUBLAS_OP_N), 
             (TA ? CUBLAS_OP_T : CUBLAS_OP_N), N, M, K, &ALPHA, B_gpu, ldb, A_gpu, lda, &BETA, C_gpu, ldc);
 #else
-    cudaError_t status = cublasSgemm(handle, (TB ? CUBLAS_OP_T : CUBLAS_OP_N), 
+    cudaError_t status = (cudaError_t)cublasSgemm(handle, (TB ? CUBLAS_OP_T : CUBLAS_OP_N), 
             (TA ? CUBLAS_OP_T : CUBLAS_OP_N), N, M, K, &ALPHA, B_gpu, ldb, A_gpu, lda, &BETA, C_gpu, ldc);
 #endif
     check_error(status);
