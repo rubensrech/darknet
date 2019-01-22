@@ -9,6 +9,17 @@ extern "C" {
 #include "image.h"
 }
 
+/* make_real3
+ * Based on CUDA vector_functions.h
+ */
+ __device__ real3 make_real3(real_device x, real_device y, real_device z) {
+    real3 t;
+    t.x = x;
+    t.y = y;
+    t.z = z;
+    return t;
+}
+
 __device__ real get_pixel_kernel(real *image, int w, int h, int x, int y, int c)
 {
     if(x < 0 || x >= w || y < 0 || y >= h) return 0;
@@ -124,7 +135,7 @@ __global__ void levels_image_kernel(real *image, real *rand, int batch, int w, i
     real b = image[x + w*(y + h*2)];
 
     real3 rgb = make_real3(r,g,b);
-    
+
     if(train){
         real3 hsv = rgb_to_hsv_kernel(rgb);
         hsv.y *= saturation;

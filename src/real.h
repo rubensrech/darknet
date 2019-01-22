@@ -7,6 +7,7 @@
 
 #if REAL == DOUBLE
     typedef double real;
+    typedef double real_device;
     #define REAL_MAX __DBL_MAX__
     #define CUDNN_DATA_REAL CUDNN_DATA_DOUBLE
 
@@ -15,11 +16,13 @@
     #include "half.hpp"
 
     typedef half real;
+    typedef __half real_device;
     #define REAL_MAX real(65504)
     #define CUDNN_DATA_REAL CUDNN_DATA_HALF
 
 #else
     typedef float real;
+    typedef float real_device;
     #define REAL_MAX __FLT_MAX__
     #define CUDNN_DATA_REAL CUDNN_DATA_FLOAT
 
@@ -33,7 +36,5 @@ typedef struct __device_builtin__ {
     real y;
     real z;
 } real3;
-
-real3 make_real3(real x, real y, real z);
 
 #endif
