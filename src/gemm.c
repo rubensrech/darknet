@@ -30,7 +30,7 @@ void gemm_bin(int M, int N, int K, real ALPHA,
 real *random_matrix(int rows, int cols)
 {
     int i;
-    real *m = calloc(rows*cols, sizeof(real));
+    real *m = (real*)calloc(rows*cols, sizeof(real));
     for(i = 0; i < rows*cols; ++i){
         m[i] = (real)rand()/RAND_MAX;
     }
@@ -52,7 +52,7 @@ void time_random_matrix(int TA, int TB, int m, int k, int n)
     int i;
     clock_t start = clock(), end;
     for(i = 0; i<10; ++i){
-        gemm_cpu(TA,TB,m,n,k,1,a,lda,b,ldb,1,c,n);
+        gemm_cpu(TA,TB,m,n,k,1.0,a,lda,b,ldb,1.0,c,n);
     }
     end = clock();
     printf("Matrix Multiplication %dx%d * %dx%d, TA=%d, TB=%d: %lf ms\n",m,k,k,n, TA, TB, (real)(end-start)/CLOCKS_PER_SEC);
@@ -272,7 +272,7 @@ void test_gpu_accuracy(int TA, int TB, int m, int k, int n)
     //printf("GPU\n");
     //pm(m, n, c_gpu);
 
-    gemm_cpu(TA,TB,m,n,k,1,a,lda,b,ldb,1,c,n);
+    gemm_cpu(TA,TB,m,n,k,1.0,a,lda,b,ldb,1.0,c,n);
     //printf("\n\nCPU\n");
     //pm(m, n, c);
     double sse = 0;
