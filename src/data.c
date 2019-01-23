@@ -41,7 +41,7 @@ char **get_random_paths_indexes(char **paths, int n, int m, int *indexes)
 
 char **get_random_paths(char **paths, int n, int m)
 {
-    char **random_paths = calloc(n, sizeof(char*));
+    char **random_paths = (char**)calloc(n, sizeof(char*));
     int i;
     pthread_mutex_lock(&mutex);
     for(i = 0; i < n; ++i){
@@ -55,7 +55,7 @@ char **get_random_paths(char **paths, int n, int m)
 
 char **find_replace_paths(char **paths, int n, char *find, char *replace)
 {
-    char **replace_paths = calloc(n, sizeof(char*));
+    char **replace_paths = (char**)calloc(n, sizeof(char*));
     int i;
     for(i = 0; i < n; ++i){
         char replaced[4096];
@@ -70,7 +70,7 @@ matrix load_image_paths_gray(char **paths, int n, int w, int h)
     int i;
     matrix X;
     X.rows = n;
-    X.vals = calloc(X.rows, sizeof(real*));
+    X.vals = (real**)calloc(X.rows, sizeof(real*));
     X.cols = 0;
 
     for(i = 0; i < n; ++i){
@@ -91,7 +91,7 @@ matrix load_image_paths(char **paths, int n, int w, int h)
     int i;
     matrix X;
     X.rows = n;
-    X.vals = calloc(X.rows, sizeof(real*));
+    X.vals = (real**)calloc(X.rows, sizeof(real*));
     X.cols = 0;
 
     for(i = 0; i < n; ++i){
@@ -107,7 +107,7 @@ matrix load_image_augment_paths(char **paths, int n, int min, int max, int size,
     int i;
     matrix X;
     X.rows = n;
-    X.vals = calloc(X.rows, sizeof(real*));
+    X.vals = (real**)calloc(X.rows, sizeof(real*));
     X.cols = 0;
 
     for(i = 0; i < n; ++i){
@@ -142,7 +142,7 @@ box_label *read_boxes(char *filename, int *n)
     if (!file) {
         printf("Can't open label file. (This can be normal only if you use MSCOCO): %s \n", filename);
         //file_error(filename);
-        box_label *boxes = calloc(1, sizeof(box_label));
+        box_label *boxes = (box_label*)calloc(1, sizeof(box_label));
         *n = 0;
         return boxes;
     }
@@ -150,7 +150,7 @@ box_label *read_boxes(char *filename, int *n)
     int id;
     int count = 0;
     int size = 64;
-    box_label *boxes = calloc(size, sizeof(box_label));
+    box_label *boxes = (box_label*)calloc(size, sizeof(box_label));
 
 #if REAL == DOUBLE
     #define FORMAT_0 "%d %lf %lf %lf %lf"
@@ -161,7 +161,7 @@ box_label *read_boxes(char *filename, int *n)
     while(fscanf(file, FORMAT_0, &id, &x, &y, &w, &h) == 5){
         if(count == size) {
             size = size * 2;
-            boxes = realloc(boxes, size*sizeof(box_label));
+            boxes = (box_label*)realloc(boxes, size*sizeof(box_label));
         }
         boxes[count].id = id;
         boxes[count].x = x;
@@ -230,11 +230,11 @@ void correct_boxes(box_label *boxes, int n, real dx, real dy, real sx, real sy, 
 void fill_truth_swag(char *path, real *truth, int classes, int flip, real dx, real dy, real sx, real sy)
 {
     char labelpath[4096];
-    find_replace(path, "images", "labels", labelpath);
-    find_replace(labelpath, "JPEGImages", "labels", labelpath);
-    find_replace(labelpath, ".jpg", ".txt", labelpath);
-    find_replace(labelpath, ".JPG", ".txt", labelpath);
-    find_replace(labelpath, ".JPEG", ".txt", labelpath);
+    find_replace(path, (char*)"images", (char*)"labels", labelpath);
+    find_replace(labelpath, (char*)"JPEGImages", (char*)"labels", labelpath);
+    find_replace(labelpath, (char*)".jpg", (char*)".txt", labelpath);
+    find_replace(labelpath, (char*)".JPG", (char*)".txt", labelpath);
+    find_replace(labelpath, (char*)".JPEG", (char*)".txt", labelpath);
 
     int count = 0;
     box_label *boxes = read_boxes(labelpath, &count);
@@ -268,13 +268,13 @@ void fill_truth_swag(char *path, real *truth, int classes, int flip, real dx, re
 void fill_truth_region(char *path, real *truth, int classes, int num_boxes, int flip, real dx, real dy, real sx, real sy)
 {
     char labelpath[4096];
-    find_replace(path, "images", "labels", labelpath);
-    find_replace(labelpath, "JPEGImages", "labels", labelpath);
+    find_replace(path, (char*)"images", (char*)"labels", labelpath);
+    find_replace(labelpath, (char*)"JPEGImages", (char*)"labels", labelpath);
 
-    find_replace(labelpath, ".jpg", ".txt", labelpath);
-    find_replace(labelpath, ".png", ".txt", labelpath);
-    find_replace(labelpath, ".JPG", ".txt", labelpath);
-    find_replace(labelpath, ".JPEG", ".txt", labelpath);
+    find_replace(labelpath, (char*)".jpg", (char*)".txt", labelpath);
+    find_replace(labelpath, (char*)".png", (char*)".txt", labelpath);
+    find_replace(labelpath, (char*)".JPG", (char*)".txt", labelpath);
+    find_replace(labelpath, (char*)".JPEG", (char*)".txt", labelpath);
     int count = 0;
     box_label *boxes = read_boxes(labelpath, &count);
     randomize_boxes(boxes, count);
@@ -377,11 +377,11 @@ box bound_image(image im)
 void fill_truth_iseg(char *path, int num_boxes, real *truth, int classes, int w, int h, augment_args aug, int flip, int mw, int mh)
 {
     char labelpath[4096];
-    find_replace(path, "images", "mask", labelpath);
-    find_replace(labelpath, "JPEGImages", "mask", labelpath);
-    find_replace(labelpath, ".jpg", ".txt", labelpath);
-    find_replace(labelpath, ".JPG", ".txt", labelpath);
-    find_replace(labelpath, ".JPEG", ".txt", labelpath);
+    find_replace(path, (char*)"images", (char*)"mask", labelpath);
+    find_replace(labelpath, (char*)"JPEGImages", (char*)"mask", labelpath);
+    find_replace(labelpath, (char*)".jpg", (char*)".txt", labelpath);
+    find_replace(labelpath, (char*)".JPG", (char*)".txt", labelpath);
+    find_replace(labelpath, (char*)".JPEG", (char*)".txt", labelpath);
     FILE *file = fopen(labelpath, "r");
     if(!file) file_error(labelpath);
     char buff[32788];
@@ -415,11 +415,11 @@ void fill_truth_iseg(char *path, int num_boxes, real *truth, int classes, int w,
 void fill_truth_mask(char *path, int num_boxes, real *truth, int classes, int w, int h, augment_args aug, int flip, int mw, int mh)
 {
     char labelpath[4096];
-    find_replace(path, "images", "mask", labelpath);
-    find_replace(labelpath, "JPEGImages", "mask", labelpath);
-    find_replace(labelpath, ".jpg", ".txt", labelpath);
-    find_replace(labelpath, ".JPG", ".txt", labelpath);
-    find_replace(labelpath, ".JPEG", ".txt", labelpath);
+    find_replace(path, (char*)"images", (char*)"mask", labelpath);
+    find_replace(labelpath, (char*)"JPEGImages", (char*)"mask", labelpath);
+    find_replace(labelpath, (char*)".jpg", (char*)".txt", labelpath);
+    find_replace(labelpath, (char*)".JPG", (char*)".txt", labelpath);
+    find_replace(labelpath, (char*)".JPEG", (char*)".txt", labelpath);
     FILE *file = fopen(labelpath, "r");
     if(!file) file_error(labelpath);
     char buff[32788];
@@ -460,14 +460,14 @@ void fill_truth_mask(char *path, int num_boxes, real *truth, int classes, int w,
 void fill_truth_detection(char *path, int num_boxes, real *truth, int classes, int flip, real dx, real dy, real sx, real sy)
 {
     char labelpath[4096];
-    find_replace(path, "images", "labels", labelpath);
-    find_replace(labelpath, "JPEGImages", "labels", labelpath);
+    find_replace(path, (char*)"images", (char*)"labels", labelpath);
+    find_replace(labelpath, (char*)"JPEGImages", (char*)"labels", labelpath);
 
-    find_replace(labelpath, "raw", "labels", labelpath);
-    find_replace(labelpath, ".jpg", ".txt", labelpath);
-    find_replace(labelpath, ".png", ".txt", labelpath);
-    find_replace(labelpath, ".JPG", ".txt", labelpath);
-    find_replace(labelpath, ".JPEG", ".txt", labelpath);
+    find_replace(labelpath, (char*)"raw", (char*)"labels", labelpath);
+    find_replace(labelpath, (char*)".jpg", (char*)".txt", labelpath);
+    find_replace(labelpath, (char*)".png", (char*)".txt", labelpath);
+    find_replace(labelpath, (char*)".JPG", (char*)".txt", labelpath);
+    find_replace(labelpath, (char*)".JPEG", (char*)".txt", labelpath);
     int count = 0;
     box_label *boxes = read_boxes(labelpath, &count);
     randomize_boxes(boxes, count);
@@ -606,20 +606,20 @@ matrix load_regression_labels_paths(char **paths, int n, int k)
     int i,j;
     for(i = 0; i < n; ++i){
         char labelpath[4096];
-        find_replace(paths[i], "images", "labels", labelpath);
-        find_replace(labelpath, "JPEGImages", "labels", labelpath);
-        find_replace(labelpath, ".BMP", ".txt", labelpath);
-        find_replace(labelpath, ".JPEG", ".txt", labelpath);
-        find_replace(labelpath, ".JPG", ".txt", labelpath);
-        find_replace(labelpath, ".JPeG", ".txt", labelpath);
-        find_replace(labelpath, ".Jpeg", ".txt", labelpath);
-        find_replace(labelpath, ".PNG", ".txt", labelpath);
-        find_replace(labelpath, ".TIF", ".txt", labelpath);
-        find_replace(labelpath, ".bmp", ".txt", labelpath);
-        find_replace(labelpath, ".jpeg", ".txt", labelpath);
-        find_replace(labelpath, ".jpg", ".txt", labelpath);
-        find_replace(labelpath, ".png", ".txt", labelpath);
-        find_replace(labelpath, ".tif", ".txt", labelpath);
+        find_replace(paths[i], (char*)"images", (char*)"labels", labelpath);
+        find_replace(labelpath, (char*)"JPEGImages", (char*)"labels", labelpath);
+        find_replace(labelpath, (char*)".BMP", (char*)".txt", labelpath);
+        find_replace(labelpath, (char*)".JPEG", (char*)".txt", labelpath);
+        find_replace(labelpath, (char*)".JPG", (char*)".txt", labelpath);
+        find_replace(labelpath, (char*)".JPeG", (char*)".txt", labelpath);
+        find_replace(labelpath, (char*)".Jpeg", (char*)".txt", labelpath);
+        find_replace(labelpath, (char*)".PNG", (char*)".txt", labelpath);
+        find_replace(labelpath, (char*)".TIF", (char*)".txt", labelpath);
+        find_replace(labelpath, (char*)".bmp", (char*)".txt", labelpath);
+        find_replace(labelpath, (char*)".jpeg", (char*)".txt", labelpath);
+        find_replace(labelpath, (char*)".jpg", (char*)".txt", labelpath);
+        find_replace(labelpath, (char*)".png", (char*)".txt", labelpath);
+        find_replace(labelpath, (char*)".tif", (char*)".txt", labelpath);
 
         FILE *file = fopen(labelpath, "r");
 
@@ -657,8 +657,8 @@ matrix load_tags_paths(char **paths, int n, int k)
     //int count = 0;
     for(i = 0; i < n; ++i){
         char label[4096];
-        find_replace(paths[i], "images", "labels", label);
-        find_replace(label, ".jpg", ".txt", label);
+        find_replace(paths[i], (char*)"images", (char*)"labels", label);
+        find_replace(label, (char*)".jpg", (char*)".txt", label);
         FILE *file = fopen(label, "r");
         if (!file) continue;
         //++count;
@@ -696,11 +696,11 @@ void free_data(data d)
 image get_segmentation_image(char *path, int w, int h, int classes)
 {
     char labelpath[4096];
-    find_replace(path, "images", "mask", labelpath);
-    find_replace(labelpath, "JPEGImages", "mask", labelpath);
-    find_replace(labelpath, ".jpg", ".txt", labelpath);
-    find_replace(labelpath, ".JPG", ".txt", labelpath);
-    find_replace(labelpath, ".JPEG", ".txt", labelpath);
+    find_replace(path, (char*)"images", (char*)"mask", labelpath);
+    find_replace(labelpath, (char*)"JPEGImages", (char*)"mask", labelpath);
+    find_replace(labelpath, (char*)".jpg", (char*)".txt", labelpath);
+    find_replace(labelpath, (char*)".JPG", (char*)".txt", labelpath);
+    find_replace(labelpath, (char*)".JPEG", (char*)".txt", labelpath);
     image mask = make_image(w, h, classes);
     FILE *file = fopen(labelpath, "r");
     if(!file) file_error(labelpath);
@@ -723,11 +723,11 @@ image get_segmentation_image(char *path, int w, int h, int classes)
 image get_segmentation_image2(char *path, int w, int h, int classes)
 {
     char labelpath[4096];
-    find_replace(path, "images", "mask", labelpath);
-    find_replace(labelpath, "JPEGImages", "mask", labelpath);
-    find_replace(labelpath, ".jpg", ".txt", labelpath);
-    find_replace(labelpath, ".JPG", ".txt", labelpath);
-    find_replace(labelpath, ".JPEG", ".txt", labelpath);
+    find_replace(path, (char*)"images", (char*)"mask", labelpath);
+    find_replace(labelpath, (char*)"JPEGImages", (char*)"mask", labelpath);
+    find_replace(labelpath, (char*)".jpg", (char*)".txt", labelpath);
+    find_replace(labelpath, (char*)".JPG", (char*)".txt", labelpath);
+    find_replace(labelpath, (char*)".JPEG", (char*)".txt", labelpath);
     image mask = make_image(w, h, classes+1);
     int i;
     for(i = 0; i < w*h; ++i){
@@ -762,13 +762,13 @@ data load_data_seg(int n, char **paths, int m, int w, int h, int classes, int mi
     d.shallow = 0;
 
     d.X.rows = n;
-    d.X.vals = calloc(d.X.rows, sizeof(real*));
+    d.X.vals = (real**)calloc(d.X.rows, sizeof(real*));
     d.X.cols = h*w*3;
 
 
     d.y.rows = n;
     d.y.cols = h*w*classes/div/div;
-    d.y.vals = calloc(d.X.rows, sizeof(real*));
+    d.y.vals = (real**)calloc(d.X.rows, sizeof(real*));
 
     for(i = 0; i < n; ++i){
         image orig = load_image_color(random_paths[i], 0, 0);
@@ -810,7 +810,7 @@ data load_data_iseg(int n, char **paths, int m, int w, int h, int classes, int b
     d.shallow = 0;
 
     d.X.rows = n;
-    d.X.vals = calloc(d.X.rows, sizeof(real*));
+    d.X.vals = (real**)calloc(d.X.rows, sizeof(real*));
     d.X.cols = h*w*3;
 
     d.y = make_matrix(n, (((w/div)*(h/div))+1)*boxes);
@@ -850,7 +850,7 @@ data load_data_mask(int n, char **paths, int m, int w, int h, int classes, int b
     d.shallow = 0;
 
     d.X.rows = n;
-    d.X.vals = calloc(d.X.rows, sizeof(real*));
+    d.X.vals = (real**)calloc(d.X.rows, sizeof(real*));
     d.X.cols = h*w*3;
 
     d.y = make_matrix(n, (coords+1)*boxes);
@@ -890,7 +890,7 @@ data load_data_region(int n, char **paths, int m, int w, int h, int size, int cl
     d.shallow = 0;
 
     d.X.rows = n;
-    d.X.vals = calloc(d.X.rows, sizeof(real*));
+    d.X.vals = (real**)calloc(d.X.rows, sizeof(real*));
     d.X.cols = h*w*3;
 
 
@@ -944,7 +944,7 @@ data load_data_compare(int n, char **paths, int m, int classes, int w, int h)
     d.shallow = 0;
 
     d.X.rows = n;
-    d.X.vals = calloc(d.X.rows, sizeof(real*));
+    d.X.vals = (real**)calloc(d.X.rows, sizeof(real*));
     d.X.cols = h*w*6;
 
     int k = 2*(classes);
@@ -953,7 +953,7 @@ data load_data_compare(int n, char **paths, int m, int classes, int w, int h)
         image im1 = load_image_color(paths[i*2],   w, h);
         image im2 = load_image_color(paths[i*2+1], w, h);
 
-        d.X.vals[i] = calloc(d.X.cols, sizeof(real));
+        d.X.vals[i] = (real*)calloc(d.X.cols, sizeof(real));
         memcpy(d.X.vals[i],         im1.data, h*w*3*sizeof(real));
         memcpy(d.X.vals[i] + h*w*3, im2.data, h*w*3*sizeof(real));
 
@@ -962,8 +962,8 @@ data load_data_compare(int n, char **paths, int m, int classes, int w, int h)
 
         char imlabel1[4096];
         char imlabel2[4096];
-        find_replace(paths[i*2],   "imgs", "labels", imlabel1);
-        find_replace(imlabel1, "jpg", "txt", imlabel1);
+        find_replace(paths[i*2], (char*)"imgs", (char*)"labels", imlabel1);
+        find_replace(imlabel1, (char*)"jpg", (char*)"txt", imlabel1);
         FILE *fp1 = fopen(imlabel1, "r");
 
 #if REAL == DOUBLE
@@ -976,8 +976,8 @@ data load_data_compare(int n, char **paths, int m, int classes, int w, int h)
             if (d.y.vals[i][2*id] < iou) d.y.vals[i][2*id] = iou;
         }
 
-        find_replace(paths[i*2+1], "imgs", "labels", imlabel2);
-        find_replace(imlabel2, "jpg", "txt", imlabel2);
+        find_replace(paths[i*2+1], (char*)"imgs", (char*)"labels", imlabel2);
+        find_replace(imlabel2, (char*)"jpg", (char*)"txt", imlabel2);
         FILE *fp2 = fopen(imlabel2, "r");
 
 #if REAL == DOUBLE
@@ -1027,7 +1027,7 @@ data load_data_swag(char **paths, int n, int classes, real jitter)
     d.h = h;
 
     d.X.rows = 1;
-    d.X.vals = calloc(d.X.rows, sizeof(real*));
+    d.X.vals = (real**)calloc(d.X.rows, sizeof(real*));
     d.X.cols = h*w*3;
 
     int k = (4+classes)*90;
@@ -1073,7 +1073,7 @@ data load_data_detection(int n, char **paths, int m, int w, int h, int boxes, in
     d.shallow = 0;
 
     d.X.rows = n;
-    d.X.vals = calloc(d.X.rows, sizeof(real*));
+    d.X.vals = (real**)calloc(d.X.rows, sizeof(real*));
     d.X.cols = h*w*3;
 
     d.y = make_matrix(n, 5*boxes);
@@ -1167,7 +1167,7 @@ void *load_thread(void *ptr)
 pthread_t load_data_in_thread(load_args args)
 {
     pthread_t thread;
-    struct load_args *ptr = calloc(1, sizeof(struct load_args));
+    struct load_args *ptr = (struct load_args *)calloc(1, sizeof(struct load_args));
     *ptr = args;
     if(pthread_create(&thread, 0, load_thread, ptr)) error("Thread creation failed");
     return thread;
@@ -1181,8 +1181,8 @@ void *load_threads(void *ptr)
     data *out = args.d;
     int total = args.n;
     free(ptr);
-    data *buffers = calloc(args.threads, sizeof(data));
-    pthread_t *threads = calloc(args.threads, sizeof(pthread_t));
+    data *buffers = (data*)calloc(args.threads, sizeof(data));
+    pthread_t *threads = (pthread_t*)calloc(args.threads, sizeof(pthread_t));
     for(i = 0; i < args.threads; ++i){
         args.d = buffers + i;
         args.n = (i+1) * total/args.threads - i * total/args.threads;
@@ -1204,7 +1204,7 @@ void *load_threads(void *ptr)
 
 void load_data_blocking(load_args args)
 {
-    struct load_args *ptr = calloc(1, sizeof(struct load_args));
+    struct load_args *ptr = (struct load_args *)calloc(1, sizeof(struct load_args));
     *ptr = args;
     load_thread(ptr);
 }
@@ -1212,7 +1212,7 @@ void load_data_blocking(load_args args)
 pthread_t load_data(load_args args)
 {
     pthread_t thread;
-    struct load_args *ptr = calloc(1, sizeof(struct load_args));
+    struct load_args *ptr = (struct load_args *)calloc(1, sizeof(struct load_args));
     *ptr = args;
     if(pthread_create(&thread, 0, load_threads, ptr)) error("Thread creation failed");
     return thread;
@@ -1221,7 +1221,7 @@ pthread_t load_data(load_args args)
 data load_data_writing(char **paths, int n, int m, int w, int h, int out_w, int out_h)
 {
     if(m) paths = get_random_paths(paths, n, m);
-    char **replace_paths = find_replace_paths(paths, n, ".png", "-label.png");
+    char **replace_paths = find_replace_paths(paths, n, (char*)".png", (char*)"-label.png");
     data d = {0};
     d.shallow = 0;
     d.X = load_image_paths(paths, n, w, h);
@@ -1266,11 +1266,11 @@ data load_data_super(char **paths, int n, int m, int w, int h, int scale)
 
     int i;
     d.X.rows = n;
-    d.X.vals = calloc(n, sizeof(real*));
+    d.X.vals = (real**)calloc(n, sizeof(real*));
     d.X.cols = w*h*3;
 
     d.y.rows = n;
-    d.y.vals = calloc(n, sizeof(real*));
+    d.y.vals = (real**)calloc(n, sizeof(real*));
     d.y.cols = w*scale * h*scale * 3;
 
     for(i = 0; i < n; ++i){
@@ -1312,8 +1312,8 @@ data select_data(data *orig, int *inds)
     d.X.cols = orig[0].X.cols;
     d.y.cols = orig[0].y.cols;
 
-    d.X.vals = calloc(orig[0].X.rows, sizeof(real *));
-    d.y.vals = calloc(orig[0].y.rows, sizeof(real *));
+    d.X.vals = (real**)calloc(orig[0].X.rows, sizeof(real *));
+    d.y.vals = (real**)calloc(orig[0].y.rows, sizeof(real *));
     int i;
     for(i = 0; i < d.X.rows; ++i){
         d.X.vals[i] = orig[inds[i]].X.vals[i];
@@ -1324,7 +1324,7 @@ data select_data(data *orig, int *inds)
 
 data *tile_data(data orig, int divs, int size)
 {
-    data *ds = calloc(divs*divs, sizeof(data));
+    data *ds = (data*)calloc(divs*divs, sizeof(data));
     int i, j;
 #pragma omp parallel for
     for(i = 0; i < divs*divs; ++i){
@@ -1334,7 +1334,7 @@ data *tile_data(data orig, int divs, int size)
         d.h = orig.h/divs * size;
         d.X.rows = orig.X.rows;
         d.X.cols = d.w*d.h*3;
-        d.X.vals = calloc(d.X.rows, sizeof(real*));
+        d.X.vals = (real**)calloc(d.X.rows, sizeof(real*));
 
         d.y = copy_matrix(orig.y);
 #pragma omp parallel for
@@ -1358,7 +1358,7 @@ data resize_data(data orig, int w, int h)
     int i;
     d.X.rows = orig.X.rows;
     d.X.cols = w*h*3;
-    d.X.vals = calloc(d.X.rows, sizeof(real*));
+    d.X.vals = (real**)calloc(d.X.rows, sizeof(real*));
 
     d.y = copy_matrix(orig.y);
 #pragma omp parallel for
@@ -1401,7 +1401,7 @@ matrix concat_matrix(matrix m1, matrix m2)
     matrix m;
     m.cols = m1.cols;
     m.rows = m1.rows+m2.rows;
-    m.vals = calloc(m1.rows + m2.rows, sizeof(real*));
+    m.vals = (real**)calloc(m1.rows + m2.rows, sizeof(real*));
     for(i = 0; i < m1.rows; ++i){
         m.vals[count++] = m1.vals[i];
     }
@@ -1427,9 +1427,9 @@ data concat_datas(data *d, int n)
     int i;
     data out = {0};
     for(i = 0; i < n; ++i){
-        data new = concat_data(d[i], out);
+        data _new = concat_data(d[i], out);
         free_data(out);
-        out = new;
+        out = _new;
     }
     return out;
 }
@@ -1466,8 +1466,8 @@ data load_cifar10_data(char *filename)
     for(i = 0; i < 10000; ++i){
         unsigned char bytes[3073];
         fread(bytes, 1, 3073, fp);
-        int class = bytes[0];
-        y.vals[i][class] = 1;
+        int class_ = bytes[0];
+        y.vals[i][class_] = 1;
         for(j = 0; j < X.cols; ++j){
             X.vals[i][j] = (double)bytes[j+1];
         }
@@ -1529,8 +1529,8 @@ data load_all_cifar10()
         for(i = 0; i < 10000; ++i){
             unsigned char bytes[3073];
             fread(bytes, 1, 3073, fp);
-            int class = bytes[0];
-            y.vals[i+b*10000][class] = 1;
+            int class_ = bytes[0];
+            y.vals[i+b*10000][class_] = 1;
             for(j = 0; j < X.cols; ++j){
                 X.vals[i+b*10000][j] = (double)bytes[j+1];
             }
@@ -1666,8 +1666,8 @@ data get_random_data(data d, int num)
     r.X.cols = d.X.cols;
     r.y.cols = d.y.cols;
 
-    r.X.vals = calloc(num, sizeof(real *));
-    r.y.vals = calloc(num, sizeof(real *));
+    r.X.vals = (real**)calloc(num, sizeof(real *));
+    r.y.vals = (real**)calloc(num, sizeof(real *));
 
     int i;
     for(i = 0; i < num; ++i){
@@ -1680,7 +1680,7 @@ data get_random_data(data d, int num)
 
 data *split_data(data d, int part, int total)
 {
-    data *split = calloc(2, sizeof(data));
+    data *split = (data*)calloc(2, sizeof(data));
     int i;
     int start = part*d.X.rows/total;
     int end = (part+1)*d.X.rows/total;
@@ -1693,10 +1693,10 @@ data *split_data(data d, int part, int total)
     train.X.cols = test.X.cols = d.X.cols;
     train.y.cols = test.y.cols = d.y.cols;
 
-    train.X.vals = calloc(train.X.rows, sizeof(real*));
-    test.X.vals = calloc(test.X.rows, sizeof(real*));
-    train.y.vals = calloc(train.y.rows, sizeof(real*));
-    test.y.vals = calloc(test.y.rows, sizeof(real*));
+    train.X.vals = (real**)calloc(train.X.rows, sizeof(real*));
+    test.X.vals = (real**)calloc(test.X.rows, sizeof(real*));
+    train.y.vals = (real**)calloc(train.y.rows, sizeof(real*));
+    test.y.vals = (real**)calloc(test.y.rows, sizeof(real*));
 
     for(i = 0; i < start; ++i){
         train.X.vals[i] = d.X.vals[i];
