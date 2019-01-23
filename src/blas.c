@@ -31,7 +31,7 @@ void reorg_cpu(real *x, int w, int h, int c, int batch, int stride, int forward,
 
 void flatten(real *x, int size, int layers, int batch, int forward)
 {
-    real *swap = calloc(size*layers*batch, sizeof(real));
+    real *swap = (real*)calloc(size*layers*batch, sizeof(real));
     int i,c,b;
     for(b = 0; b < batch; ++b){
         for(c = 0; c < layers; ++c){
