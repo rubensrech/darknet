@@ -10,16 +10,16 @@
 #include <string.h>
 
 layer make_activation_layer(int batch, int inputs, ACTIVATION activation)
-{
-    layer l = {0};
+{   
+    layer l = {}; // zero init
     l.type = ACTIVE;
 
     l.inputs = inputs;
     l.outputs = inputs;
     l.batch=batch;
 
-    l.output = calloc(batch*inputs, sizeof(real*));
-    l.delta = calloc(batch*inputs, sizeof(real*));
+    l.output = (real*)calloc(batch*inputs, sizeof(real*));
+    l.delta = (real*)calloc(batch*inputs, sizeof(real*));
 
     l.forward = forward_activation_layer;
     l.backward = backward_activation_layer;

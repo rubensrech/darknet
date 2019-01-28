@@ -6,13 +6,13 @@
 
 dropout_layer make_dropout_layer(int batch, int inputs, real probability)
 {
-    dropout_layer l = {0};
+    dropout_layer l = {}; // zero init
     l.type = DROPOUT;
     l.probability = probability;
     l.inputs = inputs;
     l.outputs = inputs;
     l.batch = batch;
-    l.rand = calloc(inputs*batch, sizeof(real));
+    l.rand = (real*)calloc(inputs*batch, sizeof(real));
     l.scale = 1./(1.-probability);
     l.forward = forward_dropout_layer;
     l.backward = backward_dropout_layer;
@@ -27,7 +27,7 @@ dropout_layer make_dropout_layer(int batch, int inputs, real probability)
 
 void resize_dropout_layer(dropout_layer *l, int inputs)
 {
-    l->rand = realloc(l->rand, l->inputs*l->batch*sizeof(real));
+    l->rand = (real*)realloc(l->rand, l->inputs*l->batch*sizeof(real));
     #ifdef GPU
     cuda_free(l->rand_gpu);
 

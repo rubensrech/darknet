@@ -7,7 +7,7 @@
 route_layer make_route_layer(int batch, int n, int *input_layers, int *input_sizes)
 {
     fprintf(stderr,"route ");
-    route_layer l = {0};
+    route_layer l = {}; // zero init
     l.type = ROUTE;
     l.batch = batch;
     l.n = n;
@@ -22,8 +22,8 @@ route_layer make_route_layer(int batch, int n, int *input_layers, int *input_siz
     fprintf(stderr, "\n");
     l.outputs = outputs;
     l.inputs = outputs;
-    l.delta =  calloc(outputs*batch, sizeof(real));
-    l.output = calloc(outputs*batch, sizeof(real));;
+    l.delta = (real*)calloc(outputs*batch, sizeof(real));
+    l.output = (real*)calloc(outputs*batch, sizeof(real));;
 
     l.forward = forward_route_layer;
     l.backward = backward_route_layer;
@@ -59,8 +59,8 @@ void resize_route_layer(route_layer *l, network *net)
         }
     }
     l->inputs = l->outputs;
-    l->delta =  realloc(l->delta, l->outputs*l->batch*sizeof(real));
-    l->output = realloc(l->output, l->outputs*l->batch*sizeof(real));
+    l->delta = (real*)realloc(l->delta, l->outputs*l->batch*sizeof(real));
+    l->output = (real*)realloc(l->output, l->outputs*l->batch*sizeof(real));
 
 #ifdef GPU
     cuda_free(l->output_gpu);

@@ -12,16 +12,16 @@ softmax_layer make_softmax_layer(int batch, int inputs, int groups)
 {
     assert(inputs%groups == 0);
     fprintf(stderr, "softmax                                        %4d\n",  inputs);
-    softmax_layer l = {0};
+    softmax_layer l = {}; // zero init
     l.type = SOFTMAX;
     l.batch = batch;
     l.groups = groups;
     l.inputs = inputs;
     l.outputs = inputs;
-    l.loss = calloc(inputs*batch, sizeof(real));
-    l.output = calloc(inputs*batch, sizeof(real));
-    l.delta = calloc(inputs*batch, sizeof(real));
-    l.cost = calloc(1, sizeof(real));
+    l.loss = (real*)calloc(inputs*batch, sizeof(real));
+    l.output = (real*)calloc(inputs*batch, sizeof(real));
+    l.delta = (real*)calloc(inputs*batch, sizeof(real));
+    l.cost = (real*)calloc(1, sizeof(real));
 
     l.forward = forward_softmax_layer;
     l.backward = backward_softmax_layer;

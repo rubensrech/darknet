@@ -23,25 +23,25 @@ char *get_cost_string(COST_TYPE a)
 {
     switch(a){
         case SEG:
-            return "seg";
+            return (char*)"seg";
         case SSE:
-            return "sse";
+            return (char*)"sse";
         case MASKED:
-            return "masked";
+            return (char*)"masked";
         case SMOOTH:
-            return "smooth";
+            return (char*)"smooth";
         case L1:
-            return "L1";
+            return (char*)"L1";
         case WGAN:
-            return "wgan";
+            return (char*)"wgan";
     }
-    return "sse";
+    return (char*)"sse";
 }
 
 cost_layer make_cost_layer(int batch, int inputs, COST_TYPE cost_type, real scale)
 {
     fprintf(stderr, "cost                                           %4d\n",  inputs);
-    cost_layer l = {0};
+    cost_layer l = {}; // zero init
     l.type = COST;
 
     l.scale = scale;
@@ -49,9 +49,9 @@ cost_layer make_cost_layer(int batch, int inputs, COST_TYPE cost_type, real scal
     l.inputs = inputs;
     l.outputs = inputs;
     l.cost_type = cost_type;
-    l.delta = calloc(inputs*batch, sizeof(real));
-    l.output = calloc(inputs*batch, sizeof(real));
-    l.cost = calloc(1, sizeof(real));
+    l.delta = (real*)calloc(inputs*batch, sizeof(real));
+    l.output = (real*)calloc(inputs*batch, sizeof(real));
+    l.cost = (real*)calloc(1, sizeof(real));
 
     l.forward = forward_cost_layer;
     l.backward = backward_cost_layer;
@@ -69,8 +69,8 @@ void resize_cost_layer(cost_layer *l, int inputs)
 {
     l->inputs = inputs;
     l->outputs = inputs;
-    l->delta = realloc(l->delta, inputs*l->batch*sizeof(real));
-    l->output = realloc(l->output, inputs*l->batch*sizeof(real));
+    l->delta = (real*)realloc(l->delta, inputs*l->batch*sizeof(real));
+    l->output = (real*)realloc(l->output, inputs*l->batch*sizeof(real));
 #ifdef GPU
     cuda_free(l->delta_gpu);
     cuda_free(l->output_gpu);

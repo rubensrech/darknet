@@ -35,7 +35,7 @@ void bilinear_init(layer l)
 layer make_deconvolutional_layer(int batch, int h, int w, int c, int n, int size, int stride, int padding, ACTIVATION activation, int batch_normalize, int adam)
 {
     int i;
-    layer l = {0};
+    layer l = {}; // zero init
     l.type = DECONVOLUTIONAL;
 
     l.h = h;
@@ -49,11 +49,11 @@ layer make_deconvolutional_layer(int batch, int h, int w, int c, int n, int size
     l.nweights = c*n*size*size;
     l.nbiases = n;
 
-    l.weights = calloc(c*n*size*size, sizeof(real));
-    l.weight_updates = calloc(c*n*size*size, sizeof(real));
+    l.weights = (real*)calloc(c*n*size*size, sizeof(real));
+    l.weight_updates = (real*)calloc(c*n*size*size, sizeof(real));
 
-    l.biases = calloc(n, sizeof(real));
-    l.bias_updates = calloc(n, sizeof(real));
+    l.biases = (real*)calloc(n, sizeof(real));
+    l.bias_updates = (real*)calloc(n, sizeof(real));
     //real scale = n/(size*size*c);
     //printf("scale: %f\n", scale);
     real scale = .02;
@@ -72,8 +72,8 @@ layer make_deconvolutional_layer(int batch, int h, int w, int c, int n, int size
 
     scal_cpu(l.nweights, (real)l.out_w*l.out_h/(l.w*l.h), l.weights, 1);
 
-    l.output = calloc(l.batch*l.outputs, sizeof(real));
-    l.delta  = calloc(l.batch*l.outputs, sizeof(real));
+    l.output = (real*)calloc(l.batch*l.outputs, sizeof(real));
+    l.delta  = (real*)calloc(l.batch*l.outputs, sizeof(real));
 
     l.forward = forward_deconvolutional_layer;
     l.backward = backward_deconvolutional_layer;
@@ -82,30 +82,30 @@ layer make_deconvolutional_layer(int batch, int h, int w, int c, int n, int size
     l.batch_normalize = batch_normalize;
 
     if(batch_normalize){
-        l.scales = calloc(n, sizeof(real));
-        l.scale_updates = calloc(n, sizeof(real));
+        l.scales = (real*)calloc(n, sizeof(real));
+        l.scale_updates = (real*)calloc(n, sizeof(real));
         for(i = 0; i < n; ++i){
             l.scales[i] = 1;
         }
 
-        l.mean = calloc(n, sizeof(real));
-        l.variance = calloc(n, sizeof(real));
+        l.mean = (real*)calloc(n, sizeof(real));
+        l.variance = (real*)calloc(n, sizeof(real));
 
-        l.mean_delta = calloc(n, sizeof(real));
-        l.variance_delta = calloc(n, sizeof(real));
+        l.mean_delta = (real*)calloc(n, sizeof(real));
+        l.variance_delta = (real*)calloc(n, sizeof(real));
 
-        l.rolling_mean = calloc(n, sizeof(real));
-        l.rolling_variance = calloc(n, sizeof(real));
-        l.x = calloc(l.batch*l.outputs, sizeof(real));
-        l.x_norm = calloc(l.batch*l.outputs, sizeof(real));
+        l.rolling_mean = (real*)calloc(n, sizeof(real));
+        l.rolling_variance = (real*)calloc(n, sizeof(real));
+        l.x = (real*)calloc(l.batch*l.outputs, sizeof(real));
+        l.x_norm = (real*)calloc(l.batch*l.outputs, sizeof(real));
     }
     if(adam){
-        l.m = calloc(c*n*size*size, sizeof(real));
-        l.v = calloc(c*n*size*size, sizeof(real));
-        l.bias_m = calloc(n, sizeof(real));
-        l.scale_m = calloc(n, sizeof(real));
-        l.bias_v = calloc(n, sizeof(real));
-        l.scale_v = calloc(n, sizeof(real));
+        l.m = (real*)calloc(c*n*size*size, sizeof(real));
+        l.v = (real*)calloc(c*n*size*size, sizeof(real));
+        l.bias_m = (real*)calloc(n, sizeof(real));
+        l.scale_m = (real*)calloc(n, sizeof(real));
+        l.bias_v = (real*)calloc(n, sizeof(real));
+        l.scale_v = (real*)calloc(n, sizeof(real));
     }
 
 #ifdef GPU
@@ -190,11 +190,11 @@ void resize_deconvolutional_layer(layer *l, int h, int w)
     l->outputs = l->out_h * l->out_w * l->out_c;
     l->inputs = l->w * l->h * l->c;
 
-    l->output = realloc(l->output, l->batch*l->outputs*sizeof(real));
-    l->delta  = realloc(l->delta,  l->batch*l->outputs*sizeof(real));
+    l->output = (real*)realloc(l->output, l->batch*l->outputs*sizeof(real));
+    l->delta  = (real*)realloc(l->delta,  l->batch*l->outputs*sizeof(real));
     if(l->batch_normalize){
-        l->x = realloc(l->x, l->batch*l->outputs*sizeof(real));
-        l->x_norm  = realloc(l->x_norm, l->batch*l->outputs*sizeof(real));
+        l->x = (real*)realloc(l->x, l->batch*l->outputs*sizeof(real));
+        l->x_norm  = (real*)realloc(l->x_norm, l->batch*l->outputs*sizeof(real));
     }
 
 #ifdef GPU
