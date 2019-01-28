@@ -1113,8 +1113,8 @@ void transpose_matrix(real *a, int rows, int cols)
 void load_connected_weights(layer l, FILE *fp, int transpose)
 {
 #if (defined(DOUBLE) || defined(HALF)) && defined(FLOAT_WEIGHTS) 
-    float *tmpBuffer0 = calloc(l.outputs, sizeof(float));
-    float *tmpBuffer1 = calloc(l.outputs*l.inputs, sizeof(float));
+    float *tmpBuffer0 = (float*)calloc(l.outputs, sizeof(float));
+    float *tmpBuffer1 = (float*)calloc(l.outputs*l.inputs, sizeof(float));
     int j;
 
     fread(tmpBuffer0, sizeof(float), l.outputs, fp);
@@ -1165,7 +1165,7 @@ void load_connected_weights(layer l, FILE *fp, int transpose)
 void load_batchnorm_weights(layer l, FILE *fp)
 {
 #if (defined(DOUBLE) || defined(HALF)) && defined(FLOAT_WEIGHTS) 
-    float *tmpBuffer = calloc(l.c, sizeof(float));
+    float *tmpBuffer = (float*)calloc(l.c, sizeof(float));
     int j;
 
     fread(tmpBuffer, sizeof(float), l.c, fp);
@@ -1192,7 +1192,7 @@ void load_batchnorm_weights(layer l, FILE *fp)
 void load_convolutional_weights_binary(layer l, FILE *fp)
 {
 #if (defined(DOUBLE) || defined(HALF)) && defined(FLOAT_WEIGHTS) 
-    float *tmpBuffer = calloc(l.n, sizeof(float));
+    float *tmpBuffer = (float*)calloc(l.n, sizeof(float));
     int x;
 
     fread(tmpBuffer, sizeof(float), l.n, fp);
@@ -1258,8 +1258,8 @@ void load_convolutional_weights(layer l, FILE *fp)
 
 
 #if (defined(DOUBLE) || defined(HALF)) && defined(FLOAT_WEIGHTS) 
-    float *tmpBuffer0 = calloc(l.n, sizeof(float));
-    float *tmpBuffer1 = calloc(num, sizeof(float));
+    float *tmpBuffer0 = (float*)calloc(l.n, sizeof(float));
+    float *tmpBuffer1 = (float*)calloc(num, sizeof(float));
     int j;
 
     fread(tmpBuffer0, sizeof(float), l.n, fp);
@@ -1437,8 +1437,8 @@ void load_weights_upto(network *net, char *filename, int start, int cutoff)
             int size = l.size*l.size*l.c*l.n*locations;
 
 #if (defined(DOUBLE) || defined(HALF)) && defined(FLOAT_WEIGHTS) 
-            float *tmpBuffer0 = calloc(l.outputs, sizeof(float));
-            float *tmpBuffer1 = calloc(size, sizeof(float));
+            float *tmpBuffer0 = (float*)calloc(l.outputs, sizeof(float));
+            float *tmpBuffer1 = (float*)calloc(size, sizeof(float));
             int j;
 
             fread(tmpBuffer0, sizeof(float), l.outputs, fp);
