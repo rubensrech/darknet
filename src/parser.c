@@ -138,11 +138,11 @@ typedef struct size_params{
 
 local_layer parse_local(list *options, size_params params)
 {
-    int n = option_find_int(options, "filters",1);
-    int size = option_find_int(options, "size",1);
-    int stride = option_find_int(options, "stride",1);
-    int pad = option_find_int(options, "pad",0);
-    char *activation_s = option_find_str(options, "activation", "logistic");
+    int n = option_find_int(options, (char*)"filters",1);
+    int size = option_find_int(options, (char*)"size",1);
+    int stride = option_find_int(options, (char*)"stride",1);
+    int pad = option_find_int(options, (char*)"pad",0);
+    char *activation_s = option_find_str(options, (char*)"activation", (char*)"logistic");
     ACTIVATION activation = get_activation(activation_s);
 
     int batch,h,w,c;
@@ -159,11 +159,11 @@ local_layer parse_local(list *options, size_params params)
 
 layer parse_deconvolutional(list *options, size_params params)
 {
-    int n = option_find_int(options, "filters",1);
-    int size = option_find_int(options, "size",1);
-    int stride = option_find_int(options, "stride",1);
+    int n = option_find_int(options, (char*)"filters",1);
+    int size = option_find_int(options, (char*)"size",1);
+    int stride = option_find_int(options, (char*)"stride",1);
 
-    char *activation_s = option_find_str(options, "activation", "logistic");
+    char *activation_s = option_find_str(options, (char*)"activation", (char*)"logistic");
     ACTIVATION activation = get_activation(activation_s);
 
     int batch,h,w,c;
@@ -172,9 +172,9 @@ layer parse_deconvolutional(list *options, size_params params)
     c = params.c;
     batch=params.batch;
     if(!(h && w && c)) error("Layer before deconvolutional layer must output image.");
-    int batch_normalize = option_find_int_quiet(options, "batch_normalize", 0);
-    int pad = option_find_int_quiet(options, "pad",0);
-    int padding = option_find_int_quiet(options, "padding",0);
+    int batch_normalize = option_find_int_quiet(options, (char*)"batch_normalize", 0);
+    int pad = option_find_int_quiet(options, (char*)"pad",0);
+    int padding = option_find_int_quiet(options, (char*)"padding",0);
     if(pad) padding = size/2;
 
     layer l = make_deconvolutional_layer(batch,h,w,c,n,size,stride,padding, activation, batch_normalize, params.net->adam);
@@ -185,15 +185,15 @@ layer parse_deconvolutional(list *options, size_params params)
 
 convolutional_layer parse_convolutional(list *options, size_params params)
 {
-    int n = option_find_int(options, "filters",1);
-    int size = option_find_int(options, "size",1);
-    int stride = option_find_int(options, "stride",1);
-    int pad = option_find_int_quiet(options, "pad",0);
-    int padding = option_find_int_quiet(options, "padding",0);
-    int groups = option_find_int_quiet(options, "groups", 1);
+    int n = option_find_int(options, (char*)"filters",1);
+    int size = option_find_int(options, (char*)"size",1);
+    int stride = option_find_int(options, (char*)"stride",1);
+    int pad = option_find_int_quiet(options, (char*)"pad",0);
+    int padding = option_find_int_quiet(options, (char*)"padding",0);
+    int groups = option_find_int_quiet(options, (char*)"groups", 1);
     if(pad) padding = size/2;
 
-    char *activation_s = option_find_str(options, "activation", "logistic");
+    char *activation_s = option_find_str(options, (char*)"activation", (char*)"logistic");
     ACTIVATION activation = get_activation(activation_s);
 
     int batch,h,w,c;
@@ -202,61 +202,61 @@ convolutional_layer parse_convolutional(list *options, size_params params)
     c = params.c;
     batch=params.batch;
     if(!(h && w && c)) error("Layer before convolutional layer must output image.");
-    int batch_normalize = option_find_int_quiet(options, "batch_normalize", 0);
-    int binary = option_find_int_quiet(options, "binary", 0);
-    int xnor = option_find_int_quiet(options, "xnor", 0);
+    int batch_normalize = option_find_int_quiet(options, (char*)"batch_normalize", 0);
+    int binary = option_find_int_quiet(options, (char*)"binary", 0);
+    int xnor = option_find_int_quiet(options, (char*)"xnor", 0);
 
     convolutional_layer layer = make_convolutional_layer(batch,h,w,c,n,groups,size,stride,padding,activation, batch_normalize, binary, xnor, params.net->adam);
-    layer.flipped = option_find_int_quiet(options, "flipped", 0);
-    layer.dot = option_find_real_quiet(options, "dot", 0);
+    layer.flipped = option_find_int_quiet(options, (char*)"flipped", 0);
+    layer.dot = option_find_real_quiet(options, (char*)"dot", 0);
 
     return layer;
 }
 
 layer parse_crnn(list *options, size_params params)
 {
-    int output_filters = option_find_int(options, "output_filters",1);
-    int hidden_filters = option_find_int(options, "hidden_filters",1);
-    char *activation_s = option_find_str(options, "activation", "logistic");
+    int output_filters = option_find_int(options, (char*)"output_filters",1);
+    int hidden_filters = option_find_int(options,(char*)"hidden_filters",1);
+    char *activation_s = option_find_str(options,(char*)"activation", (char*)"logistic");
     ACTIVATION activation = get_activation(activation_s);
-    int batch_normalize = option_find_int_quiet(options, "batch_normalize", 0);
+    int batch_normalize = option_find_int_quiet(options, (char*)"batch_normalize", 0);
 
     layer l = make_crnn_layer(params.batch, params.w, params.h, params.c, hidden_filters, output_filters, params.time_steps, activation, batch_normalize);
 
-    l.shortcut = option_find_int_quiet(options, "shortcut", 0);
+    l.shortcut = option_find_int_quiet(options, (char*)"shortcut", 0);
 
     return l;
 }
 
 layer parse_rnn(list *options, size_params params)
 {
-    int output = option_find_int(options, "output",1);
-    char *activation_s = option_find_str(options, "activation", "logistic");
+    int output = option_find_int(options, (char*)"output",1);
+    char *activation_s = option_find_str(options, (char*)"activation", (char*)"logistic");
     ACTIVATION activation = get_activation(activation_s);
-    int batch_normalize = option_find_int_quiet(options, "batch_normalize", 0);
+    int batch_normalize = option_find_int_quiet(options, (char*)"batch_normalize", 0);
 
     layer l = make_rnn_layer(params.batch, params.inputs, output, params.time_steps, activation, batch_normalize, params.net->adam);
 
-    l.shortcut = option_find_int_quiet(options, "shortcut", 0);
+    l.shortcut = option_find_int_quiet(options, (char*)"shortcut", 0);
 
     return l;
 }
 
 layer parse_gru(list *options, size_params params)
 {
-    int output = option_find_int(options, "output",1);
-    int batch_normalize = option_find_int_quiet(options, "batch_normalize", 0);
+    int output = option_find_int(options, (char*)"output",1);
+    int batch_normalize = option_find_int_quiet(options, (char*)"batch_normalize", 0);
 
     layer l = make_gru_layer(params.batch, params.inputs, output, params.time_steps, batch_normalize, params.net->adam);
-    l.tanh = option_find_int_quiet(options, "tanh", 0);
+    l.tanh = option_find_int_quiet(options, (char*)"tanh", 0);
 
     return l;
 }
 
 layer parse_lstm(list *options, size_params params)
 {
-    int output = option_find_int(options, "output", 1);
-    int batch_normalize = option_find_int_quiet(options, "batch_normalize", 0);
+    int output = option_find_int(options, (char*)"output", 1);
+    int batch_normalize = option_find_int_quiet(options, (char*)"batch_normalize", 0);
 
     layer l = make_lstm_layer(params.batch, params.inputs, output, params.time_steps, batch_normalize, params.net->adam);
 
@@ -265,10 +265,10 @@ layer parse_lstm(list *options, size_params params)
 
 layer parse_connected(list *options, size_params params)
 {
-    int output = option_find_int(options, "output",1);
-    char *activation_s = option_find_str(options, "activation", "logistic");
+    int output = option_find_int(options, (char*)"output",1);
+    char *activation_s = option_find_str(options, (char*)"activation", (char*)"logistic");
     ACTIVATION activation = get_activation(activation_s);
-    int batch_normalize = option_find_int_quiet(options, "batch_normalize", 0);
+    int batch_normalize = option_find_int_quiet(options, (char*)"batch_normalize", 0);
 
     layer l = make_connected_layer(params.batch, params.inputs, output, activation, batch_normalize, params.net->adam);
     return l;
@@ -276,16 +276,16 @@ layer parse_connected(list *options, size_params params)
 
 layer parse_softmax(list *options, size_params params)
 {
-    int groups = option_find_int_quiet(options, "groups",1);
+    int groups = option_find_int_quiet(options, (char*)"groups",1);
     layer l = make_softmax_layer(params.batch, params.inputs, groups);
-    l.temperature = option_find_real_quiet(options, "temperature", 1);
-    char *tree_file = option_find_str(options, "tree", 0);
+    l.temperature = option_find_real_quiet(options, (char*)"temperature", 1);
+    char *tree_file = option_find_str(options, (char*)"tree", 0);
     if (tree_file) l.softmax_tree = read_tree(tree_file);
     l.w = params.w;
     l.h = params.h;
     l.c = params.c;
-    l.spatial = option_find_real_quiet(options, "spatial", 0);
-    l.noloss =  option_find_int_quiet(options, "noloss", 0);
+    l.spatial = option_find_real_quiet(options, (char*)"spatial", 0);
+    l.noloss =  option_find_int_quiet(options, (char*)"noloss", 0);
     return l;
 }
 
@@ -299,7 +299,7 @@ int *parse_yolo_mask(char *a, int *num)
         for(i = 0; i < len; ++i){
             if (a[i] == ',') ++n;
         }
-        mask = calloc(n, sizeof(int));
+        mask = (int*)calloc(n, sizeof(int));
         for(i = 0; i < n; ++i){
             int val = atoi(a);
             mask[i] = val;
@@ -312,26 +312,26 @@ int *parse_yolo_mask(char *a, int *num)
 
 layer parse_yolo(list *options, size_params params)
 {
-    int classes = option_find_int(options, "classes", 20);
-    int total = option_find_int(options, "num", 1);
+    int classes = option_find_int(options, (char*)"classes", 20);
+    int total = option_find_int(options, (char*)"num", 1);
     int num = total;
 
-    char *a = option_find_str(options, "mask", 0);
+    char *a = option_find_str(options, (char*)"mask", 0);
     int *mask = parse_yolo_mask(a, &num);
     layer l = make_yolo_layer(params.batch, params.w, params.h, num, total, mask, classes);
     assert(l.outputs == params.inputs);
 
-    l.max_boxes = option_find_int_quiet(options, "max",90);
-    l.jitter = option_find_real(options, "jitter", .2);
+    l.max_boxes = option_find_int_quiet(options, (char*)"max",90);
+    l.jitter = option_find_real(options, (char*)"jitter", .2);
 
-    l.ignore_thresh = option_find_real(options, "ignore_thresh", .5);
-    l.truth_thresh = option_find_real(options, "truth_thresh", 1);
-    l.random = option_find_int_quiet(options, "random", 0);
+    l.ignore_thresh = option_find_real(options, (char*)"ignore_thresh", .5);
+    l.truth_thresh = option_find_real(options, (char*)"truth_thresh", 1);
+    l.random = option_find_int_quiet(options, (char*)"random", 0);
 
-    char *map_file = option_find_str(options, "map", 0);
+    char *map_file = option_find_str(options, (char*)"map", 0);
     if (map_file) l.map = read_map(map_file);
 
-    a = option_find_str(options, "anchors", 0);
+    a = option_find_str(options, (char*)"anchors", 0);
     if(a){
         int len = strlen(a);
         int n = 1;
@@ -350,8 +350,8 @@ layer parse_yolo(list *options, size_params params)
 
 layer parse_iseg(list *options, size_params params)
 {
-    int classes = option_find_int(options, "classes", 20);
-    int ids = option_find_int(options, "ids", 32);
+    int classes = option_find_int(options, (char*)"classes", 20);
+    int ids = option_find_int(options, (char*)"ids", 32);
     layer l = make_iseg_layer(params.batch, params.w, params.h, classes, ids);
     assert(l.outputs == params.inputs);
     return l;
@@ -359,40 +359,40 @@ layer parse_iseg(list *options, size_params params)
 
 layer parse_region(list *options, size_params params)
 {
-    int coords = option_find_int(options, "coords", 4);
-    int classes = option_find_int(options, "classes", 20);
-    int num = option_find_int(options, "num", 1);
+    int coords = option_find_int(options, (char*)"coords", 4);
+    int classes = option_find_int(options, (char*)"classes", 20);
+    int num = option_find_int(options, (char*)"num", 1);
 
     layer l = make_region_layer(params.batch, params.w, params.h, num, classes, coords);
     assert(l.outputs == params.inputs);
 
-    l.log = option_find_int_quiet(options, "log", 0);
-    l.sqrt = option_find_int_quiet(options, "sqrt", 0);
+    l.log = option_find_int_quiet(options, (char*)"log", 0);
+    l.sqrt = option_find_int_quiet(options, (char*)"sqrt", 0);
 
-    l.softmax = option_find_int(options, "softmax", 0);
-    l.background = option_find_int_quiet(options, "background", 0);
-    l.max_boxes = option_find_int_quiet(options, "max",30);
-    l.jitter = option_find_real(options, "jitter", .2);
-    l.rescore = option_find_int_quiet(options, "rescore",0);
+    l.softmax = option_find_int(options, (char*)"softmax", 0);
+    l.background = option_find_int_quiet(options, (char*)"background", 0);
+    l.max_boxes = option_find_int_quiet(options, (char*)"max",30);
+    l.jitter = option_find_real(options, (char*)"jitter", .2);
+    l.rescore = option_find_int_quiet(options, (char*)"rescore",0);
 
-    l.thresh = option_find_real(options, "thresh", .5);
-    l.classfix = option_find_int_quiet(options, "classfix", 0);
-    l.absolute = option_find_int_quiet(options, "absolute", 0);
-    l.random = option_find_int_quiet(options, "random", 0);
+    l.thresh = option_find_real(options, (char*)"thresh", .5);
+    l.classfix = option_find_int_quiet(options, (char*)"classfix", 0);
+    l.absolute = option_find_int_quiet(options, (char*)"absolute", 0);
+    l.random = option_find_int_quiet(options, (char*)"random", 0);
 
-    l.coord_scale = option_find_real(options, "coord_scale", 1);
-    l.object_scale = option_find_real(options, "object_scale", 1);
-    l.noobject_scale = option_find_real(options, "noobject_scale", 1);
-    l.mask_scale = option_find_real(options, "mask_scale", 1);
-    l.class_scale = option_find_real(options, "class_scale", 1);
-    l.bias_match = option_find_int_quiet(options, "bias_match",0);
+    l.coord_scale = option_find_real(options, (char*)"coord_scale", 1);
+    l.object_scale = option_find_real(options, (char*)"object_scale", 1);
+    l.noobject_scale = option_find_real(options, (char*)"noobject_scale", 1);
+    l.mask_scale = option_find_real(options, (char*)"mask_scale", 1);
+    l.class_scale = option_find_real(options, (char*)"class_scale", 1);
+    l.bias_match = option_find_int_quiet(options, (char*)"bias_match",0);
 
-    char *tree_file = option_find_str(options, "tree", 0);
+    char *tree_file = option_find_str(options, (char*)"tree", 0);
     if (tree_file) l.softmax_tree = read_tree(tree_file);
-    char *map_file = option_find_str(options, "map", 0);
+    char *map_file = option_find_str(options, (char*)"map", 0);
     if (map_file) l.map = read_map(map_file);
 
-    char *a = option_find_str(options, "anchors", 0);
+    char *a = option_find_str(options, (char*)"anchors", 0);
     if(a){
         int len = strlen(a);
         int n = 1;
@@ -411,48 +411,48 @@ layer parse_region(list *options, size_params params)
 
 detection_layer parse_detection(list *options, size_params params)
 {
-    int coords = option_find_int(options, "coords", 1);
-    int classes = option_find_int(options, "classes", 1);
-    int rescore = option_find_int(options, "rescore", 0);
-    int num = option_find_int(options, "num", 1);
-    int side = option_find_int(options, "side", 7);
+    int coords = option_find_int(options, (char*)"coords", 1);
+    int classes = option_find_int(options, (char*)"classes", 1);
+    int rescore = option_find_int(options, (char*)"rescore", 0);
+    int num = option_find_int(options, (char*)"num", 1);
+    int side = option_find_int(options, (char*)"side", 7);
     detection_layer layer = make_detection_layer(params.batch, params.inputs, num, side, classes, coords, rescore);
 
-    layer.softmax = option_find_int(options, "softmax", 0);
-    layer.sqrt = option_find_int(options, "sqrt", 0);
+    layer.softmax = option_find_int(options, (char*)"softmax", 0);
+    layer.sqrt = option_find_int(options, (char*)"sqrt", 0);
 
-    layer.max_boxes = option_find_int_quiet(options, "max",90);
-    layer.coord_scale = option_find_real(options, "coord_scale", 1);
-    layer.forced = option_find_int(options, "forced", 0);
-    layer.object_scale = option_find_real(options, "object_scale", 1);
-    layer.noobject_scale = option_find_real(options, "noobject_scale", 1);
-    layer.class_scale = option_find_real(options, "class_scale", 1);
-    layer.jitter = option_find_real(options, "jitter", .2);
-    layer.random = option_find_int_quiet(options, "random", 0);
-    layer.reorg = option_find_int_quiet(options, "reorg", 0);
+    layer.max_boxes = option_find_int_quiet(options, (char*)"max",90);
+    layer.coord_scale = option_find_real(options, (char*)"coord_scale", 1);
+    layer.forced = option_find_int(options, (char*)"forced", 0);
+    layer.object_scale = option_find_real(options, (char*)"object_scale", 1);
+    layer.noobject_scale = option_find_real(options, (char*)"noobject_scale", 1);
+    layer.class_scale = option_find_real(options, (char*)"class_scale", 1);
+    layer.jitter = option_find_real(options, (char*)"jitter", .2);
+    layer.random = option_find_int_quiet(options, (char*)"random", 0);
+    layer.reorg = option_find_int_quiet(options, (char*)"reorg", 0);
     return layer;
 }
 
 cost_layer parse_cost(list *options, size_params params)
 {
-    char *type_s = option_find_str(options, "type", "sse");
+    char *type_s = option_find_str(options, (char*)"type", (char*)"sse");
     COST_TYPE type = get_cost_type(type_s);
-    real scale = option_find_real_quiet(options, "scale",1);
+    real scale = option_find_real_quiet(options, (char*)"scale",1);
     cost_layer layer = make_cost_layer(params.batch, params.inputs, type, scale);
-    layer.ratio =  option_find_real_quiet(options, "ratio",0);
-    layer.noobject_scale =  option_find_real_quiet(options, "noobj", 1);
-    layer.thresh =  option_find_real_quiet(options, "thresh",0);
+    layer.ratio =  option_find_real_quiet(options, (char*)"ratio",0);
+    layer.noobject_scale =  option_find_real_quiet(options, (char*)"noobj", 1);
+    layer.thresh =  option_find_real_quiet(options, (char*)"thresh",0);
     return layer;
 }
 
 crop_layer parse_crop(list *options, size_params params)
 {
-    int crop_height = option_find_int(options, "crop_height",1);
-    int crop_width = option_find_int(options, "crop_width",1);
-    int flip = option_find_int(options, "flip",0);
-    real angle = option_find_real(options, "angle",0);
-    real saturation = option_find_real(options, "saturation",1);
-    real exposure = option_find_real(options, "exposure",1);
+    int crop_height = option_find_int(options, (char*)"crop_height",1);
+    int crop_width = option_find_int(options, (char*)"crop_width",1);
+    int flip = option_find_int(options, (char*)"flip",0);
+    real angle = option_find_real(options, (char*)"angle",0);
+    real saturation = option_find_real(options, (char*)"saturation",1);
+    real exposure = option_find_real(options, (char*)"exposure",1);
 
     int batch,h,w,c;
     h = params.h;
@@ -461,20 +461,20 @@ crop_layer parse_crop(list *options, size_params params)
     batch=params.batch;
     if(!(h && w && c)) error("Layer before crop layer must output image.");
 
-    int noadjust = option_find_int_quiet(options, "noadjust",0);
+    int noadjust = option_find_int_quiet(options, (char*)"noadjust",0);
 
     crop_layer l = make_crop_layer(batch,h,w,c,crop_height,crop_width,flip, angle, saturation, exposure);
-    l.shift = option_find_real(options, "shift", 0);
+    l.shift = option_find_real(options, (char*)"shift", 0);
     l.noadjust = noadjust;
     return l;
 }
 
 layer parse_reorg(list *options, size_params params)
 {
-    int stride = option_find_int(options, "stride",1);
-    int reverse = option_find_int_quiet(options, "reverse",0);
-    int flatten = option_find_int_quiet(options, "flatten",0);
-    int extra = option_find_int_quiet(options, "extra",0);
+    int stride = option_find_int(options, (char*)"stride",1);
+    int reverse = option_find_int_quiet(options, (char*)"reverse",0);
+    int flatten = option_find_int_quiet(options, (char*)"flatten",0);
+    int extra = option_find_int_quiet(options, (char*)"extra",0);
 
     int batch,h,w,c;
     h = params.h;
@@ -489,9 +489,9 @@ layer parse_reorg(list *options, size_params params)
 
 maxpool_layer parse_maxpool(list *options, size_params params)
 {
-    int stride = option_find_int(options, "stride",1);
-    int size = option_find_int(options, "size",stride);
-    int padding = option_find_int_quiet(options, "padding", size-1);
+    int stride = option_find_int(options, (char*)"stride",1);
+    int size = option_find_int(options, (char*)"size",stride);
+    int padding = option_find_int_quiet(options, (char*)"padding", size-1);
 
     int batch,h,w,c;
     h = params.h;
@@ -519,7 +519,7 @@ avgpool_layer parse_avgpool(list *options, size_params params)
 
 dropout_layer parse_dropout(list *options, size_params params)
 {
-    real probability = option_find_real(options, "probability", .5);
+    real probability = option_find_real(options, (char*)"probability", .5);
     dropout_layer layer = make_dropout_layer(params.batch, params.inputs, probability);
     layer.out_w = params.w;
     layer.out_h = params.h;
@@ -529,10 +529,10 @@ dropout_layer parse_dropout(list *options, size_params params)
 
 layer parse_normalization(list *options, size_params params)
 {
-    real alpha = option_find_real(options, "alpha", .0001);
-    real beta =  option_find_real(options, "beta" , .75);
-    real kappa = option_find_real(options, "kappa", 1);
-    int size = option_find_int(options, "size", 5);
+    real alpha = option_find_real(options, (char*)"alpha", .0001);
+    real beta =  option_find_real(options, (char*)"beta" , .75);
+    real kappa = option_find_real(options, (char*)"kappa", 1);
+    int size = option_find_int(options, (char*)"size", 5);
     layer l = make_normalization_layer(params.batch, params.w, params.h, params.c, size, alpha, beta, kappa);
     return l;
 }
@@ -545,7 +545,7 @@ layer parse_batchnorm(list *options, size_params params)
 
 layer parse_shortcut(list *options, size_params params, network *net)
 {
-    char *l = option_find(options, "from");
+    char *l = option_find(options, (char*)"from");
     int index = atoi(l);
     if(index < 0) index = params.index + index;
 
@@ -554,11 +554,11 @@ layer parse_shortcut(list *options, size_params params, network *net)
 
     layer s = make_shortcut_layer(batch, index, params.w, params.h, params.c, from.out_w, from.out_h, from.out_c);
 
-    char *activation_s = option_find_str(options, "activation", "linear");
+    char *activation_s = option_find_str(options, (char*)"activation", (char*)"linear");
     ACTIVATION activation = get_activation(activation_s);
     s.activation = activation;
-    s.alpha = option_find_real_quiet(options, "alpha", 1);
-    s.beta = option_find_real_quiet(options, "beta", 1);
+    s.alpha = option_find_real_quiet(options, (char*)"alpha", 1);
+    s.beta = option_find_real_quiet(options, (char*)"beta", 1);
     return s;
 }
 
@@ -584,7 +584,7 @@ layer parse_logistic(list *options, size_params params)
 
 layer parse_activation(list *options, size_params params)
 {
-    char *activation_s = option_find_str(options, "activation", "linear");
+    char *activation_s = option_find_str(options, (char*)"activation", (char*)"linear");
     ACTIVATION activation = get_activation(activation_s);
 
     layer l = make_activation_layer(params.batch, params.inputs, activation);
@@ -599,15 +599,15 @@ layer parse_activation(list *options, size_params params)
 layer parse_upsample(list *options, size_params params, network *net)
 {
 
-    int stride = option_find_int(options, "stride",2);
+    int stride = option_find_int(options, (char*)"stride",2);
     layer l = make_upsample_layer(params.batch, params.w, params.h, params.c, stride);
-    l.scale = option_find_real_quiet(options, "scale", 1);
+    l.scale = option_find_real_quiet(options, (char*)"scale", 1);
     return l;
 }
 
 route_layer parse_route(list *options, size_params params, network *net)
 {
-    char *l = option_find(options, "layers");
+    char *l = option_find(options, (char*)"layers");
     int len = strlen(l);
     if(!l) error("Route Layer must specify input layers");
     int n = 1;
@@ -616,8 +616,8 @@ route_layer parse_route(list *options, size_params params, network *net)
         if (l[i] == ',') ++n;
     }
 
-    int *layers = calloc(n, sizeof(int));
-    int *sizes = calloc(n, sizeof(int));
+    int *layers = (int*)calloc(n, sizeof(int));
+    int *sizes = (int*)calloc(n, sizeof(int));
     for(i = 0; i < n; ++i){
         int index = atoi(l);
         l = strchr(l, ',')+1;
@@ -661,54 +661,54 @@ learning_rate_policy get_policy(char *s)
 
 void parse_net_options(list *options, network *net)
 {
-    net->batch = option_find_int(options, "batch",1);
-    net->learning_rate = option_find_real(options, "learning_rate", .001);
-    net->momentum = option_find_real(options, "momentum", .9);
-    net->decay = option_find_real(options, "decay", .0001);
-    int subdivs = option_find_int(options, "subdivisions",1);
-    net->time_steps = option_find_int_quiet(options, "time_steps",1);
-    net->notruth = option_find_int_quiet(options, "notruth",0);
+    net->batch = option_find_int(options, (char*)"batch",1);
+    net->learning_rate = option_find_real(options, (char*)"learning_rate", .001);
+    net->momentum = option_find_real(options, (char*)"momentum", .9);
+    net->decay = option_find_real(options, (char*)"decay", .0001);
+    int subdivs = option_find_int(options, (char*)"subdivisions",1);
+    net->time_steps = option_find_int_quiet(options, (char*)"time_steps",1);
+    net->notruth = option_find_int_quiet(options, (char*)"notruth",0);
     net->batch /= subdivs;
     net->batch *= net->time_steps;
     net->subdivisions = subdivs;
-    net->random = option_find_int_quiet(options, "random", 0);
+    net->random = option_find_int_quiet(options, (char*)"random", 0);
 
-    net->adam = option_find_int_quiet(options, "adam", 0);
+    net->adam = option_find_int_quiet(options, (char*)"adam", 0);
     if(net->adam){
-        net->B1 = option_find_real(options, "B1", .9);
-        net->B2 = option_find_real(options, "B2", .999);
-        net->eps = option_find_real(options, "eps", .0000001);
+        net->B1 = option_find_real(options, (char*)"B1", .9);
+        net->B2 = option_find_real(options, (char*)"B2", .999);
+        net->eps = option_find_real(options, (char*)"eps", .0000001);
     }
 
-    net->h = option_find_int_quiet(options, "height",0);
-    net->w = option_find_int_quiet(options, "width",0);
-    net->c = option_find_int_quiet(options, "channels",0);
-    net->inputs = option_find_int_quiet(options, "inputs", net->h * net->w * net->c);
-    net->max_crop = option_find_int_quiet(options, "max_crop",net->w*2);
-    net->min_crop = option_find_int_quiet(options, "min_crop",net->w);
-    net->max_ratio = option_find_real_quiet(options, "max_ratio", (real) net->max_crop / net->w);
-    net->min_ratio = option_find_real_quiet(options, "min_ratio", (real) net->min_crop / net->w);
-    net->center = option_find_int_quiet(options, "center",0);
-    net->clip = option_find_real_quiet(options, "clip", 0);
+    net->h = option_find_int_quiet(options, (char*)"height",0);
+    net->w = option_find_int_quiet(options, (char*)"width",0);
+    net->c = option_find_int_quiet(options, (char*)"channels",0);
+    net->inputs = option_find_int_quiet(options, (char*)"inputs", net->h * net->w * net->c);
+    net->max_crop = option_find_int_quiet(options, (char*)"max_crop",net->w*2);
+    net->min_crop = option_find_int_quiet(options, (char*)"min_crop",net->w);
+    net->max_ratio = option_find_real_quiet(options, (char*)"max_ratio", (real) net->max_crop / net->w);
+    net->min_ratio = option_find_real_quiet(options, (char*)"min_ratio", (real) net->min_crop / net->w);
+    net->center = option_find_int_quiet(options, (char*)"center",0);
+    net->clip = option_find_real_quiet(options, (char*)"clip", 0);
 
-    net->angle = option_find_real_quiet(options, "angle", 0);
-    net->aspect = option_find_real_quiet(options, "aspect", 1);
-    net->saturation = option_find_real_quiet(options, "saturation", 1);
-    net->exposure = option_find_real_quiet(options, "exposure", 1);
-    net->hue = option_find_real_quiet(options, "hue", 0);
+    net->angle = option_find_real_quiet(options, (char*)"angle", 0);
+    net->aspect = option_find_real_quiet(options, (char*)"aspect", 1);
+    net->saturation = option_find_real_quiet(options, (char*)"saturation", 1);
+    net->exposure = option_find_real_quiet(options, (char*)"exposure", 1);
+    net->hue = option_find_real_quiet(options, (char*)"hue", 0);
 
     if(!net->inputs && !(net->h && net->w && net->c)) error("No input parameters supplied");
 
-    char *policy_s = option_find_str(options, "policy", "constant");
+    char *policy_s = option_find_str(options, (char*)"policy", (char*)"constant");
     net->policy = get_policy(policy_s);
-    net->burn_in = option_find_int_quiet(options, "burn_in", 0);
-    net->power = option_find_real_quiet(options, "power", 4);
+    net->burn_in = option_find_int_quiet(options, (char*)"burn_in", 0);
+    net->power = option_find_real_quiet(options, (char*)"power", 4);
     if(net->policy == STEP){
-        net->step = option_find_int(options, "step", 1);
-        net->scale = option_find_real(options, "scale", 1);
+        net->step = option_find_int(options, (char*)"step", 1);
+        net->scale = option_find_real(options, (char*)"scale", 1);
     } else if (net->policy == STEPS){
-        char *l = option_find(options, "steps");
-        char *p = option_find(options, "scales");
+        char *l = option_find(options, (char*)"steps");
+        char *p = option_find(options, (char*)"scales");
         if(!l || !p) error("STEPS policy must have steps and scales in cfg file");
 
         int len = strlen(l);
@@ -717,8 +717,8 @@ void parse_net_options(list *options, network *net)
         for(i = 0; i < len; ++i){
             if (l[i] == ',') ++n;
         }
-        int *steps = calloc(n, sizeof(int));
-        real *scales = calloc(n, sizeof(real));
+        int *steps = (int*)calloc(n, sizeof(int));
+        real *scales = (real*)calloc(n, sizeof(real));
         for(i = 0; i < n; ++i){
             int step    = atoi(l);
             real scale = atof(p);
@@ -731,13 +731,13 @@ void parse_net_options(list *options, network *net)
         net->steps = steps;
         net->num_steps = n;
     } else if (net->policy == EXP){
-        net->gamma = option_find_real(options, "gamma", 1);
+        net->gamma = option_find_real(options, (char*)"gamma", 1);
     } else if (net->policy == SIG){
-        net->gamma = option_find_real(options, "gamma", 1);
-        net->step = option_find_int(options, "step", 1);
+        net->gamma = option_find_real(options, (char*)"gamma", 1);
+        net->step = option_find_int(options, (char*)"step", 1);
     } else if (net->policy == POLY || net->policy == RANDOM){
     }
-    net->max_batches = option_find_int(options, "max_batches", 0);
+    net->max_batches = option_find_int(options, (char*)"max_batches", 0);
 }
 
 int is_network(section *s)
@@ -785,7 +785,7 @@ network *parse_network_cfg_custom(char *filename, int batch)
         fprintf(stderr, "%5d ", count);
         s = (section *)n->val;
         options = s->options;
-        layer l = {0};
+        layer l = {}; // zero init
         LAYER_TYPE lt = string_to_layer_type(s->type);
         if(lt == CONVOLUTIONAL){
             l = parse_convolutional(options, params);
@@ -852,15 +852,15 @@ network *parse_network_cfg_custom(char *filename, int batch)
             fprintf(stderr, "Type not recognized: %s\n", s->type);
         }
         l.clip = net->clip;
-        l.truth = option_find_int_quiet(options, "truth", 0);
-        l.onlyforward = option_find_int_quiet(options, "onlyforward", 0);
-        l.stopbackward = option_find_int_quiet(options, "stopbackward", 0);
-        l.dontsave = option_find_int_quiet(options, "dontsave", 0);
-        l.dontload = option_find_int_quiet(options, "dontload", 0);
-        l.numload = option_find_int_quiet(options, "numload", 0);
-        l.dontloadscales = option_find_int_quiet(options, "dontloadscales", 0);
-        l.learning_rate_scale = option_find_real_quiet(options, "learning_rate", 1);
-        l.smooth = option_find_real_quiet(options, "smooth", 0);
+        l.truth = option_find_int_quiet(options, (char*)"truth", 0);
+        l.onlyforward = option_find_int_quiet(options, (char*)"onlyforward", 0);
+        l.stopbackward = option_find_int_quiet(options, (char*)"stopbackward", 0);
+        l.dontsave = option_find_int_quiet(options, (char*)"dontsave", 0);
+        l.dontload = option_find_int_quiet(options, (char*)"dontload", 0);
+        l.numload = option_find_int_quiet(options, (char*)"numload", 0);
+        l.dontloadscales = option_find_int_quiet(options, (char*)"dontloadscales", 0);
+        l.learning_rate_scale = option_find_real_quiet(options, (char*)"learning_rate", 1);
+        l.smooth = option_find_real_quiet(options, (char*)"smooth", 0);
         option_unused(options);
         net->layers[count] = l;
         if (l.workspace_size > workspace_size) workspace_size = l.workspace_size;
@@ -881,8 +881,8 @@ network *parse_network_cfg_custom(char *filename, int batch)
     net->truths = out.outputs;
     if(net->layers[net->n-1].truths) net->truths = net->layers[net->n-1].truths;
     net->output = out.output;
-    net->input = calloc(net->inputs*net->batch, sizeof(real));
-    net->truth = calloc(net->truths*net->batch, sizeof(real));
+    net->input = (real*)calloc(net->inputs*net->batch, sizeof(real));
+    net->truth = (real*)calloc(net->truths*net->batch, sizeof(real));
 #ifdef GPU
     net->output_gpu = out.output_gpu;
     net->input_gpu = cuda_make_array(net->input, net->inputs*net->batch);
@@ -897,7 +897,7 @@ network *parse_network_cfg_custom(char *filename, int batch)
             net->workspace = calloc(1, workspace_size);
         }
 #else
-        net->workspace = calloc(1, workspace_size);
+        net->workspace = (real*)calloc(1, workspace_size);
 #endif
     }
     return net;
@@ -916,7 +916,7 @@ list *read_cfg(char *filename)
         strip(line);
         switch(line[0]){
             case '[':
-                current = malloc(sizeof(section));
+                current = (section*)malloc(sizeof(section));
                 list_insert(options, current);
                 current->options = make_list();
                 current->type = line;
@@ -1099,7 +1099,7 @@ void save_weights(network *net, char *filename)
 
 void transpose_matrix(real *a, int rows, int cols)
 {
-    real *transpose = calloc(rows*cols, sizeof(real));
+    real *transpose = (real*)calloc(rows*cols, sizeof(real));
     int x, y;
     for(x = 0; x < rows; ++x){
         for(y = 0; y < cols; ++y){
