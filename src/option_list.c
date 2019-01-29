@@ -37,14 +37,14 @@ metadata get_metadata(char *file)
     metadata m = {0};
     list *options = read_data_cfg(file);
 
-    char *name_list = option_find_str(options, "names", 0);
-    if(!name_list) name_list = option_find_str(options, "labels", 0);
+    char *name_list = option_find_str(options, (char*)"names", 0);
+    if(!name_list) name_list = option_find_str(options, (char*)"labels", 0);
     if(!name_list) {
         fprintf(stderr, "No names or labels found\n");
     } else {
         m.names = get_labels(name_list);
     }
-    m.classes = option_find_int(options, "classes", 2);
+    m.classes = option_find_int(options, (char*)"classes", 2);
     free_list(options);
     return m;
 }
@@ -69,7 +69,7 @@ int read_option(char *s, list *options)
 
 void option_insert(list *l, char *key, char *val)
 {
-    kvp *p = malloc(sizeof(kvp));
+    kvp *p = (kvp*)malloc(sizeof(kvp));
     p->key = key;
     p->val = val;
     p->used = 0;
