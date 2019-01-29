@@ -7,7 +7,7 @@ void extend_data_truth(data *d, int n, real val)
 {
     int i, j;
     for(i = 0; i < d->y.rows; ++i){
-        d->y.vals[i] = realloc(d->y.vals[i], (d->y.cols+n)*sizeof(real));
+        d->y.vals[i] = (real*)realloc(d->y.vals[i], (d->y.cols+n)*sizeof(real));
         for(j = 0; j < n; ++j){
             d->y.vals[i][d->y.cols + j] = val;
         }
@@ -20,8 +20,8 @@ matrix network_loss_data(network *net, data test)
     int i,b;
     int k = 1;
     matrix pred = make_matrix(test.X.rows, k);
-    real *X = calloc(net->batch*test.X.cols, sizeof(real));
-    real *y = calloc(net->batch*test.y.cols, sizeof(real));
+    real *X = (real*)calloc(net->batch*test.X.cols, sizeof(real));
+    real *y = (real*)calloc(net->batch*test.y.cols, sizeof(real));
     for(i = 0; i < test.X.rows; i += net->batch){
         for(b = 0; b < net->batch; ++b){
             if(i+b == test.X.rows) break;
@@ -60,7 +60,7 @@ void train_attention(char *datacfg, char *cfgfile, char *weightfile, int *gpus, 
     char *base = basecfg(cfgfile);
     printf("%s\n", base);
     printf("%d\n", ngpus);
-    network **nets = calloc(ngpus, sizeof(network*));
+    network **nets = (network**)calloc(ngpus, sizeof(network*));
 
     srand(time(0));
     int seed = rand();
@@ -80,10 +80,10 @@ void train_attention(char *datacfg, char *cfgfile, char *weightfile, int *gpus, 
     printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
     list *options = read_data_cfg(datacfg);
 
-    char *backup_directory = option_find_str(options, "backup", "/backup/");
-    char *label_list = option_find_str(options, "labels", "data/labels.list");
-    char *train_list = option_find_str(options, "train", "data/train.list");
-    int classes = option_find_int(options, "classes", 2);
+    char *backup_directory = option_find_str(options, (char*)"backup", (char*)"/backup/");
+    char *label_list = option_find_str(options, (char*)"labels", (char*)"data/labels.list");
+    char *train_list = option_find_str(options, (char*)"train", (char*)"data/train.list");
+    int classes = option_find_int(options, (char*)"classes", 2);
 
     char **labels = get_labels(label_list);
     list *plist = get_paths(train_list);
@@ -152,7 +152,7 @@ void train_attention(char *datacfg, char *cfgfile, char *weightfile, int *gpus, 
                 free_matrix(deltas);
             }
         }
-        int *inds = calloc(resized.y.rows, sizeof(int));
+        int *inds = (int*)calloc(resized.y.rows, sizeof(int));
         for(z = 0; z < resized.y.rows; ++z){
             int index = max_index(resized.y.vals[z] + train.y.cols, divs*divs);
             inds[z] = index;
@@ -239,12 +239,12 @@ void validate_attention_single(char *datacfg, char *filename, char *weightfile)
 
     list *options = read_data_cfg(datacfg);
 
-    char *label_list = option_find_str(options, "labels", "data/labels.list");
-    char *leaf_list = option_find_str(options, "leaves", 0);
+    char *label_list = option_find_str(options, (char*)"labels", (char*)"data/labels.list");
+    char *leaf_list = option_find_str(options, (char*)"leaves", 0);
     if(leaf_list) change_leaves(net->hierarchy, leaf_list);
-    char *valid_list = option_find_str(options, "valid", "data/train.list");
-    int classes = option_find_int(options, "classes", 2);
-    int topk = option_find_int(options, "top", 1);
+    char *valid_list = option_find_str(options, (char*)"valid", (char*)"data/train.list");
+    int classes = option_find_int(options, (char*)"classes", 2);
+    int topk = option_find_int(options, (char*)"top", 1);
 
     char **labels = get_labels(label_list);
     list *plist = get_paths(valid_list);
@@ -255,19 +255,19 @@ void validate_attention_single(char *datacfg, char *filename, char *weightfile)
 
     real avg_acc = 0;
     real avg_topk = 0;
-    int *indexes = calloc(topk, sizeof(int));
+    int *indexes = (int*)calloc(topk, sizeof(int));
     int divs = 4;
     int size = 2;
     int extra = 0;
-    real *avgs = calloc(classes, sizeof(real));
-    int *inds = calloc(divs*divs, sizeof(int));
+    real *avgs = (real*)calloc(classes, sizeof(real));
+    int *inds = (int*)calloc(divs*divs, sizeof(int));
 
     for(i = 0; i < m; ++i){
-        int class = -1;
+        int _class = -1;
         char *path = paths[i];
         for(j = 0; j < classes; ++j){
             if(strstr(path, labels[j])){
-                class = j;
+                _class = j;
                 break;
             }
         }
@@ -309,9 +309,9 @@ void validate_attention_single(char *datacfg, char *filename, char *weightfile)
         free_image(crop);
         top_k(pred, classes, topk, indexes);
 
-        if(indexes[0] == class) avg_acc += 1;
+        if(indexes[0] == _class) avg_acc += 1;
         for(j = 0; j < topk; ++j){
-            if(indexes[j] == class) avg_topk += 1;
+            if(indexes[j] == _class) avg_topk += 1;
         }
 
         printf("%d: top 1: %f, top %d: %f\n", i, avg_acc/(i+1), topk, avg_topk/(i+1));
@@ -327,10 +327,10 @@ void validate_attention_multi(char *datacfg, char *filename, char *weightfile)
 
     list *options = read_data_cfg(datacfg);
 
-    char *label_list = option_find_str(options, "labels", "data/labels.list");
-    char *valid_list = option_find_str(options, "valid", "data/train.list");
-    int classes = option_find_int(options, "classes", 2);
-    int topk = option_find_int(options, "top", 1);
+    char *label_list = option_find_str(options, (char*)"labels", (char*)"data/labels.list");
+    char *valid_list = option_find_str(options, (char*)"valid", (char*)"data/train.list");
+    int classes = option_find_int(options, (char*)"classes", 2);
+    int topk = option_find_int(options, (char*)"top", 1);
 
     char **labels = get_labels(label_list);
     list *plist = get_paths(valid_list);
@@ -343,18 +343,18 @@ void validate_attention_multi(char *datacfg, char *filename, char *weightfile)
 
     real avg_acc = 0;
     real avg_topk = 0;
-    int *indexes = calloc(topk, sizeof(int));
+    int *indexes = (int*)calloc(topk, sizeof(int));
 
     for(i = 0; i < m; ++i){
-        int class = -1;
+        int _class = -1;
         char *path = paths[i];
         for(j = 0; j < classes; ++j){
             if(strstr(path, labels[j])){
-                class = j;
+                _class = j;
                 break;
             }
         }
-        real *pred = calloc(classes, sizeof(real));
+        real *pred = (real*)calloc(classes, sizeof(real));
         image im = load_image_color(paths[i], 0, 0);
         for(j = 0; j < nscales; ++j){
             image r = resize_min(im, scales[j]);
@@ -370,9 +370,9 @@ void validate_attention_multi(char *datacfg, char *filename, char *weightfile)
         free_image(im);
         top_k(pred, classes, topk, indexes);
         free(pred);
-        if(indexes[0] == class) avg_acc += 1;
+        if(indexes[0] == _class) avg_acc += 1;
         for(j = 0; j < topk; ++j){
-            if(indexes[j] == class) avg_topk += 1;
+            if(indexes[j] == _class) avg_topk += 1;
         }
 
         printf("%d: top 1: %f, top %d: %f\n", i, avg_acc/(i+1), topk, avg_topk/(i+1));
@@ -387,14 +387,14 @@ void predict_attention(char *datacfg, char *cfgfile, char *weightfile, char *fil
 
     list *options = read_data_cfg(datacfg);
 
-    char *name_list = option_find_str(options, "names", 0);
-    if(!name_list) name_list = option_find_str(options, "labels", "data/labels.list");
-    if(top == 0) top = option_find_int(options, "top", 1);
+    char *name_list = option_find_str(options, (char*)"names", 0);
+    if(!name_list) name_list = option_find_str(options, (char*)"labels", (char*)"data/labels.list");
+    if(top == 0) top = option_find_int(options, (char*)"top", 1);
 
     int i = 0;
     char **names = get_labels(name_list);
     clock_t time;
-    int *indexes = calloc(top, sizeof(int));
+    int *indexes = (int*)calloc(top, sizeof(int));
     char buff[256];
     char *input = buff;
     while(1){
@@ -438,22 +438,22 @@ void run_attention(int argc, char **argv)
         return;
     }
 
-    char *gpu_list = find_char_arg(argc, argv, "-gpus", 0);
+    char *gpu_list = find_char_arg(argc, argv, (char*)"-gpus", 0);
     int ngpus;
     int *gpus = read_intlist(gpu_list, &ngpus, gpu_index);
 
 
-    int top = find_int_arg(argc, argv, "-t", 0);
-    int clear = find_arg(argc, argv, "-clear");
+    int top = find_int_arg(argc, argv, (char*)"-t", 0);
+    int clear = find_arg(argc, argv, (char*)"-clear");
     char *data = argv[3];
     char *cfg = argv[4];
     char *weights = (argc > 5) ? argv[5] : 0;
     char *filename = (argc > 6) ? argv[6]: 0;
     char *layer_s = (argc > 7) ? argv[7]: 0;
-    if(0==strcmp(argv[2], "predict")) predict_attention(data, cfg, weights, filename, top);
-    else if(0==strcmp(argv[2], "train")) train_attention(data, cfg, weights, gpus, ngpus, clear);
-    else if(0==strcmp(argv[2], "valid")) validate_attention_single(data, cfg, weights);
-    else if(0==strcmp(argv[2], "validmulti")) validate_attention_multi(data, cfg, weights);
+    if(0==strcmp(argv[2], (char*)"predict")) predict_attention(data, cfg, weights, filename, top);
+    else if(0==strcmp(argv[2], (char*)"train")) train_attention(data, cfg, weights, gpus, ngpus, clear);
+    else if(0==strcmp(argv[2], (char*)"valid")) validate_attention_single(data, cfg, weights);
+    else if(0==strcmp(argv[2], (char*)"validmulti")) validate_attention_multi(data, cfg, weights);
 }
 
 
