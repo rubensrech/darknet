@@ -6,14 +6,14 @@ static int coco_ids[] = {1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,17,18,19,20,21,22,2
 void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, int ngpus, int clear)
 {
     list *options = read_data_cfg(datacfg);
-    char *train_images = option_find_str(options, "train", "data/train.list");
-    char *backup_directory = option_find_str(options, "backup", "/backup/");
+    char *train_images = option_find_str(options, (char*)"train", (char*)"data/train.list");
+    char *backup_directory = option_find_str(options, (char*)"backup", (char*)"/backup/");
 
     srand(time(0));
     char *base = basecfg(cfgfile);
     printf("%s\n", base);
     real avg_loss = -1;
-    network **nets = calloc(ngpus, sizeof(network));
+    network **nets = (network**)calloc(ngpus, sizeof(network));
 
     srand(time(0));
     int seed = rand();
@@ -224,8 +224,8 @@ void print_imagenet_detections(FILE *fp, int id, detection *dets, int total, int
         if (ymax > h) ymax = h;
 
         for(j = 0; j < classes; ++j){
-            int class = j;
-            if (dets[i].prob[class]) fprintf(fp, "%d %d %f %f %f %f %f\n", id, j+1, dets[i].prob[class],
+            int _class = j;
+            if (dets[i].prob[_class]) fprintf(fp, "%d %d %f %f %f %f %f\n", id, j+1, dets[i].prob[_class],
                     xmin, ymin, xmax, ymax);
         }
     }
@@ -235,11 +235,11 @@ void validate_detector_flip(char *datacfg, char *cfgfile, char *weightfile, char
 {
     int j;
     list *options = read_data_cfg(datacfg);
-    char *valid_images = option_find_str(options, "valid", "data/train.list");
-    char *name_list = option_find_str(options, "names", "data/names.list");
-    char *prefix = option_find_str(options, "results", "results");
+    char *valid_images = option_find_str(options, (char*)"valid", (char*)"data/train.list");
+    char *name_list = option_find_str(options, (char*)"names", (char*)"data/names.list");
+    char *prefix = option_find_str(options, (char*)"results", (char*)"results");
     char **names = get_labels(name_list);
-    char *mapf = option_find_str(options, "map", 0);
+    char *mapf = option_find_str(options, (char*)"map", 0);
     int *map = 0;
     if (mapf) map = read_map(mapf);
 
@@ -255,26 +255,26 @@ void validate_detector_flip(char *datacfg, char *cfgfile, char *weightfile, char
     int classes = l.classes;
 
     char buff[1024];
-    char *type = option_find_str(options, "eval", "voc");
+    char *type = option_find_str(options, (char*)"eval", (char*)"voc");
     FILE *fp = 0;
     FILE **fps = 0;
     int coco = 0;
     int imagenet = 0;
     if(0==strcmp(type, "coco")){
-        if(!outfile) outfile = "coco_results";
+        if(!outfile) outfile = (char*)"coco_results";
         snprintf(buff, 1024, "%s/%s.json", prefix, outfile);
         fp = fopen(buff, "w");
         fprintf(fp, "[\n");
         coco = 1;
     } else if(0==strcmp(type, "imagenet")){
-        if(!outfile) outfile = "imagenet-detection";
+        if(!outfile) outfile = (char*)"imagenet-detection";
         snprintf(buff, 1024, "%s/%s.txt", prefix, outfile);
         fp = fopen(buff, "w");
         imagenet = 1;
         classes = 200;
     } else {
-        if(!outfile) outfile = "comp4_det_test_";
-        fps = calloc(classes, sizeof(FILE *));
+        if(!outfile) outfile = (char*)"comp4_det_test_";
+        fps = (FILE**)calloc(classes, sizeof(FILE *));
         for(j = 0; j < classes; ++j){
             snprintf(buff, 1024, "%s/%s%s.txt", prefix, outfile, names[j]);
             fps[j] = fopen(buff, "w");
@@ -289,11 +289,11 @@ void validate_detector_flip(char *datacfg, char *cfgfile, char *weightfile, char
     real nms = .45;
 
     int nthreads = 4;
-    image *val = calloc(nthreads, sizeof(image));
-    image *val_resized = calloc(nthreads, sizeof(image));
-    image *buf = calloc(nthreads, sizeof(image));
-    image *buf_resized = calloc(nthreads, sizeof(image));
-    pthread_t *thr = calloc(nthreads, sizeof(pthread_t));
+    image *val = (image*)calloc(nthreads, sizeof(image));
+    image *val_resized = (image*)calloc(nthreads, sizeof(image));
+    image *buf = (image*)calloc(nthreads, sizeof(image));
+    image *buf_resized = (image*)calloc(nthreads, sizeof(image));
+    pthread_t *thr = (pthread_t*)calloc(nthreads, sizeof(pthread_t));
 
     image input = make_image(net->w, net->h, net->c*2);
 
@@ -367,11 +367,11 @@ void validate_detector(char *datacfg, char *cfgfile, char *weightfile, char *out
 {
     int j;
     list *options = read_data_cfg(datacfg);
-    char *valid_images = option_find_str(options, "valid", "data/train.list");
-    char *name_list = option_find_str(options, "names", "data/names.list");
-    char *prefix = option_find_str(options, "results", "results");
+    char *valid_images = option_find_str(options, (char*)"valid", (char*)"data/train.list");
+    char *name_list = option_find_str(options, (char*)"names", (char*)"data/names.list");
+    char *prefix = option_find_str(options, (char*)"results", (char*)"results");
     char **names = get_labels(name_list);
-    char *mapf = option_find_str(options, "map", 0);
+    char *mapf = option_find_str(options, (char*)"map", 0);
     int *map = 0;
     if (mapf) map = read_map(mapf);
 
@@ -387,26 +387,26 @@ void validate_detector(char *datacfg, char *cfgfile, char *weightfile, char *out
     int classes = l.classes;
 
     char buff[1024];
-    char *type = option_find_str(options, "eval", "voc");
+    char *type = option_find_str(options, (char*)"eval", (char*)"voc");
     FILE *fp = 0;
     FILE **fps = 0;
     int coco = 0;
     int imagenet = 0;
     if(0==strcmp(type, "coco")){
-        if(!outfile) outfile = "coco_results";
+        if(!outfile) outfile = (char*)"coco_results";
         snprintf(buff, 1024, "%s/%s.json", prefix, outfile);
         fp = fopen(buff, "w");
         fprintf(fp, "[\n");
         coco = 1;
     } else if(0==strcmp(type, "imagenet")){
-        if(!outfile) outfile = "imagenet-detection";
+        if(!outfile) outfile = (char*)"imagenet-detection";
         snprintf(buff, 1024, "%s/%s.txt", prefix, outfile);
         fp = fopen(buff, "w");
         imagenet = 1;
         classes = 200;
     } else {
-        if(!outfile) outfile = "comp4_det_test_";
-        fps = calloc(classes, sizeof(FILE *));
+        if(!outfile) outfile = (char*)"comp4_det_test_";
+        fps = (FILE**)calloc(classes, sizeof(FILE *));
         for(j = 0; j < classes; ++j){
             snprintf(buff, 1024, "%s/%s%s.txt", prefix, outfile, names[j]);
             fps[j] = fopen(buff, "w");
@@ -422,11 +422,11 @@ void validate_detector(char *datacfg, char *cfgfile, char *weightfile, char *out
     real nms = .45;
 
     int nthreads = 4;
-    image *val = calloc(nthreads, sizeof(image));
-    image *val_resized = calloc(nthreads, sizeof(image));
-    image *buf = calloc(nthreads, sizeof(image));
-    image *buf_resized = calloc(nthreads, sizeof(image));
-    pthread_t *thr = calloc(nthreads, sizeof(pthread_t));
+    image *val = (image*)calloc(nthreads, sizeof(image));
+    image *val_resized = (image*)calloc(nthreads, sizeof(image));
+    image *buf = (image*)calloc(nthreads, sizeof(image));
+    image *buf_resized = (image*)calloc(nthreads, sizeof(image));
+    pthread_t *thr = (pthread_t*)calloc(nthreads, sizeof(pthread_t));
 
     load_args args = {0};
     args.w = net->w;
@@ -497,7 +497,7 @@ void validate_detector_recall(char *cfgfile, char *weightfile)
     fprintf(stderr, "Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
     srand(time(0));
 
-    list *plist = get_paths("data/coco_val_5k.list");
+    list *plist = get_paths((char*)"data/coco_val_5k.list");
     char **paths = (char **)list_to_array(plist);
 
     layer l = net->layers[net->n-1];
@@ -529,10 +529,10 @@ void validate_detector_recall(char *cfgfile, char *weightfile)
         if (nms) do_nms_obj(dets, nboxes, 1, nms);
 
         char labelpath[4096];
-        find_replace(path, "images", "labels", labelpath);
-        find_replace(labelpath, "JPEGImages", "labels", labelpath);
-        find_replace(labelpath, ".jpg", ".txt", labelpath);
-        find_replace(labelpath, ".JPEG", ".txt", labelpath);
+        find_replace(path, (char*)"images", (char*)"labels", labelpath);
+        find_replace(labelpath, (char*)"JPEGImages", (char*)"labels", labelpath);
+        find_replace(labelpath, (char*)".jpg", (char*)".txt", labelpath);
+        find_replace(labelpath, (char*)".JPEG", (char*)".txt", labelpath);
 
         int num_labels = 0;
         box_label *truth = read_boxes(labelpath, &num_labels);
@@ -586,9 +586,9 @@ int detections_comparator(const void *pa, const void *pb)
 real validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real thresh_calc_avg_iou, const real iou_thresh, network *existing_net)
 {
     list *options = read_data_cfg(datacfg);
-    char *valid_images = option_find_str(options, "valid", "data/train.txt");
-    char *difficult_valid_images = option_find_str(options, "difficult", NULL);
-    char *name_list = option_find_str(options, "names", "data/names.list");
+    char *valid_images = option_find_str(options, (char*)"valid", (char*)"data/train.txt");
+    char *difficult_valid_images = option_find_str(options, (char*)"difficult", NULL);
+    char *name_list = option_find_str(options, (char*)"names", (char*)"data/names.list");
     char **names = get_labels(name_list);
     FILE* reinforcement_fd = NULL;
 
@@ -626,11 +626,11 @@ real validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real 
 
     int nthreads = 4;
     if (m < 4) nthreads = m;
-    image *val = calloc(nthreads, sizeof(image));
-    image *val_resized = calloc(nthreads, sizeof(image));
-    image *buf = calloc(nthreads, sizeof(image));
-    image *buf_resized = calloc(nthreads, sizeof(image));
-    pthread_t *thr = calloc(nthreads, sizeof(pthread_t));
+    image *val = (image*)calloc(nthreads, sizeof(image));
+    image *val_resized = (image*)calloc(nthreads, sizeof(image));
+    image *buf = (image*)calloc(nthreads, sizeof(image));
+    image *buf_resized = (image*)calloc(nthreads, sizeof(image));
+    pthread_t *thr = (pthread_t*)calloc(nthreads, sizeof(pthread_t));
 
     load_args args = { 0 };
     args.w = net->w;
@@ -644,11 +644,11 @@ real validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real 
     int tp_for_thresh = 0;
     int fp_for_thresh = 0;
 
-    box_prob *detections = calloc(1, sizeof(box_prob));
+    box_prob *detections = (box_prob*)calloc(1, sizeof(box_prob));
     int detections_count = 0;
     int unique_truth_count = 0;
 
-    int *truth_classes_count = calloc(classes, sizeof(int));
+    int *truth_classes_count = (int*)calloc(classes, sizeof(int));
 
     for (t = 0; t < nthreads; ++t) {
         args.path = paths[i + t];
@@ -721,7 +721,7 @@ real validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real 
                     real prob = dets[i].prob[class_id];
                     if (prob > 0) {
                         detections_count++;
-                        detections = realloc(detections, detections_count * sizeof(box_prob));
+                        detections = (box_prob*)realloc(detections, detections_count * sizeof(box_prob));
                         detections[detections_count - 1].b = dets[i].bbox;
                         detections[detections_count - 1].p = prob;
                         detections[detections_count - 1].image_index = image_index;
@@ -803,13 +803,13 @@ real validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real 
     } pr_t;
 
     // for PR-curve
-    pr_t **pr = calloc(classes, sizeof(pr_t*));
+    pr_t **pr = (pr_t**)calloc(classes, sizeof(pr_t*));
     for (i = 0; i < classes; ++i) {
-        pr[i] = calloc(detections_count, sizeof(pr_t));
+        pr[i] = (pr_t*)calloc(detections_count, sizeof(pr_t));
     }
     printf("\n detections_count = %d, unique_truth_count = %d  \n", detections_count, unique_truth_count);
 
-    int *truth_flags = calloc(unique_truth_count, sizeof(int));
+    int *truth_flags = (int*)calloc(unique_truth_count, sizeof(int));
 
     int rank;
     for (rank = 0; rank < detections_count; ++rank) {
@@ -927,7 +927,7 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
     list *options = read_data_cfg(datacfg);
 
     // Load classes names
-    char *name_list = option_find_str(options, "names", "data/names.list");
+    char *name_list = option_find_str(options, (char*)"names", (char*)"data/names.list");
     char **names = get_labels(name_list);
 
     // Load alphabet letters images
@@ -1163,19 +1163,19 @@ void network_detect(network *net, image im, real thresh, real hier_thresh, real 
 
 void run_detector(int argc, char **argv)
 {
-    char *prefix = find_char_arg(argc, argv, "-prefix", 0);
-    real thresh = find_real_arg(argc, argv, "-thresh", .5);
-    real iou_thresh = find_real_arg(argc, argv, "-iou_thresh", .5);    // 0.5 for mAP
-    real hier_thresh = find_real_arg(argc, argv, "-hier", .5);
-    int cam_index = find_int_arg(argc, argv, "-c", 0);
-    int frame_skip = find_int_arg(argc, argv, "-s", 0);
-    int avg = find_int_arg(argc, argv, "-avg", 3);
+    char *prefix = find_char_arg(argc, argv, (char*)"-prefix", 0);
+    real thresh = find_real_arg(argc, argv, (char*)"-thresh", .5);
+    real iou_thresh = find_real_arg(argc, argv, (char*)"-iou_thresh", .5);    // 0.5 for mAP
+    real hier_thresh = find_real_arg(argc, argv, (char*)"-hier", .5);
+    int cam_index = find_int_arg(argc, argv, (char*)"-c", 0);
+    int frame_skip = find_int_arg(argc, argv, (char*)"-s", 0);
+    int avg = find_int_arg(argc, argv, (char*)"-avg", 3);
     if(argc < 4){
         fprintf(stderr, "usage: %s %s [train/test/valid] [cfg] [weights (optional)]\n", argv[0], argv[1]);
         return;
     }
-    char *gpu_list = find_char_arg(argc, argv, "-gpus", 0);
-    char *outfile = find_char_arg(argc, argv, "-out", 0);
+    char *gpu_list = find_char_arg(argc, argv, (char*)"-gpus", 0);
+    char *outfile = find_char_arg(argc, argv, (char*)"-out", 0);
     int *gpus = 0;
     int gpu = 0;
     int ngpus = 0;
@@ -1187,7 +1187,7 @@ void run_detector(int argc, char **argv)
         for(i = 0; i < len; ++i){
             if (gpu_list[i] == ',') ++ngpus;
         }
-        gpus = calloc(ngpus, sizeof(int));
+        gpus = (int*)calloc(ngpus, sizeof(int));
         for(i = 0; i < ngpus; ++i){
             gpus[i] = atoi(gpu_list);
             gpu_list = strchr(gpu_list, ',')+1;
@@ -1198,11 +1198,11 @@ void run_detector(int argc, char **argv)
         ngpus = 1;
     }
 
-    int clear = find_arg(argc, argv, "-clear");
-    int fullscreen = find_arg(argc, argv, "-fullscreen");
-    int width = find_int_arg(argc, argv, "-w", 0);
-    int height = find_int_arg(argc, argv, "-h", 0);
-    int fps = find_int_arg(argc, argv, "-fps", 0);
+    int clear = find_arg(argc, argv, (char*)"-clear");
+    int fullscreen = find_arg(argc, argv, (char*)"-fullscreen");
+    int width = find_int_arg(argc, argv, (char*)"-w", 0);
+    int height = find_int_arg(argc, argv, (char*)"-h", 0);
+    int fps = find_int_arg(argc, argv, (char*)"-fps", 0);
     //int class = find_int_arg(argc, argv, "-class", 0);
 
     char *datacfg = argv[3];
@@ -1217,8 +1217,8 @@ void run_detector(int argc, char **argv)
     else if(0==strcmp(argv[2], "map")) validate_detector_map(datacfg, cfg, weights, thresh, iou_thresh, NULL);
     else if(0==strcmp(argv[2], "demo")) {
         list *options = read_data_cfg(datacfg);
-        int classes = option_find_int(options, "classes", 20);
-        char *name_list = option_find_str(options, "names", "data/names.list");
+        int classes = option_find_int(options, (char*)"classes", 20);
+        char *name_list = option_find_str(options, (char*)"names", (char*)"data/names.list");
         char **names = get_labels(name_list);
         demo(cfg, weights, thresh, cam_index, filename, names, classes, frame_skip, prefix, avg, hier_thresh, width, height, fps, fullscreen);
     }
