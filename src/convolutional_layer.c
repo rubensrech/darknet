@@ -176,7 +176,7 @@ void cudnn_convolutional_setup(layer *l)
 convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int n, int groups, int size, int stride, int padding, ACTIVATION activation, int batch_normalize, int binary, int xnor, int adam)
 {
     int i;
-    convolutional_layer l = {};
+    convolutional_layer l = {}; // zero init
     l.type = CONVOLUTIONAL;
 
     l.groups = groups;

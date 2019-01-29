@@ -30,7 +30,7 @@ layer make_gru_layer(int batch, int inputs, int outputs, int steps, int batch_no
 {
     fprintf(stderr, "GRU Layer: %d inputs, %d outputs\n", inputs, outputs);
     batch = batch / steps;
-    layer l = {};
+    layer l = {}; // zero init
     l.batch = batch;
     l.type = GRU;
     l.steps = steps;
