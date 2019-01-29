@@ -6,7 +6,7 @@
 layer make_normalization_layer(int batch, int w, int h, int c, int size, real alpha, real beta, real kappa)
 {
     fprintf(stderr, "Local Response Normalization Layer: %d x %d x %d image, %d size\n", w,h,c,size);
-    layer layer = {0};
+    layer layer = {};
     layer.type = NORMALIZATION;
     layer.batch = batch;
     layer.h = layer.out_h = h;
@@ -16,10 +16,10 @@ layer make_normalization_layer(int batch, int w, int h, int c, int size, real al
     layer.size = size;
     layer.alpha = alpha;
     layer.beta = beta;
-    layer.output = calloc(h * w * c * batch, sizeof(real));
-    layer.delta = calloc(h * w * c * batch, sizeof(real));
-    layer.squared = calloc(h * w * c * batch, sizeof(real));
-    layer.norms = calloc(h * w * c * batch, sizeof(real));
+    layer.output = (real*)calloc(h * w * c * batch, sizeof(real));
+    layer.delta = (real*)calloc(h * w * c * batch, sizeof(real));
+    layer.squared = (real*)calloc(h * w * c * batch, sizeof(real));
+    layer.norms = (real*)calloc(h * w * c * batch, sizeof(real));
     layer.inputs = w*h*c;
     layer.outputs = layer.inputs;
 
@@ -47,10 +47,10 @@ void resize_normalization_layer(layer *layer, int w, int h)
     layer->out_w = w;
     layer->inputs = w*h*c;
     layer->outputs = layer->inputs;
-    layer->output = realloc(layer->output, h * w * c * batch * sizeof(real));
-    layer->delta = realloc(layer->delta, h * w * c * batch * sizeof(real));
-    layer->squared = realloc(layer->squared, h * w * c * batch * sizeof(real));
-    layer->norms = realloc(layer->norms, h * w * c * batch * sizeof(real));
+    layer->output = (real*)realloc(layer->output, h * w * c * batch * sizeof(real));
+    layer->delta = (real*)realloc(layer->delta, h * w * c * batch * sizeof(real));
+    layer->squared = (real*)realloc(layer->squared, h * w * c * batch * sizeof(real));
+    layer->norms = (real*)realloc(layer->norms, h * w * c * batch * sizeof(real));
 #ifdef GPU
     cuda_free(layer->output_gpu);
     cuda_free(layer->delta_gpu); 
