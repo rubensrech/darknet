@@ -1,15 +1,15 @@
 #include "darknet.h"
 
-char *dice_labels[] = {"face1","face2","face3","face4","face5","face6"};
+char *dice_labels[] = {(char*)"face1",(char*)"face2",(char*)"face3",(char*)"face4",(char*)"face5",(char*)"face6"};
 
 void train_dice(char *cfgfile, char *weightfile)
 {
     srand(time(0));
     real avg_loss = -1;
     char *base = basecfg(cfgfile);
-    char *backup_directory = "/home/pjreddie/backup/";
+    char *backup_directory = (char*)"/home/pjreddie/backup/";
     printf("%s\n", base);
-    network net = parse_network_cfg(cfgfile);
+    network net = *parse_network_cfg(cfgfile);
     if(weightfile){
         load_weights(&net, weightfile);
     }
@@ -17,7 +17,7 @@ void train_dice(char *cfgfile, char *weightfile)
     int imgs = 1024;
     int i = *net.seen/imgs;
     char **labels = dice_labels;
-    list *plist = get_paths("data/dice/dice.train.list");
+    list *plist = get_paths((char*)"data/dice/dice.train.list");
     char **paths = (char **)list_to_array(plist);
     printf("%d\n", plist->size);
     clock_t time;
@@ -28,7 +28,7 @@ void train_dice(char *cfgfile, char *weightfile)
         printf("Loaded: %lf seconds\n", sec(clock()-time));
 
         time=clock();
-        real loss = train_network(net, train);
+        real loss = train_network(&net, train);
         if(avg_loss == -1) avg_loss = loss;
         avg_loss = avg_loss*.9 + loss*.1;
         printf("%d: %f, %f avg, %lf seconds, %ld images\n", i, loss, avg_loss, sec(clock()-time), *net.seen);
@@ -37,35 +37,35 @@ void train_dice(char *cfgfile, char *weightfile)
         if(i%100==0){
             char buff[256];
             sprintf(buff, "%s/%s_%d.weights",backup_directory,base, i);
-            save_weights(net, buff);
+            save_weights(&net, buff);
         }
     }
 }
 
 void validate_dice(char *filename, char *weightfile)
 {
-    network net = parse_network_cfg(filename);
+    network net = *parse_network_cfg(filename);
     if(weightfile){
         load_weights(&net, weightfile);
     }
     srand(time(0));
 
     char **labels = dice_labels;
-    list *plist = get_paths("data/dice/dice.val.list");
+    list *plist = get_paths((char*)"data/dice/dice.val.list");
 
     char **paths = (char **)list_to_array(plist);
     int m = plist->size;
     free_list(plist);
 
     data val = load_data_old(paths, m, 0, labels, 6, net.w, net.h);
-    real *acc = network_accuracies(net, val, 2);
+    real *acc = network_accuracies(&net, val, 2);
     printf("Validation Accuracy: %f, %d images\n", acc[0], m);
     free_data(val);
 }
 
 void test_dice(char *cfgfile, char *weightfile, char *filename)
 {
-    network net = parse_network_cfg(cfgfile);
+    network net = *parse_network_cfg(cfgfile);
     if(weightfile){
         load_weights(&net, weightfile);
     }
@@ -88,8 +88,8 @@ void test_dice(char *cfgfile, char *weightfile, char *filename)
         }
         image im = load_image_color(input, net.w, net.h);
         real *X = im.data;
-        real *predictions = network_predict(net, X);
-        top_predictions(net, 6, indexes);
+        real *predictions = network_predict(&net, X);
+        top_predictions(&net, 6, indexes);
         for(i = 0; i < 6; ++i){
             int index = indexes[i];
             printf("%s: %f\n", names[index], predictions[index]);
