@@ -12,15 +12,15 @@
 layer make_logistic_layer(int batch, int inputs)
 {
     fprintf(stderr, "logistic x entropy                             %4d\n",  inputs);
-    layer l = {0};
+    layer l = {};
     l.type = LOGXENT;
     l.batch = batch;
     l.inputs = inputs;
     l.outputs = inputs;
-    l.loss = calloc(inputs*batch, sizeof(real));
-    l.output = calloc(inputs*batch, sizeof(real));
-    l.delta = calloc(inputs*batch, sizeof(real));
-    l.cost = calloc(1, sizeof(real));
+    l.loss = (real*)calloc(inputs*batch, sizeof(real));
+    l.output = (real*)calloc(inputs*batch, sizeof(real));
+    l.delta = (real*)calloc(inputs*batch, sizeof(real));
+    l.cost = (real*)calloc(1, sizeof(real));
 
     l.forward = forward_logistic_layer;
     l.backward = backward_logistic_layer;
