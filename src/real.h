@@ -12,7 +12,10 @@
     #define CUDNN_DATA_REAL CUDNN_DATA_DOUBLE
 
 #elif REAL == HALF
-    #include <cuda_fp16.h>
+    #ifdef GPU
+        #include <cuda_fp16.h>
+    #endif
+    
     #include "half.hpp"
     using half_float::half;
     using namespace half_float::literal;
