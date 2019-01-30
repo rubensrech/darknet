@@ -11,7 +11,7 @@ unsigned char **load_files(char *filename, int *n)
 {
     list *paths = get_paths(filename);
     *n = paths->size;
-    unsigned char **contents = calloc(*n, sizeof(char *));
+    unsigned char **contents = (unsigned char**)calloc(*n, sizeof(char *));
     int i;
     node *x = paths->front;
     for(i = 0; i < *n; ++i){
@@ -26,20 +26,20 @@ int *read_tokenized_data(char *filename, size_t *read)
     size_t size = 512;
     size_t count = 0;
     FILE *fp = fopen(filename, "r");
-    int *d = calloc(size, sizeof(int));
+    int *d = (int*)calloc(size, sizeof(int));
     int n, one;
     one = fscanf(fp, "%d", &n);
     while(one == 1){
         ++count;
         if(count > size){
             size = size*2;
-            d = realloc(d, size*sizeof(int));
+            d = (int*)realloc(d, size*sizeof(int));
         }
         d[count-1] = n;
         one = fscanf(fp, "%d", &n);
     }
     fclose(fp);
-    d = realloc(d, count*sizeof(int));
+    d = (int*)realloc(d, count*sizeof(int));
     *read = count;
     return d;
 }
@@ -49,19 +49,19 @@ char **read_tokens(char *filename, size_t *read)
     size_t size = 512;
     size_t count = 0;
     FILE *fp = fopen(filename, "r");
-    char **d = calloc(size, sizeof(char *));
+    char **d = (char**)calloc(size, sizeof(char *));
     char *line;
     while((line=fgetl(fp)) != 0){
         ++count;
         if(count > size){
             size = size*2;
-            d = realloc(d, size*sizeof(char *));
+            d = (char**)realloc(d, size*sizeof(char *));
         }
-        if(0==strcmp(line, "<NEWLINE>")) line = "\n";
+        if(0==strcmp(line, "<NEWLINE>")) line = (char*)"\n";
         d[count-1] = line;
     }
     fclose(fp);
-    d = realloc(d, count*sizeof(char *));
+    d = (char**)realloc(d, count*sizeof(char *));
     *read = count;
     return d;
 }
@@ -69,8 +69,8 @@ char **read_tokens(char *filename, size_t *read)
 
 real_pair get_rnn_token_data(int *tokens, size_t *offsets, int characters, size_t len, int batch, int steps)
 {
-    real *x = calloc(batch * steps * characters, sizeof(real));
-    real *y = calloc(batch * steps * characters, sizeof(real));
+    real *x = (real*)calloc(batch * steps * characters, sizeof(real));
+    real *y = (real*)calloc(batch * steps * characters, sizeof(real));
     int i,j;
     for(i = 0; i < batch; ++i){
         for(j = 0; j < steps; ++j){
@@ -96,8 +96,8 @@ real_pair get_rnn_token_data(int *tokens, size_t *offsets, int characters, size_
 real_pair get_seq2seq_data(char **source, char **dest, int n, int characters, size_t len, int batch, int steps)
 {
     int i,j;
-    real *x = calloc(batch * steps * characters, sizeof(real));
-    real *y = calloc(batch * steps * characters, sizeof(real));
+    real *x = (real*)calloc(batch * steps * characters, sizeof(real));
+    real *y = (real*)calloc(batch * steps * characters, sizeof(real));
     for(i = 0; i < batch; ++i){
         int index = rand()%n;
         //int slen = strlen(source[index]);
@@ -126,8 +126,8 @@ real_pair get_seq2seq_data(char **source, char **dest, int n, int characters, si
 
 real_pair get_rnn_data(unsigned char *text, size_t *offsets, int characters, size_t len, int batch, int steps)
 {
-    real *x = calloc(batch * steps * characters, sizeof(real));
-    real *y = calloc(batch * steps * characters, sizeof(real));
+    real *x = (real*)calloc(batch * steps * characters, sizeof(real));
+    real *y = (real*)calloc(batch * steps * characters, sizeof(real));
     int i,j;
     for(i = 0; i < batch; ++i){
         for(j = 0; j < steps; ++j){
@@ -167,7 +167,7 @@ void train_char_rnn(char *cfgfile, char *weightfile, char *filename, int clear, 
         size = strlen((const char*)text);
     }
 
-    char *backup_directory = "/home/pjreddie/backup/";
+    char *backup_directory = (char*)"/home/pjreddie/backup/";
     char *base = basecfg(cfgfile);
     fprintf(stderr, "%s\n", base);
     real avg_loss = -1;
@@ -181,7 +181,7 @@ void train_char_rnn(char *cfgfile, char *weightfile, char *filename, int clear, 
     int i = (*net->seen)/net->batch;
 
     int streams = batch/steps;
-    size_t *offsets = calloc(streams, sizeof(size_t));
+    size_t *offsets = (size_t*)calloc(streams, sizeof(size_t));
     int j;
     for(j = 0; j < streams; ++j){
         offsets[j] = rand_size_t()%size;
@@ -261,7 +261,7 @@ void test_char_rnn(char *cfgfile, char *weightfile, int num, char *seed, real te
     for(i = 0; i < net->n; ++i) net->layers[i].temperature = temp;
     int c = 0;
     int len = strlen(seed);
-    real *input = calloc(inputs, sizeof(real));
+    real *input = (real*)calloc(inputs, sizeof(real));
 
     /*
        fill_cpu(inputs, 0, input, 1);
@@ -314,7 +314,7 @@ void test_tactic_rnn_multi(char *cfgfile, char *weightfile, int num, real temp, 
     int i, j;
     for(i = 0; i < net->n; ++i) net->layers[i].temperature = temp;
     int c = 0;
-    real *input = calloc(inputs, sizeof(real));
+    real *input = (real*)calloc(inputs, sizeof(real));
     real *out = 0;
 
     while(1){
@@ -359,7 +359,7 @@ void test_tactic_rnn(char *cfgfile, char *weightfile, int num, real temp, int rs
     int i, j;
     for(i = 0; i < net->n; ++i) net->layers[i].temperature = temp;
     int c = 0;
-    real *input = calloc(inputs, sizeof(real));
+    real *input = (real*)calloc(inputs, sizeof(real));
     real *out = 0;
 
     while((c = getc(stdin)) != EOF){
@@ -395,7 +395,7 @@ void valid_tactic_rnn(char *cfgfile, char *weightfile, char *seed)
     int words = 1;
     int c;
     int len = strlen(seed);
-    real *input = calloc(inputs, sizeof(real));
+    real *input = (real*)calloc(inputs, sizeof(real));
     int i;
     for(i = 0; i < len; ++i){
         c = seed[i];
@@ -444,7 +444,7 @@ void valid_char_rnn(char *cfgfile, char *weightfile, char *seed)
     int words = 1;
     int c;
     int len = strlen(seed);
-    real *input = calloc(inputs, sizeof(real));
+    real *input = (real*)calloc(inputs, sizeof(real));
     int i;
     for(i = 0; i < len; ++i){
         c = seed[i];
@@ -480,7 +480,7 @@ void vec_char_rnn(char *cfgfile, char *weightfile, char *seed)
 
     int c;
     int seed_len = strlen(seed);
-    real *input = calloc(inputs, sizeof(real));
+    real *input = (real*)calloc(inputs, sizeof(real));
     int i;
     char *line;
     while((line=fgetl(stdin)) != 0){
@@ -522,14 +522,14 @@ void run_char_rnn(int argc, char **argv)
         fprintf(stderr, "usage: %s %s [train/test/valid] [cfg] [weights (optional)]\n", argv[0], argv[1]);
         return;
     }
-    char *filename = find_char_arg(argc, argv, "-file", "data/shakespeare.txt");
-    char *seed = find_char_arg(argc, argv, "-seed", "\n\n");
-    int len = find_int_arg(argc, argv, "-len", 1000);
-    real temp = find_real_arg(argc, argv, "-temp", .7);
-    int rseed = find_int_arg(argc, argv, "-srand", time(0));
-    int clear = find_arg(argc, argv, "-clear");
-    int tokenized = find_arg(argc, argv, "-tokenized");
-    char *tokens = find_char_arg(argc, argv, "-tokens", 0);
+    char *filename = find_char_arg(argc, argv, (char*)"-file", (char*)"data/shakespeare.txt");
+    char *seed = find_char_arg(argc, argv, (char*)"-seed", (char*)"\n\n");
+    int len = find_int_arg(argc, argv, (char*)"-len", 1000);
+    real temp = find_real_arg(argc, argv, (char*)"-temp", .7);
+    int rseed = find_int_arg(argc, argv, (char*)"-srand", time(0));
+    int clear = find_arg(argc, argv, (char*)"-clear");
+    int tokenized = find_arg(argc, argv, (char*)"-tokenized");
+    char *tokens = find_char_arg(argc, argv, (char*)"-tokens", 0);
 
     char *cfg = argv[3];
     char *weights = (argc > 4) ? argv[4] : 0;
