@@ -14,14 +14,14 @@
 #elif REAL == HALF
     #ifdef GPU
         #include <cuda_fp16.h>
+        typedef __half real_device;
     #endif
-    
+
     #include "half.hpp"
     using half_float::half;
     using namespace half_float::literal;
-
     typedef half_float::half real;
-    typedef __half real_device;
+    
     #define REAL_MAX half(65504)
     #define CUDNN_DATA_REAL CUDNN_DATA_HALF
 
