@@ -97,7 +97,7 @@ void gemm_nt(int M, int N, int K, real ALPHA,
     #pragma omp parallel for
     for(i = 0; i < M; ++i){
         for(j = 0; j < N; ++j){
-            register real sum = 0;
+            register real sum = real(0);
             for(k = 0; k < K; ++k){
                 sum += ALPHA*A[i*lda+k]*B[j*ldb + k];
             }
@@ -132,7 +132,7 @@ void gemm_tt(int M, int N, int K, real ALPHA,
     #pragma omp parallel for
     for(i = 0; i < M; ++i){
         for(j = 0; j < N; ++j){
-            register real sum = 0;
+            register real sum = real(0);
             for(k = 0; k < K; ++k){
                 sum += ALPHA*A[i+k*lda]*B[k+j*ldb];
             }
