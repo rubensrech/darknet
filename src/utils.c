@@ -206,7 +206,7 @@ void pm(int M, int N, real *A)
     for(i =0 ; i < M; ++i){
         printf("%d ", i+1);
         for(j = 0; j < N; ++j){
-            printf("%2.4f, ", A[i*N+j]);
+            printf("%2.4f, ", (float)A[i*N+j]);
         }
         printf("\n");
     }
@@ -231,7 +231,7 @@ void find_replace(char *str, char *orig, char *rep, char *output)
 
 real sec(clock_t clocks)
 {
-    return (real)clocks/CLOCKS_PER_SEC;
+    return CAST((real)clocks/CLOCKS_PER_SEC);
 }
 
 void top_k(real *a, int n, int k, int *index)
@@ -479,14 +479,14 @@ real *parse_fields(char *line, int n)
 real sum_array(real *a, int n)
 {
     int i;
-    real sum = 0;
+    real sum = CAST(0);
     for(i = 0; i < n; ++i) sum += a[i];
     return sum;
 }
 
 real mean_array(real *a, int n)
 {
-    return sum_array(a,n)/n;
+    return sum_array(a,n)/CAST(n);
 }
 
 void mean_arrays(real **a, int n, int els, real *avg)
@@ -508,16 +508,16 @@ void print_statistics(real *a, int n)
 {
     real m = mean_array(a, n);
     real v = variance_array(a, n);
-    printf("MSE: %.6f, Mean: %.6f, Variance: %.6f\n", mse_array(a, n), m, v);
+    printf("MSE: %.6f, Mean: %.6f, Variance: %.6f\n", (float)mse_array(a, n), (float)m, (float)v);
 }
 
 real variance_array(real *a, int n)
 {
     int i;
-    real sum = 0;
+    real sum = CAST(0);
     real mean = mean_array(a, n);
     for(i = 0; i < n; ++i) sum += (a[i] - mean)*(a[i]-mean);
-    real variance = sum/n;
+    real variance = sum/CAST(n);
     return variance;
 }
 
@@ -538,7 +538,7 @@ real constrain(real min, real max, real a)
 real dist_array(real *a, real *b, int n, int sub)
 {
     int i;
-    real sum = 0;
+    real sum = CAST(0);
     for(i = 0; i < n; i += sub) sum += pow(a[i]-b[i], 2);
     return sqrt(sum);
 }
@@ -546,9 +546,9 @@ real dist_array(real *a, real *b, int n, int sub)
 real mse_array(real *a, int n)
 {
     int i;
-    real sum = 0;
+    real sum = CAST(0);
     for(i = 0; i < n; ++i) sum += a[i]*a[i];
-    return sqrt(sum/n);
+    return CAST(sqrt(sum/n));
 }
 
 void normalize_array(real *a, int n)
@@ -574,7 +574,7 @@ void translate_array(real *a, int n, real s)
 real mag_array(real *a, int n)
 {
     int i;
-    real sum = 0;
+    real sum = CAST(0);
     for(i = 0; i < n; ++i){
         sum += a[i]*a[i];   
     }
@@ -592,8 +592,8 @@ void scale_array(real *a, int n, real s)
 int sample_array(real *a, int n)
 {
     real sum = sum_array(a, n);
-    scale_array(a, n, 1./sum);
-    real r = rand_uniform(0, 1);
+    scale_array(a, n, CAST(1.0)/sum);
+    real r = rand_uniform(CAST(0.0), CAST(1.0));
     int i;
     for(i = 0; i < n; ++i){
         r = r - a[i];
@@ -659,7 +659,7 @@ real rand_normal()
     if(haveSpare)
     {
         haveSpare = 0;
-        return sqrt(rand1) * sin(rand2);
+        return CAST(sqrt(rand1) * sin(rand2));
     }
 
     haveSpare = 1;
@@ -669,7 +669,7 @@ real rand_normal()
     rand1 = -2 * log(rand1);
     rand2 = (rand() / ((double) RAND_MAX)) * TWO_PI;
 
-    return sqrt(rand1) * cos(rand2);
+    return CAST(sqrt(rand1) * cos(rand2));
 }
 
 /*
@@ -702,14 +702,14 @@ real rand_uniform(real min, real max)
         min = max;
         max = swap;
     }
-    return ((real)rand()/RAND_MAX * (max - min)) + min;
+    return CAST(((real)rand()/RAND_MAX * (max - min)) + min);
 }
 
 real rand_scale(real s)
 {
-    real scale = rand_uniform(1, s);
+    real scale = rand_uniform(CAST(1.0), s);
     if(rand()%2) return scale;
-    return 1./scale;
+    return CAST(1.0)/scale;
 }
 
 real **one_hot_encode(real *a, int n, int k)
