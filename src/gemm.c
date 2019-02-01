@@ -52,7 +52,7 @@ void time_random_matrix(int TA, int TB, int m, int k, int n)
     int i;
     clock_t start = clock(), end;
     for(i = 0; i<10; ++i){
-        gemm_cpu(TA,TB,m,n,k,real(1),a,lda,b,ldb,real(1),c,n);
+        gemm_cpu(TA,TB,m,n,k,CAST(1),a,lda,b,ldb,CAST(1),c,n);
     }
     end = clock();
     printf("Matrix Multiplication %dx%d * %dx%d, TA=%d, TB=%d: %lf ms\n",m,k,k,n, TA, TB, (real)(end-start)/CLOCKS_PER_SEC);
@@ -97,7 +97,7 @@ void gemm_nt(int M, int N, int K, real ALPHA,
     #pragma omp parallel for
     for(i = 0; i < M; ++i){
         for(j = 0; j < N; ++j){
-            register real sum = real(0);
+            register real sum = CAST(0);
             for(k = 0; k < K; ++k){
                 sum += ALPHA*A[i*lda+k]*B[j*ldb + k];
             }
@@ -132,7 +132,7 @@ void gemm_tt(int M, int N, int K, real ALPHA,
     #pragma omp parallel for
     for(i = 0; i < M; ++i){
         for(j = 0; j < N; ++j){
-            register real sum = real(0);
+            register real sum = CAST(0);
             for(k = 0; k < K; ++k){
                 sum += ALPHA*A[i+k*lda]*B[k+j*ldb];
             }

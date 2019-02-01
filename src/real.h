@@ -1,9 +1,11 @@
 #ifndef REAL_H
 #define REAL_H
 
-#define FLOAT   0
-#define DOUBLE  1
-#define HALF    2
+#define FLOAT       0
+#define DOUBLE      1
+#define HALF        2
+
+#define CAST(v)     real(v)
 
 #if REAL == DOUBLE
     typedef double real;
