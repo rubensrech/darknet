@@ -72,8 +72,8 @@ void forward_crop_layer(const crop_layer l, network net)
     int flip = (l.flip && rand()%2);
     int dh = rand()%(l.h - l.out_h + 1);
     int dw = rand()%(l.w - l.out_w + 1);
-    real scale = 2;
-    real trans = -1;
+    real scale = CAST(2);
+    real trans = CAST(-1);
     if(l.noadjust){
         scale = 1;
         trans = 0;
