@@ -34,7 +34,7 @@ void col2im_cpu(real* data_col,
                 int col_index = (c * height_col + h) * width_col + w;
                 double val = data_col[col_index];
                 col2im_add_pixel(data_im, height, width, channels,
-                        im_row, im_col, c_im, pad, val);
+                        im_row, im_col, c_im, pad, CAST(val));
             }
         }
     }
