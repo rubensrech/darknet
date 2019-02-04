@@ -21,7 +21,7 @@ dropout_layer make_dropout_layer(int batch, int inputs, real probability)
     l.backward_gpu = backward_dropout_layer_gpu;
     l.rand_gpu = cuda_make_array(l.rand, inputs*batch);
     #endif
-    fprintf(stderr, "dropout       p = %.2f               %4d  ->  %4d\n", probability, inputs, inputs);
+    fprintf(stderr, "dropout       p = %.2f               %4d  ->  %4d\n", (float)probability, inputs, inputs);
     return l;
 } 
 
@@ -40,7 +40,7 @@ void forward_dropout_layer(dropout_layer l, network net)
     int i;
     if (!net.train) return;
     for(i = 0; i < l.batch * l.inputs; ++i){
-        real r = rand_uniform(0, 1);
+        real r = rand_uniform(CAST(0), CAST(1));
         l.rand[i] = r;
         if(r < l.probability) net.input[i] = 0;
         else net.input[i] *= l.scale;
