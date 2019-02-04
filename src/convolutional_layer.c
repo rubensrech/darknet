@@ -29,7 +29,7 @@ void binarize_weights(real *weights, int n, int size, real *binary)
 {
     int i, f;
     for(f = 0; f < n; ++f){
-        real mean = 0;
+        real mean = CAST(0);
         for(i = 0; i < size; ++i){
             mean += fabs(weights[f*size + i]);
         }
@@ -52,7 +52,7 @@ void binarize_input(real *input, int n, int size, real *binary)
 {
     int i, s;
     for(s = 0; s < size; ++s){
-        real mean = 0;
+        real mean = CAST(0);
         for(i = 0; i < n; ++i){
             mean += fabs(input[i*size + s]);
         }
@@ -202,7 +202,7 @@ convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int
     l.nbiases = n;
 
     // real scale = 1./sqrt(size*size*c);
-    real scale = sqrt(2./(size*size*c/l.groups));
+    real scale = CAST(sqrt(2./(size*size*c/l.groups)));
     //printf("convscale %f\n", scale);
     //scale = .02;
     //for(i = 0; i < c*n*size*size; ++i) l.weights[i] = scale*rand_uniform(-1, 1);
@@ -331,7 +331,7 @@ void denormalize_convolutional_layer(convolutional_layer l)
 {
     int i, j;
     for(i = 0; i < l.n; ++i){
-        real scale = l.scales[i]/sqrt(l.rolling_variance[i] + .00001);
+        real scale = l.scales[i]/CAST(sqrt(l.rolling_variance[i] + .00001));
         for(j = 0; j < l.c/l.groups*l.size*l.size; ++j){
             l.weights[i*l.c/l.groups*l.size*l.size + j] *= scale;
         }
@@ -446,7 +446,7 @@ void forward_convolutional_layer(convolutional_layer l, network net)
 {
     int i, j;
 
-    fill_cpu(l.outputs*l.batch, 0, l.output, 1);
+    fill_cpu(l.outputs*l.batch, CAST(0), l.output, 1);
 
     if(l.xnor){
         binarize_weights(l.weights, l.n, l.c/l.groups*l.size*l.size, l.binary_weights);
@@ -470,7 +470,7 @@ void forward_convolutional_layer(convolutional_layer l, network net)
             } else {
                 im2col_cpu(im, l.c/l.groups, l.h, l.w, l.size, l.stride, l.pad, b);
             }
-            gemm(0,0,m,n,k,1,a,k,b,n,1,c,n);
+            gemm(0,0,m,n,k,CAST(1),a,k,b,n,CAST(1),c,n);
         }
     }
 
@@ -515,7 +515,7 @@ void backward_convolutional_layer(convolutional_layer l, network net)
                         l.size, l.stride, l.pad, b);
             }
 
-            gemm(0,1,m,n,k,1,a,k,b,k,1,c,n);
+            gemm(0,1,m,n,k,CAST(1),a,k,b,k,CAST(1),c,n);
 
             if (net.delta) {
                 a = l.weights + j*l.nweights/l.groups;
@@ -525,7 +525,7 @@ void backward_convolutional_layer(convolutional_layer l, network net)
                     c = imd;
                 }
 
-                gemm(1,0,n,k,m,1,a,n,b,k,0,c,k);
+                gemm(1,0,n,k,m,CAST(1),a,n,b,k,CAST(0),c,k);
 
                 if (l.size != 1) {
                     col2im_cpu(net.workspace, l.c/l.groups, l.h, l.w, l.size, l.stride, l.pad, imd);
@@ -542,16 +542,16 @@ void update_convolutional_layer(convolutional_layer l, update_args a)
     real decay = a.decay;
     int batch = a.batch;
 
-    axpy_cpu(l.n, learning_rate/batch, l.bias_updates, 1, l.biases, 1);
+    axpy_cpu(l.n, learning_rate/CAST(batch), l.bias_updates, 1, l.biases, 1);
     scal_cpu(l.n, momentum, l.bias_updates, 1);
 
     if(l.scales){
-        axpy_cpu(l.n, learning_rate/batch, l.scale_updates, 1, l.scales, 1);
+        axpy_cpu(l.n, learning_rate/CAST(batch), l.scale_updates, 1, l.scales, 1);
         scal_cpu(l.n, momentum, l.scale_updates, 1);
     }
 
-    axpy_cpu(l.nweights, -decay*batch, l.weights, 1, l.weight_updates, 1);
-    axpy_cpu(l.nweights, learning_rate/batch, l.weight_updates, 1, l.weights, 1);
+    axpy_cpu(l.nweights, -decay*CAST(batch), l.weights, 1, l.weight_updates, 1);
+    axpy_cpu(l.nweights, learning_rate/CAST(batch), l.weight_updates, 1, l.weights, 1);
     scal_cpu(l.nweights, momentum, l.weight_updates, 1);
 }
 
