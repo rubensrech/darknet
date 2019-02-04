@@ -12,15 +12,23 @@
 
 int windows = 0;
 
-real colors[6][3] = { {1,0,1}, {0,0,1},{0,1,1},{0,1,0},{1,1,0},{1,0,0} };
+
+real colors[6][3] = {
+    {CAST(1),CAST(0),CAST(1)},
+    {CAST(0),CAST(0),CAST(1)},
+    {CAST(0),CAST(1),CAST(1)},
+    {CAST(0),CAST(1),CAST(0)},
+    {CAST(1),CAST(1),CAST(0)},
+    {CAST(1),CAST(0),CAST(0)}
+};
 
 real get_color(int c, int x, int max)
 {
-    real ratio = ((real)x/max)*5;
+    real ratio = CAST(((real)x/max)*5);
     int i = floor(ratio);
     int j = ceil(ratio);
     ratio -= i;
-    real r = (1-ratio) * colors[i][c] + ratio*colors[j][c];
+    real r = CAST(1-ratio) * colors[i][c] + ratio*colors[j][c];
     //printf("%f\n", r);
     return r;
 }
@@ -51,14 +59,14 @@ static real get_pixel(image m, int x, int y, int c)
 }
 static real get_pixel_extend(image m, int x, int y, int c)
 {
-    if(x < 0 || x >= m.w || y < 0 || y >= m.h) return 0;
+    if(x < 0 || x >= m.w || y < 0 || y >= m.h) return CAST(0);
     /*
     if(x < 0) x = 0;
     if(x >= m.w) x = m.w-1;
     if(y < 0) y = 0;
     if(y >= m.h) y = m.h-1;
     */
-    if(c < 0 || c >= m.c) return 0;
+    if(c < 0 || c >= m.c) return CAST(0);
     return get_pixel(m, x, y, c);
 }
 static void set_pixel(image m, int x, int y, int c, real val)
@@ -78,13 +86,13 @@ static real bilinear_interpolate(image im, real x, real y, int c)
     int ix = (int) floorf(x);
     int iy = (int) floorf(y);
 
-    real dx = x - ix;
-    real dy = y - iy;
+    real dx = x - CAST(ix);
+    real dy = y - CAST(iy);
 
-    real val = (1-dy) * (1-dx) * get_pixel_extend(im, ix, iy, c) + 
+    real val = CAST((1-dy) * (1-dx) * get_pixel_extend(im, ix, iy, c) + 
         dy     * (1-dx) * get_pixel_extend(im, ix, iy+1, c) + 
         (1-dy) *   dx   * get_pixel_extend(im, ix+1, iy, c) +
-        dy     *   dx   * get_pixel_extend(im, ix+1, iy+1, c);
+        dy     *   dx   * get_pixel_extend(im, ix+1, iy+1, c));
     return val;
 }
 
@@ -123,7 +131,7 @@ image tile_images(image a, image b, int dx)
 {
     if(a.w == 0) return copy_image(b);
     image c = make_image(a.w + b.w + dx, (a.h > b.h) ? a.h : b.h, (a.c > b.c) ? a.c : b.c);
-    fill_cpu(c.w*c.h*c.c, 1, c.data, 1);
+    fill_cpu(c.w*c.h*c.c, CAST(1), c.data, 1);
     embed_image(a, c, 0, 0); 
     composite_image(b, c, a.w + dx, 0);
     return c;
@@ -299,7 +307,7 @@ void draw_detections(image im, detection *dets, int num, real thresh, char **nam
             if (dets[i].mask){
                 image mask = real_to_image(14, 14, 1, dets[i].mask);
                 image resized_mask = resize_image(mask, b.w*im.w, b.h*im.h);
-                image tmask = threshold_image(resized_mask, .5);
+                image tmask = threshold_image(resized_mask, CAST(.5));
                 embed_image(tmask, im, left, top);
                 free_image(mask);
                 free_image(resized_mask);
@@ -380,16 +388,16 @@ image image_distance(image a, image b)
 void ghost_image(image source, image dest, int dx, int dy)
 {
     int x,y,k;
-    real max_dist = sqrt((-source.w/2. + .5)*(-source.w/2. + .5));
+    real max_dist = sqrt(CAST((-source.w/2. + .5)*(-source.w/2. + .5)));
     for(k = 0; k < source.c; ++k){
         for(y = 0; y < source.h; ++y){
             for(x = 0; x < source.w; ++x){
-                real dist = sqrt((x - source.w/2. + .5)*(x - source.w/2. + .5) + (y - source.h/2. + .5)*(y - source.h/2. + .5));
-                real alpha = (1 - dist/max_dist);
+                real dist = sqrt(CAST((x - source.w/2. + .5)*(x - source.w/2. + .5) + (y - source.h/2. + .5)*(y - source.h/2. + .5)));
+                real alpha = CAST(1 - dist/max_dist);
                 if(alpha < 0) alpha = 0;
                 real v1 = get_pixel(source, x,y,k);
                 real v2 = get_pixel(dest, dx+x,dy+y,k);
-                real val = alpha*v1 + (1-alpha)*v2;
+                real val = alpha*v1 + CAST(1-alpha)*v2;
                 set_pixel(dest, dx+x, dy+y, k, val);
             }
         }
@@ -465,8 +473,8 @@ void constrain_image(image im)
 void normalize_image(image p)
 {
     int i;
-    real min = 9999999;
-    real max = -999999;
+    real min = CAST(9999999);
+    real max = CAST(-999999);
 
     for(i = 0; i < p.h*p.w*p.c; ++i){
         real v = p.data[i];
@@ -636,8 +644,8 @@ void place_image(image im, int w, int h, int dx, int dy, image canvas)
     for(c = 0; c < im.c; ++c){
         for(y = 0; y < h; ++y){
             for(x = 0; x < w; ++x){
-                real rx = ((real)x / w) * im.w;
-                real ry = ((real)y / h) * im.h;
+                real rx = CAST(((real)x / w) * im.w);
+                real ry = CAST(((real)y / h) * im.h);
                 real val = bilinear_interpolate(im, rx, ry, c);
                 set_pixel(canvas, x + dx, y + dy, c, val);
             }
@@ -657,14 +665,14 @@ image center_crop_image(image im, int w, int h)
 image rotate_crop_image(image im, real rad, real s, int w, int h, real dx, real dy, real aspect)
 {
     int x, y, c;
-    real cx = im.w/2.;
-    real cy = im.h/2.;
+    real cx = CAST(im.w/2.);
+    real cy = CAST(im.h/2.);
     image rot = make_image(w, h, im.c);
     for(c = 0; c < im.c; ++c){
         for(y = 0; y < h; ++y){
             for(x = 0; x < w; ++x){
-                real rx = cos(rad)*((x - w/2.)/s*aspect + dx/s*aspect) - sin(rad)*((y - h/2.)/s + dy/s) + cx;
-                real ry = sin(rad)*((x - w/2.)/s*aspect + dx/s*aspect) + cos(rad)*((y - h/2.)/s + dy/s) + cy;
+                real rx = cos(rad)*(CAST(x - w/2.)/s*aspect + dx/s*aspect) - sin(rad)*(CAST(y - h/2.)/s + dy/s) + cx;
+                real ry = sin(rad)*(CAST(x - w/2.)/s*aspect + dx/s*aspect) + cos(rad)*(CAST(y - h/2.)/s + dy/s) + cy;
                 real val = bilinear_interpolate(im, rx, ry, c);
                 set_pixel(rot, x, y, c, val);
             }
@@ -676,14 +684,14 @@ image rotate_crop_image(image im, real rad, real s, int w, int h, real dx, real 
 image rotate_image(image im, real rad)
 {
     int x, y, c;
-    real cx = im.w/2.;
-    real cy = im.h/2.;
+    real cx = CAST(im.w/2.);
+    real cy = CAST(im.h/2.);
     image rot = make_image(im.w, im.h, im.c);
     for(c = 0; c < im.c; ++c){
         for(y = 0; y < im.h; ++y){
             for(x = 0; x < im.w; ++x){
-                real rx = cos(rad)*(x-cx) - sin(rad)*(y-cy) + cx;
-                real ry = sin(rad)*(x-cx) + cos(rad)*(y-cy) + cy;
+                real rx = cos(rad)*CAST(x-cx) - sin(rad)*CAST(y-cy) + cx;
+                real ry = sin(rad)*CAST(x-cx) + cos(rad)*CAST(y-cy) + cy;
                 real val = bilinear_interpolate(im, rx, ry, c);
                 set_pixel(rot, x, y, c, val);
             }
@@ -719,7 +727,7 @@ image crop_image(image im, int dx, int dy, int w, int h)
             for(i = 0; i < w; ++i){
                 int r = j + dy;
                 int c = i + dx;
-                real val = 0;
+                real val = CAST(0);
                 r = constrain_int(r, 0, im.h-1);
                 c = constrain_int(c, 0, im.w-1);
                 val = get_pixel(im, c, r, k);
@@ -756,7 +764,7 @@ int best_3d_shift(image a, image b, int min, int max)
             best_distance = d;
             best = i;
         }
-        printf("%d %f\n", i, d);
+        printf("%d %f\n", i, (float)d);
         free_image(c);
     }
     return best;
@@ -822,7 +830,7 @@ image letterbox_image(image im, int w, int h)
     }
     image resized = resize_image(im, new_w, new_h);
     image boxed = make_image(w, h, im.c);
-    fill_image(boxed, .5);
+    fill_image(boxed, CAST(.5));
     //int i;
     //for(i = 0; i < boxed.w*boxed.h*boxed.c; ++i) boxed.data[i] = 0;
     embed_image(resized, boxed, (w-new_w)/2, (h-new_h)/2); 
@@ -876,12 +884,12 @@ augment_args random_augment_args(image im, real angle, real aspect, int low, int
     aspect = rand_scale(aspect);
     int r = rand_int(low, high);
     int min = (im.h < im.w*aspect) ? im.h : im.w*aspect;
-    real scale = (real)r / min;
+    real scale = CAST((real)r / min);
 
-    real rad = rand_uniform(-angle, angle) * TWO_PI / 360.;
+    real rad = rand_uniform(-angle, angle) * CAST(TWO_PI / 360.);
 
-    real dx = (im.w*scale/aspect - w) / 2.;
-    real dy = (im.h*scale - w) / 2.;
+    real dx = CAST((im.w*scale/aspect - w) / 2.);
+    real dy = CAST((im.h*scale - w) / 2.);
     //if(dx < 0) dx = 0;
     //if(dy < 0) dy = 0;
     dx = rand_uniform(-dx, dx);
@@ -1043,10 +1051,10 @@ void grayscale_image_3c(image im)
 {
     assert(im.c == 3);
     int i, j, k;
-    real scale[] = {0.299, 0.587, 0.114};
+    real scale[] = {CAST(0.299), CAST(0.587), CAST(0.114)};
     for(j = 0; j < im.h; ++j){
         for(i = 0; i < im.w; ++i){
-            real val = 0;
+            real val = CAST(0);
             for(k = 0; k < 3; ++k){
                 val += scale[k]*get_pixel(im, i, j, k);
             }
@@ -1062,7 +1070,7 @@ image grayscale_image(image im)
     assert(im.c == 3);
     int i, j, k;
     image gray = make_image(im.w, im.h, 1);
-    real scale[] = {0.299, 0.587, 0.114};
+    real scale[] = {CAST(0.299), CAST(0.587), CAST(0.114)};
     for(k = 0; k < im.c; ++k){
         for(j = 0; j < im.h; ++j){
             for(i = 0; i < im.w; ++i){
@@ -1092,7 +1100,7 @@ image blend_image(image fore, image back, real alpha)
         for(j = 0; j < fore.h; ++j){
             for(i = 0; i < fore.w; ++i){
                 real val = alpha * get_pixel(fore, i, j, k) + 
-                    (1 - alpha)* get_pixel(back, i, j, k);
+                    (CAST(1) - alpha) * get_pixel(back, i, j, k);
                 set_pixel(blend, i, j, k, val);
             }
         }
@@ -1201,18 +1209,18 @@ image resize_image(image im, int w, int h)
     image resized = make_image(w, h, im.c);   
     image part = make_image(w, im.h, im.c);
     int r, c, k;
-    real w_scale = (real)(im.w - 1) / (w - 1);
-    real h_scale = (real)(im.h - 1) / (h - 1);
+    real w_scale = CAST((real)(im.w - 1) / (w - 1));
+    real h_scale = CAST((real)(im.h - 1) / (h - 1));
     for(k = 0; k < im.c; ++k){
         for(r = 0; r < im.h; ++r){
             for(c = 0; c < w; ++c){
-                real val = 0;
+                real val = CAST(0);
                 if(c == w-1 || im.w == 1){
                     val = get_pixel(im, im.w-1, r, k);
                 } else {
-                    real sx = c*w_scale;
+                    real sx = CAST(c)*w_scale;
                     int ix = (int) sx;
-                    real dx = sx - ix;
+                    real dx = sx - CAST(ix);
                     val = (1 - dx) * get_pixel(im, ix, r, k) + dx * get_pixel(im, ix+1, r, k);
                 }
                 set_pixel(part, c, r, k, val);
@@ -1221,11 +1229,11 @@ image resize_image(image im, int w, int h)
     }
     for(k = 0; k < im.c; ++k){
         for(r = 0; r < h; ++r){
-            real sy = r*h_scale;
+            real sy = CAST(r)*h_scale;
             int iy = (int) sy;
-            real dy = sy - iy;
+            real dy = sy - CAST(iy);
             for(c = 0; c < w; ++c){
-                real val = (1-dy) * get_pixel(part, c, iy, k);
+                real val = (CAST(1)1-dy) * get_pixel(part, c, iy, k);
                 set_pixel(resized, c, r, k, val);
             }
             if(r == h-1 || im.h == 1) continue;
@@ -1245,17 +1253,17 @@ void test_resize(char *filename)
 {
     image im = load_image(filename, 0,0, 3);
     real mag = mag_array(im.data, im.w*im.h*im.c);
-    printf("L2 Norm: %f\n", mag);
+    printf("L2 Norm: %f\n", (float)mag);
     image gray = grayscale_image(im);
 
     image c1 = copy_image(im);
     image c2 = copy_image(im);
     image c3 = copy_image(im);
     image c4 = copy_image(im);
-    distort_image(c1, .1, 1.5, 1.5);
-    distort_image(c2, -.1, .66666, .66666);
-    distort_image(c3, .1, 1.5, .66666);
-    distort_image(c4, .1, .66666, 1.5);
+    distort_image(c1, CAST(.1), CAST(1.5), CAST(1.5));
+    distort_image(c2, CAST(-.1), CAST(.66666), CAST(.66666));
+    distort_image(c3, CAST(.1), CAST(1.5), CAST(.66666));
+    distort_image(c4, CAST(.1), CAST(.66666), CAST(1.5));
 
 
     show_image(im,   "Original", 1);
