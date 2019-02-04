@@ -35,7 +35,8 @@ ARFLAGS=rcs
 OPTS=-Ofast
 LDFLAGS= -lm -pthread 
 COMMON= -Iinclude/ -Isrc/
-CFLAGS=-Wall -Wno-unused-result -Wno-unknown-pragmas -Wfatal-errors -fPIC -Wno-pointer-arith -Wno-sign-compare -Wno-narrowing -Wno-write-strings
+CFLAGS=-Wall -Wno-unused-result -Wno-unknown-pragmas -Wfatal-errors -fPIC
+CFLAGS+=-Wno-pointer-arith -Wno-sign-compare -Wno-narrowing -Wno-write-strings -Wno-parentheses
 
 ifeq ($(OPENMP), 1) 
 CFLAGS+= -fopenmp
