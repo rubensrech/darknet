@@ -93,7 +93,7 @@ void shortcut_cpu(int batch, int w1, int h1, int c1, real *add, int w2, int h2, 
 
 void mean_cpu(real *x, int batch, int filters, int spatial, real *mean)
 {
-    real scale = 1./(batch * spatial);
+    real scale = CAST(1./(batch * spatial));
     int i,j,k;
     for(i = 0; i < filters; ++i){
         mean[i] = 0;
@@ -109,7 +109,7 @@ void mean_cpu(real *x, int batch, int filters, int spatial, real *mean)
 
 void variance_cpu(real *x, real *mean, int batch, int filters, int spatial, real *variance)
 {
-    real scale = 1./(batch * spatial - 1);
+    real scale = CAST(1./(batch * spatial - 1));
     int i,j,k;
     for(i = 0; i < filters; ++i){
         variance[i] = 0;
@@ -128,7 +128,7 @@ void l2normalize_cpu(real *x, real *dx, int batch, int filters, int spatial)
     int b,f,i;
     for(b = 0; b < batch; ++b){
         for(i = 0; i < spatial; ++i){
-            real sum = 0;
+            real sum = CAST(0);
             for(f = 0; f < filters; ++f){
                 int index = b*filters*spatial + f*spatial + i;
                 sum += powf(x[index], 2);
@@ -297,7 +297,7 @@ void l2_cpu(int n, real *pred, real *truth, real *delta, real *error)
 real dot_cpu(int N, real *X, int INCX, real *Y, int INCY)
 {
     int i;
-    real dot = 0;
+    real dot = CAST(0);
     for(i = 0; i < N; ++i) dot += X[i*INCX] * Y[i*INCY];
     return dot;
 }
@@ -305,7 +305,7 @@ real dot_cpu(int N, real *X, int INCX, real *Y, int INCY)
 void softmax(real *input, int n, real temp, int stride, real *output)
 {
     int i;
-    real sum = 0;
+    real sum = CAST(0);
     real largest = -REAL_MAX;
     for(i = 0; i < n; ++i){
         if(input[i*stride] > largest) largest = input[i*stride];
