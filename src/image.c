@@ -1358,7 +1358,7 @@ void print_image(image m)
     for(i =0 ; i < m.c; ++i){
         for(j =0 ; j < m.h; ++j){
             for(k = 0; k < m.w; ++k){
-                printf("%.2lf, ", m.data[i*m.h*m.w + j*m.w + k]);
+                printf("%.2lf, ", (double)m.data[i*m.h*m.w + j*m.w + k]);
                 if(k > 30) break;
             }
             printf("\n");
