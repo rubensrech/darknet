@@ -95,7 +95,7 @@ real activate(real x, ACTIVATION a)
         case LHTAN:
             return lhtan_activate(x);
     }
-    return 0;
+    return CAST(0);
 }
 
 void activate_array(real *x, const int n, const ACTIVATION a)
@@ -138,7 +138,7 @@ real gradient(real x, ACTIVATION a)
         case LHTAN:
             return lhtan_gradient(x);
     }
-    return 0;
+    return CAST(0);
 }
 
 void gradient_array(const real *x, const int n, const ACTIVATION a, real *delta)
