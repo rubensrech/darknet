@@ -1233,7 +1233,7 @@ image resize_image(image im, int w, int h)
             int iy = (int) sy;
             real dy = sy - CAST(iy);
             for(c = 0; c < w; ++c){
-                real val = (CAST(1)1-dy) * get_pixel(part, c, iy, k);
+                real val = (CAST(1)-dy) * get_pixel(part, c, iy, k);
                 set_pixel(resized, c, r, k, val);
             }
             if(r == h-1 || im.h == 1) continue;
