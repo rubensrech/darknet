@@ -18,11 +18,11 @@ static size_t get_workspace_size(layer l){
 void bilinear_init(layer l)
 {
     int i,j,f;
-    real center = (l.size-1) / 2.;
+    real center = CAST((l.size-1) / 2.0);
     for(f = 0; f < l.n; ++f){
         for(j = 0; j < l.size; ++j){
             for(i = 0; i < l.size; ++i){
-                real val = (1 - fabs(i - center)) * (1 - fabs(j - center));
+                real val = CAST((1 - fabs(i - center)) * (1 - fabs(j - center)));
                 int c = f%l.c;
                 int ind = f*l.size*l.size*l.c + c*l.size*l.size + j*l.size + i;
                 l.weights[ind] = val;
@@ -56,7 +56,7 @@ layer make_deconvolutional_layer(int batch, int h, int w, int c, int n, int size
     l.bias_updates = (real*)calloc(n, sizeof(real));
     //real scale = n/(size*size*c);
     //printf("scale: %f\n", scale);
-    real scale = .02;
+    real scale = CAST(0.02);
     for(i = 0; i < c*n*size*size; ++i) l.weights[i] = scale*rand_normal();
     //bilinear_init(l);
     for(i = 0; i < n; ++i){
@@ -70,7 +70,7 @@ layer make_deconvolutional_layer(int batch, int h, int w, int c, int n, int size
     l.outputs = l.out_w * l.out_h * l.out_c;
     l.inputs = l.w * l.h * l.c;
 
-    scal_cpu(l.nweights, (real)l.out_w*l.out_h/(l.w*l.h), l.weights, 1);
+    scal_cpu(l.nweights, CAST((real)l.out_w*l.out_h/(l.w*l.h)), l.weights, 1);
 
     l.output = (real*)calloc(l.batch*l.outputs, sizeof(real));
     l.delta  = (real*)calloc(l.batch*l.outputs, sizeof(real));
@@ -169,7 +169,7 @@ void denormalize_deconvolutional_layer(layer l)
 {
     int i, j;
     for(i = 0; i < l.n; ++i){
-        real scale = l.scales[i]/sqrt(l.rolling_variance[i] + .00001);
+        real scale = l.scales[i]/CAST(sqrt(l.rolling_variance[i] + .00001));
         for(j = 0; j < l.c*l.size*l.size; ++j){
             l.weights[i*l.c*l.size*l.size + j] *= scale;
         }
@@ -227,14 +227,14 @@ void forward_deconvolutional_layer(const layer l, network net)
     int n = l.h*l.w;
     int k = l.c;
 
-    fill_cpu(l.outputs*l.batch, 0, l.output, 1);
+    fill_cpu(l.outputs*l.batch, CAST(0), l.output, 1);
 
     for(i = 0; i < l.batch; ++i){
         real *a = l.weights;
         real *b = net.input + i*l.c*l.h*l.w;
         real *c = net.workspace;
 
-        gemm_cpu(1,0,m,n,k,1,a,m,b,n,0,c,n);
+        gemm_cpu(1,0,m,n,k,CAST(1),a,m,b,n,CAST(0),c,n);
 
         col2im_cpu(net.workspace, l.out_c, l.out_h, l.out_w, l.size, l.stride, l.pad, l.output+i*l.outputs);
     }
@@ -271,7 +271,7 @@ void backward_deconvolutional_layer(layer l, network net)
 
         im2col_cpu(l.delta + i*l.outputs, l.out_c, l.out_h, l.out_w, 
                 l.size, l.stride, l.pad, b);
-        gemm_cpu(0,1,m,n,k,1,a,k,b,k,1,c,n);
+        gemm_cpu(0,1,m,n,k,CAST(1),a,k,b,k,CAST(1),c,n);
 
         if(net.delta){
             int m = l.c;
@@ -282,7 +282,7 @@ void backward_deconvolutional_layer(layer l, network net)
             real *b = net.workspace;
             real *c = net.delta + i*n*m;
 
-            gemm_cpu(0,0,m,n,k,1,a,k,b,n,1,c,n);
+            gemm_cpu(0,0,m,n,k,CAST(1),a,k,b,n,CAST(1),c,n);
         }
     }
 }
@@ -295,16 +295,16 @@ void update_deconvolutional_layer(layer l, update_args a)
     int batch = a.batch;
 
     int size = l.size*l.size*l.c*l.n;
-    axpy_cpu(l.n, learning_rate/batch, l.bias_updates, 1, l.biases, 1);
+    axpy_cpu(l.n, learning_rate/CAST(batch), l.bias_updates, 1, l.biases, 1);
     scal_cpu(l.n, momentum, l.bias_updates, 1);
 
     if(l.scales){
-        axpy_cpu(l.n, learning_rate/batch, l.scale_updates, 1, l.scales, 1);
+        axpy_cpu(l.n, learning_rate/CAST(batch), l.scale_updates, 1, l.scales, 1);
         scal_cpu(l.n, momentum, l.scale_updates, 1);
     }
 
-    axpy_cpu(size, -decay*batch, l.weights, 1, l.weight_updates, 1);
-    axpy_cpu(size, learning_rate/batch, l.weight_updates, 1, l.weights, 1);
+    axpy_cpu(size, -decay*CAST(batch), l.weights, 1, l.weight_updates, 1);
+    axpy_cpu(size, learning_rate/CAST(batch), l.weight_updates, 1, l.weights, 1);
     scal_cpu(size, momentum, l.weight_updates, 1);
 }
 
