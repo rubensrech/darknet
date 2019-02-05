@@ -92,12 +92,12 @@ real get_current_rate(network *net)
     size_t batch_num = get_current_batch(net);
     int i;
     real rate;
-    if (batch_num < net->burn_in) return net->learning_rate * pow((real)batch_num / net->burn_in, net->power);
+    if (batch_num < net->burn_in) return net->learning_rate * pow((real)batch_num / CAST(net->burn_in), net->power);
     switch (net->policy) {
         case CONSTANT:
             return net->learning_rate;
         case STEP:
-            return net->learning_rate * pow(net->scale, batch_num/net->step);
+            return net->learning_rate * pow(net->scale, CAST(batch_num/net->step));
         case STEPS:
             rate = net->learning_rate;
             for(i = 0; i < net->num_steps; ++i){
@@ -106,13 +106,13 @@ real get_current_rate(network *net)
             }
             return rate;
         case EXP:
-            return net->learning_rate * pow(net->gamma, batch_num);
+            return net->learning_rate * pow(net->gamma, CAST(batch_num));
         case POLY:
-            return net->learning_rate * pow(1 - (real)batch_num / net->max_batches, net->power);
+            return net->learning_rate * pow(CAST(1 - (real)batch_num / net->max_batches), net->power);
         case RANDOM:
-            return net->learning_rate * pow(rand_uniform(0,1), net->power);
+            return net->learning_rate * pow(rand_uniform(CAST(0),CAST(1)), net->power);
         case SIG:
-            return net->learning_rate * (1./(1.+exp(net->gamma*(batch_num - net->step))));
+            return net->learning_rate * CAST(1./(1.+exp(net->gamma*(batch_num - net->step))));
         default:
             fprintf(stderr, "Policy is weird!\n");
             return net->learning_rate;
@@ -199,7 +199,7 @@ void forward_network(network *netp)
         net.index = i;
         layer l = net.layers[i];
         if(l.delta){
-            fill_cpu(l.outputs * l.batch, 0, l.delta, 1);
+            fill_cpu(l.outputs * l.batch, CAST(0), l.delta, 1);
         }
         l.forward(l, net);
         net.input = l.output;
@@ -244,7 +244,7 @@ void calc_network_cost(network *netp)
 {
     network net = *netp;
     int i;
-    real sum = 0;
+    real sum = CAST(0);
     int count = 0;
     for(i = 0; i < net.n; ++i){
         if(net.layers[i].cost){
@@ -302,13 +302,13 @@ real train_network_sgd(network *net, data d, int n)
     int batch = net->batch;
 
     int i;
-    real sum = 0;
+    real sum = CAST(0);
     for(i = 0; i < n; ++i){
         get_random_batch(d, batch, net->input, net->truth);
         real err = train_network_datum(net);
         sum += err;
     }
-    return (real)sum/(n*batch);
+    return (real)sum/CAST(n*batch);
 }
 
 real train_network(network *net, data d)
@@ -318,13 +318,13 @@ real train_network(network *net, data d)
     int n = d.X.rows / batch;
 
     int i;
-    real sum = 0;
+    real sum = CAST(0);
     for(i = 0; i < n; ++i){
         get_next_batch(d, batch, i*batch, net->input, net->truth);
         real err = train_network_datum(net);
         sum += err;
     }
-    return (real)sum/(n*batch);
+    return (real)sum/CAST(n*batch);
 }
 
 void set_temp_network(network *net, real t)
@@ -539,7 +539,7 @@ detection *make_network_boxes(network *net, real thresh, int *num)
     return dets;
 }
 
-void fill_network_boxes(network *net, int w, int h, float thresh, float hier, int *map, int relative, detection *dets, int letter)
+void fill_network_boxes(network *net, int w, int h, real thresh, real hier, int *map, int relative, detection *dets, int letter)
 {
     int j;
     for(j = 0; j < net->n; ++j){
@@ -560,7 +560,7 @@ void fill_network_boxes(network *net, int w, int h, float thresh, float hier, in
     }
 }
 
-detection *get_network_boxes(network *net, int w, int h, float thresh, float hier, int *map, int relative, int *num, int letter)
+detection *get_network_boxes(network *net, int w, int h, real thresh, real hier, int *map, int relative, int *num, int letter)
 {
     detection *dets = make_network_boxes(net, thresh, num);
     fill_network_boxes(net, w, h, thresh, hier, map, relative, dets, letter);
@@ -646,9 +646,9 @@ void print_network(network *net)
         int n = l.outputs;
         real mean = mean_array(output, n);
         real vari = variance_array(output, n);
-        fprintf(stderr, "Layer %d - Mean: %f, Variance: %f\n",i,mean, vari);
+        fprintf(stderr, "Layer %d - Mean: %f, Variance: %f\n", i, (float)mean, (float)vari);
         if(n > 100) n = 100;
-        for(j = 0; j < n; ++j) fprintf(stderr, "%f, ", output[j]);
+        for(j = 0; j < n; ++j) fprintf(stderr, "%f, ", (float)(output[j]));
         if(n == 100)fprintf(stderr,".....\n");
         fprintf(stderr, "\n");
     }
@@ -674,9 +674,9 @@ void compare_networks(network *n1, network *n2, data test)
         }
     }
     printf("%5d %5d\n%5d %5d\n", a, b, c, d);
-    real num = pow((abs(b - c) - 1.), 2.);
-    real den = b + c;
-    printf("%f\n", num/den); 
+    real num = CAST(pow((abs(b - c) - 1.), 2.));
+    real den = CAST(b + c);
+    printf("%f\n", (float)(num/den)); 
 }
 
 real network_accuracy(network *net, data d)
