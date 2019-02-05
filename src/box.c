@@ -277,7 +277,7 @@ void test_box()
 
     real iou = box_iou(a,b);
     iou = (1-iou)*(1-iou);
-    printf("%f\n", iou);
+    printf("%f\n", (float)iou);
     dbox d = diou(a, b);
     printf("%f %f %f %f\n", (float)d.dx, (float)d.dy, (float)d.dw, (float)d.dh);
 
