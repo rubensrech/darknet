@@ -1122,7 +1122,7 @@ data load_data_detection(int n, char **paths, int m, int w, int h, int boxes, in
         d.X.vals[i] = sized.data;
 
 
-        fill_truth_detection(random_paths[i], boxes, d.y.vals[i], classes, flip, -dx/w, -dy/CAST(h), nw/CAST(w), nh/CAST(h));
+        fill_truth_detection(random_paths[i], boxes, d.y.vals[i], classes, flip, -dx/CAST(w), -dy/CAST(h), nw/CAST(w), nh/CAST(h));
 
         free_image(orig);
     }
@@ -1513,7 +1513,7 @@ void smooth_data(data d)
 {
     int i, j;
     real scale = CAST(1. / d.y.cols);
-    real eps = CAST(.1)1;
+    real eps = CAST(.1);
     for(i = 0; i < d.y.rows; ++i){
         for(j = 0; j < d.y.cols; ++j){
             d.y.vals[i][j] = eps * scale + (1-eps) * d.y.vals[i][j];
