@@ -287,7 +287,7 @@ layer parse_softmax(list *options, size_params params)
     l.w = params.w;
     l.h = params.h;
     l.c = params.c;
-    l.spatial = option_find_real_quiet(options, (char*)"spatial", CAST(0))9;
+    l.spatial = option_find_real_quiet(options, (char*)"spatial", CAST(0));
     l.noloss =  option_find_int_quiet(options, (char*)"noloss", 0);
     return l;
 }
@@ -1289,7 +1289,7 @@ void load_convolutional_weights(layer l, FILE *fp)
         }
         if(0){
             fill_cpu(l.n, CAST(0), l.rolling_mean, 1);
-            fill_cpu(l.n, CAST(0), l.rolling_v1ariance, 1);
+            fill_cpu(l.n, CAST(0), l.rolling_variance, 1);
         }
         if(0){
             int i;
