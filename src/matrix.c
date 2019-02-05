@@ -31,7 +31,7 @@ real matrix_topk_accuracy(matrix truth, matrix guess, int k)
         }
     }
     free(indexes);
-    return (real)correct/truth.rows;
+    return (real)correct/CAST(truth.rows);
 }
 
 void scale_matrix(matrix m, real scale)
@@ -165,7 +165,7 @@ void matrix_to_csv(matrix m)
     for(i = 0; i < m.rows; ++i){
         for(j = 0; j < m.cols; ++j){
             if(j > 0) printf(",");
-            printf("%.17g", m.vals[i][j]);
+            printf("%.17g", (float)(m.vals[i][j]));
         }
         printf("\n");
     }
@@ -186,7 +186,7 @@ void print_matrix(matrix m)
     for(i = 0; i < m.rows; ++i){
         printf("|  ");
         for(j = 0; j < m.cols; ++j){
-            printf("%15.7f ", m.vals[i][j]);
+            printf("%15.7f ", (float)(m.vals[i][j]));
         }
         printf(" |\n");
     }
