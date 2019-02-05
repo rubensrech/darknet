@@ -69,13 +69,13 @@ void forward_normalization_layer(const layer layer, network net)
     int w = layer.w;
     int h = layer.h;
     int c = layer.c;
-    scal_cpu(w*h*c*layer.batch, 0, layer.squared, 1);
+    scal_cpu(w*h*c*layer.batch, CAST(0), layer.squared, 1);
 
     for(b = 0; b < layer.batch; ++b){
         real *squared = layer.squared + w*h*c*b;
         real *norms   = layer.norms + w*h*c*b;
         real *input   = net.input + w*h*c*b;
-        pow_cpu(w*h*c, 2, input, 1, squared, 1);
+        pow_cpu(w*h*c, CAST(2), input, 1, squared, 1);
 
         const_cpu(w*h, layer.kappa, norms, 1);
         for(k = 0; k < layer.size/2; ++k){
