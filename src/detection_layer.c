@@ -59,17 +59,17 @@ void forward_detection_layer(const detection_layer l, network net)
             int index = b*l.inputs;
             for (i = 0; i < locations; ++i) {
                 int offset = i*l.classes;
-                softmax(l.output + index + offset, l.classes, 1, 1,
+                softmax(l.output + index + offset, l.classes, CAST(1), 1,
                         l.output + index + offset);
             }
         }
     }
     if(net.train){
-        real avg_iou = 0;
-        real avg_cat = 0;
-        real avg_allcat = 0;
-        real avg_obj = 0;
-        real avg_anyobj = 0;
+        real avg_iou = CAST(0);
+        real avg_cat = CAST(0);
+        real avg_allcat = CAST(0);
+        real avg_obj = CAST(0);
+        real avg_anyobj = CAST(0);
         int count = 0;
         *(l.cost) = 0;
         int size = l.inputs * l.batch;
@@ -87,8 +87,8 @@ void forward_detection_layer(const detection_layer l, network net)
                 }
 
                 int best_index = -1;
-                real best_iou = 0;
-                real best_rmse = 20;
+                real best_iou = CAST(0);
+                real best_rmse = CAST(20);
 
                 if (!is_obj){
                     continue;
@@ -219,7 +219,7 @@ void forward_detection_layer(const detection_layer l, network net)
 
 void backward_detection_layer(const detection_layer l, network net)
 {
-    axpy_cpu(l.batch*l.inputs, 1, l.delta, 1, net.delta, 1);
+    axpy_cpu(l.batch*l.inputs, CAST(1), l.delta, 1, net.delta, 1);
 }
 
 void get_detection_detections(layer l, int w, int h, real thresh, detection *dets)
