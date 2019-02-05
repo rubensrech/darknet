@@ -43,9 +43,9 @@ layer make_connected_layer(int batch, int inputs, int outputs, ACTIVATION activa
     l.update = update_connected_layer;
 
     //real scale = 1./sqrt(inputs);
-    real scale = sqrt(2./inputs);
+    real scale = sqrt(CAST(2./inputs));
     for(i = 0; i < outputs*inputs; ++i){
-        l.weights[i] = scale*rand_uniform(-1, 1);
+        l.weights[i] = scale*rand_uniform(CAST(-1), CAST(1));
     }
 
     for(i = 0; i < outputs; ++i){
@@ -135,29 +135,29 @@ void update_connected_layer(layer l, update_args a)
     real momentum = a.momentum;
     real decay = a.decay;
     int batch = a.batch;
-    axpy_cpu(l.outputs, learning_rate/batch, l.bias_updates, 1, l.biases, 1);
+    axpy_cpu(l.outputs, learning_rate/CAST(batch), l.bias_updates, 1, l.biases, 1);
     scal_cpu(l.outputs, momentum, l.bias_updates, 1);
 
     if(l.batch_normalize){
-        axpy_cpu(l.outputs, learning_rate/batch, l.scale_updates, 1, l.scales, 1);
+        axpy_cpu(l.outputs, learning_rate/CAST(batch), l.scale_updates, 1, l.scales, 1);
         scal_cpu(l.outputs, momentum, l.scale_updates, 1);
     }
 
-    axpy_cpu(l.inputs*l.outputs, -decay*batch, l.weights, 1, l.weight_updates, 1);
-    axpy_cpu(l.inputs*l.outputs, learning_rate/batch, l.weight_updates, 1, l.weights, 1);
+    axpy_cpu(l.inputs*l.outputs, -decay*CAST(batch), l.weights, 1, l.weight_updates, 1);
+    axpy_cpu(l.inputs*l.outputs, learning_rate/CAST(batch), l.weight_updates, 1, l.weights, 1);
     scal_cpu(l.inputs*l.outputs, momentum, l.weight_updates, 1);
 }
 
 void forward_connected_layer(layer l, network net)
 {
-    fill_cpu(l.outputs*l.batch, 0, l.output, 1);
+    fill_cpu(l.outputs*l.batch, CAST(0), l.output, 1);
     int m = l.batch;
     int k = l.inputs;
     int n = l.outputs;
     real *a = net.input;
     real *b = l.weights;
     real *c = l.output;
-    gemm(0,1,m,n,k,1,a,k,b,k,1,c,n);
+    gemm(0,1,m,n,k,CAST(1),a,k,b,k,CAST(1),c,n);
     if(l.batch_normalize){
         forward_batchnorm_layer(l, net);
     } else {
@@ -182,7 +182,7 @@ void backward_connected_layer(layer l, network net)
     real *a = l.delta;
     real *b = net.input;
     real *c = l.weight_updates;
-    gemm(1,0,m,n,k,1,a,m,b,n,1,c,n);
+    gemm(1,0,m,n,k,CAST(1),a,m,b,n,CAST(1),c,n);
 
     m = l.batch;
     k = l.outputs;
@@ -192,7 +192,7 @@ void backward_connected_layer(layer l, network net)
     b = l.weights;
     c = net.delta;
 
-    if(c) gemm(0,0,m,n,k,1,a,k,b,n,1,c,n);
+    if(c) gemm(0,0,m,n,k,CAST(1),a,k,b,n,CAST(1),c,n);
 }
 
 
@@ -200,7 +200,7 @@ void denormalize_connected_layer(layer l)
 {
     int i, j;
     for(i = 0; i < l.outputs; ++i){
-        real scale = l.scales[i]/sqrt(l.rolling_variance[i] + .000001);
+        real scale = l.scales[i]/sqrt(l.rolling_variance[i] + CAST(.000001));
         for(j = 0; j < l.inputs; ++j){
             l.weights[i*l.inputs + j] *= scale;
         }
