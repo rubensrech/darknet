@@ -104,7 +104,7 @@ dbox derivative(box a, box b)
     d.dx = 0;
     d.dw = 0;
     real l1 = a.x - a.w/CAST(2);
-    real l2 = b.x - b.w/CAST(2)1;
+    real l2 = b.x - b.w/CAST(2);
     if (l1 > l2){
         d.dx -= 1;
         d.dw += .5;
@@ -279,7 +279,7 @@ void test_box()
     iou = (1-iou)*(1-iou);
     printf("%f\n", iou);
     dbox d = diou(a, b);
-    printf("%f %f %f %f\n", d.dx, d.dy, d.dw, d.dh);
+    printf("%f %f %f %f\n", (float)d.dx, (float)d.dy, (float)d.dw, (float)d.dh);
 
     real xiou = box_iou(dxa, b);
     real yiou = box_iou(dya, b);
@@ -289,7 +289,7 @@ void test_box()
     yiou = ((1-yiou)*(1-yiou) - iou)/(.00001);
     wiou = ((1-wiou)*(1-wiou) - iou)/(.00001);
     hiou = ((1-hiou)*(1-hiou) - iou)/(.00001);
-    printf("manual %f %f %f %f\n", xiou, yiou, wiou, hiou);
+    printf("manual %f %f %f %f\n", (float)xiou, (float)yiou, (float)wiou, (float)hiou);
 }
 
 dbox diou(box a, box b)
