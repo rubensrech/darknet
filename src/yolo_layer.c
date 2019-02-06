@@ -95,10 +95,10 @@ real delta_yolo_box(box truth, real *x, real *biases, int n, int index, int i, i
     box pred = get_yolo_box(x, biases, n, index, i, j, lw, lh, w, h, stride);
     real iou = box_iou(pred, truth);
 
-    real tx = (truth.x*lw - i);
-    real ty = (truth.y*lh - j);
-    real tw = log(truth.w*w / biases[2*n]);
-    real th = log(truth.h*h / biases[2*n + 1]);
+    real tx = CAST(truth.x*lw - i);
+    real ty = CAST(truth.y*lh - j);
+    real tw = log(truth.w*CAST(w) / biases[2*n]);
+    real th = log(truth.h*CAST(h) / biases[2*n + 1]);
 
     delta[index + 0*stride] = scale * (tx - x[index + 0*stride]);
     delta[index + 1*stride] = scale * (ty - x[index + 1*stride]);
@@ -147,12 +147,12 @@ void forward_yolo_layer(const layer l, network net)
 
     memset(l.delta, 0, l.outputs * l.batch * sizeof(real));
     if(!net.train) return;
-    real avg_iou = 0;
-    real recall = 0;
-    real recall75 = 0;
-    real avg_cat = 0;
-    real avg_obj = 0;
-    real avg_anyobj = 0;
+    real avg_iou = CAST(0);
+    real recall = CAST(0);
+    real recall75 = CAST(0);
+    real avg_cat = CAST(0);
+    real avg_obj = CAST(0);
+    real avg_anyobj = CAST(0);
     int count = 0;
     int class_count = 0;
     *(l.cost) = 0;
@@ -162,7 +162,7 @@ void forward_yolo_layer(const layer l, network net)
                 for (n = 0; n < l.n; ++n) {
                     int box_index = entry_index(l, b, n*l.w*l.h + j*l.w + i, 0);
                     box pred = get_yolo_box(l.output, l.biases, l.mask[n], box_index, i, j, l.w, l.h, net.w, net.h, l.w*l.h);
-                    real best_iou = 0;
+                    real best_iou = CAST(0);
                     int best_t = 0;
                     for(t = 0; t < l.max_boxes; ++t){
                         box truth = real_to_box(net.truth + t*(4 + 1) + b*l.truths, 1);
@@ -187,7 +187,7 @@ void forward_yolo_layer(const layer l, network net)
                         int class_index = entry_index(l, b, n*l.w*l.h + j*l.w + i, 4 + 1);
                         delta_yolo_class(l.output, l.delta, class_index, _class, l.classes, l.w*l.h, 0);
                         box truth = real_to_box(net.truth + best_t*(4 + 1) + b*l.truths, 1);
-                        delta_yolo_box(truth, l.output, l.biases, l.mask[n], box_index, i, j, l.w, l.h, net.w, net.h, l.delta, (2-truth.w*truth.h), l.w*l.h);
+                        delta_yolo_box(truth, l.output, l.biases, l.mask[n], box_index, i, j, l.w, l.h, net.w, net.h, l.delta, (CAST(2)-truth.w*truth.h), l.w*l.h);
                     }
                 }
             }
@@ -196,14 +196,14 @@ void forward_yolo_layer(const layer l, network net)
             box truth = real_to_box(net.truth + t*(4 + 1) + b*l.truths, 1);
 
             if(!truth.x) break;
-            real best_iou = 0;
+            real best_iou = CAST(0);
             int best_n = 0;
             i = (truth.x * l.w);
             j = (truth.y * l.h);
             box truth_shift = truth;
             truth_shift.x = truth_shift.y = 0;
             for(n = 0; n < l.total; ++n){
-                box pred = {0};
+                box pred = {CAST(0)};
                 pred.w = l.biases[2*n]/net.w;
                 pred.h = l.biases[2*n+1]/net.h;
                 real iou = box_iou(pred, truth_shift);
@@ -216,7 +216,7 @@ void forward_yolo_layer(const layer l, network net)
             int mask_n = int_index(l.mask, best_n, l.n);
             if(mask_n >= 0){
                 int box_index = entry_index(l, b, mask_n*l.w*l.h + j*l.w + i, 0);
-                real iou = delta_yolo_box(truth, l.output, l.biases, best_n, box_index, i, j, l.w, l.h, net.w, net.h, l.delta, (2-truth.w*truth.h), l.w*l.h);
+                real iou = delta_yolo_box(truth, l.output, l.biases, best_n, box_index, i, j, l.w, l.h, net.w, net.h, l.delta, (CAST(2)-truth.w*truth.h), l.w*l.h);
 
                 int obj_index = entry_index(l, b, mask_n*l.w*l.h + j*l.w + i, 4);
                 avg_obj += l.output[obj_index];
@@ -241,7 +241,7 @@ void forward_yolo_layer(const layer l, network net)
 
 void backward_yolo_layer(const layer l, network net)
 {
-   axpy_cpu(l.batch*l.inputs, 1, l.delta, 1, net.delta, 1);
+   axpy_cpu(l.batch*l.inputs, CAST(1), l.delta, 1, net.delta, 1);
 }
 
 void correct_yolo_boxes(detection *dets, int n, int w, int h, int netw, int neth, int relative, int letter)
