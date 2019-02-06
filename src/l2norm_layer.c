@@ -43,7 +43,7 @@ void forward_l2norm_layer(const layer l, network net)
 void backward_l2norm_layer(const layer l, network net)
 {
     //axpy_cpu(l.inputs*l.batch, 1, l.scales, 1, l.delta, 1);
-    axpy_cpu(l.inputs*l.batch, 1, l.delta, 1, net.delta, 1);
+    axpy_cpu(l.inputs*l.batch, CAST(1), l.delta, 1, net.delta, 1);
 }
 
 #ifdef GPU
