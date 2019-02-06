@@ -388,12 +388,12 @@ void slerp(real *start, real *end, real s, int n, real *out)
 {
     real omega = acos(dot_cpu(n, start, 1, end, 1));
     real so = sin(omega);
-    fill_cpu(n, 0, out, 1);
-    axpy_cpu(n, sin((1-s)*omega)/so, start, 1, out, 1);
+    fill_cpu(n, CAST(0), out, 1);
+    axpy_cpu(n, sin((CAST(1)-s)*omega)/so, start, 1, out, 1);
     axpy_cpu(n, sin(s*omega)/so, end, 1, out, 1);
 
     real mag = mag_array(out, n);
-    scale_array(out, n, 1./mag);
+    scale_array(out, n, CAST(1.)/mag);
 }
 
 image random_unit_vector_image(int w, int h, int c)
@@ -404,7 +404,7 @@ image random_unit_vector_image(int w, int h, int c)
         im.data[i] = rand_normal();
     }
     real mag = mag_array(im.data, im.w*im.h*im.c);
-    scale_array(im.data, im.w*im.h*im.c, 1./mag);
+    scale_array(im.data, im.w*im.h*im.c, CAST(1.)/mag);
     return im;
 }
 
@@ -449,7 +449,7 @@ void inter_dcgan(char *cfgfile, char *weightfile)
         }
         ++count;
 
-        slerp(start.data, end.data, (real)count / max_count, im.w*im.h*im.c, im.data);
+        slerp(start.data, end.data, CAST((real)count / max_count), im.w*im.h*im.c, im.data);
 
         real *X = im.data;
         time=clock();
@@ -457,7 +457,7 @@ void inter_dcgan(char *cfgfile, char *weightfile)
         image out = get_network_image_layer(net, imlayer);
         //yuv_to_rgb(out);
         normalize_image(out);
-        printf("%s: Predicted in %f seconds.\n", input, sec(clock()-time));
+        printf("%s: Predicted in %f seconds.\n", input, (float6)sec(clock()-time));
         //char buff[256];
         sprintf(buff, "out%05d", c);
         save_image(out, "out");
@@ -494,7 +494,7 @@ void test_dcgan(char *cfgfile, char *weightfile)
         image out = get_network_image_layer(net, imlayer);
         //yuv_to_rgb(out);
         normalize_image(out);
-        printf("%s: Predicted in %f seconds.\n", input, sec(clock()-time));
+        printf("%s: Predicted in %f seconds.\n", input, (float)sec(clock()-time));
         save_image(out, "out");
         show_image(out, "out", 0);
 
@@ -1331,7 +1331,7 @@ void test_lsd(char *cfg, char *weights, char *filename, int gray)
         image out = get_network_image_layer(net, imlayer);
         //yuv_to_rgb(out);
         constrain_image(out);
-        printf("%s: Predicted in %f seconds.\n", input, sec(clock()-time));
+        printf("%s: Predicted in %f seconds.\n", input, (float)sec(clock()-time));
         save_image(out, "out");
         show_image(out, "out", 1);
         show_image(crop, "crop", 0);
