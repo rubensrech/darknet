@@ -54,8 +54,8 @@ local_layer make_local_layer(int batch, int h, int w, int c, int n, int size, in
     l.bias_updates = (real*)calloc(l.outputs, sizeof(real));
 
     // real scale = 1./sqrt(size*size*c);
-    real scale = sqrt(2./(size*size*c));
-    for(i = 0; i < c*n*size*size; ++i) l.weights[i] = scale*rand_uniform(-1,1);
+    real scale = sqrt(CAST(2./(size*size*c)));
+    for(i = 0; i < c*n*size*size; ++i) l.weights[i] = scale*rand_uniform(CAST(-1),CAST(1));
 
     l.output = (real*)calloc(l.batch*out_h * out_w * n, sizeof(real));
     l.delta  = (real*)calloc(l.batch*out_h * out_w * n, sizeof(real));
@@ -113,7 +113,7 @@ void forward_local_layer(const local_layer l, network net)
             int n = 1;
             int k = l.size*l.size*l.c;
 
-            gemm(0,0,m,n,k,1,a,k,b,locations,1,c,locations);
+            gemm(0,0,m,n,k,CAST(1),a,k,b,locations,CAST(1),c,locations);
         }
     }
     activate_array(l.output, l.outputs*l.batch, l.activation);
@@ -127,7 +127,7 @@ void backward_local_layer(local_layer l, network net)
     gradient_array(l.output, l.outputs*l.batch, l.activation, l.delta);
 
     for(i = 0; i < l.batch; ++i){
-        axpy_cpu(l.outputs, 1, l.delta + i*l.outputs, 1, l.bias_updates, 1);
+        axpy_cpu(l.outputs, CAST(1), l.delta + i*l.outputs, 1, l.bias_updates, 1);
     }
 
     for(i = 0; i < l.batch; ++i){
@@ -143,7 +143,7 @@ void backward_local_layer(local_layer l, network net)
             int n = l.size*l.size*l.c;
             int k = 1;
 
-            gemm(0,1,m,n,k,1,a,locations,b,locations,1,c,n);
+            gemm(0,1,m,n,k,CAST(1),a,locations,b,locations,CAST(1),c,n);
         }
 
         if(net.delta){
@@ -156,7 +156,7 @@ void backward_local_layer(local_layer l, network net)
                 int n = 1;
                 int k = l.n;
 
-                gemm(1,0,m,n,k,1,a,m,b,locations,0,c,locations);
+                gemm(1,0,m,n,k,CAST(1),a,m,b,locations,CAST(0),c,locations);
             }
 
             col2im_cpu(net.workspace, l.c,  l.h,  l.w,  l.size,  l.stride, l.pad, net.delta+i*l.c*l.h*l.w);
@@ -173,11 +173,11 @@ void update_local_layer(local_layer l, update_args a)
 
     int locations = l.out_w*l.out_h;
     int size = l.size*l.size*l.c*l.n*locations;
-    axpy_cpu(l.outputs, learning_rate/batch, l.bias_updates, 1, l.biases, 1);
+    axpy_cpu(l.outputs, learning_rate/CAST(batch), l.bias_updates, 1, l.biases, 1);
     scal_cpu(l.outputs, momentum, l.bias_updates, 1);
 
-    axpy_cpu(size, -decay*batch, l.weights, 1, l.weight_updates, 1);
-    axpy_cpu(size, learning_rate/batch, l.weight_updates, 1, l.weights, 1);
+    axpy_cpu(size, -decay*CAST(batch), l.weights, 1, l.weight_updates, 1);
+    axpy_cpu(size, learning_rate/CAST(batch), l.weight_updates, 1, l.weights, 1);
     scal_cpu(size, momentum, l.weight_updates, 1);
 }
 
