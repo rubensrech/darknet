@@ -95,10 +95,10 @@ void forward_rnn_layer(layer l, network net)
     layer self_layer = *(l.self_layer);
     layer output_layer = *(l.output_layer);
 
-    fill_cpu(l.outputs * l.batch * l.steps, 0, output_layer.delta, 1);
-    fill_cpu(l.outputs * l.batch * l.steps, 0, self_layer.delta, 1);
-    fill_cpu(l.outputs * l.batch * l.steps, 0, input_layer.delta, 1);
-    if(net.train) fill_cpu(l.outputs * l.batch, 0, l.state, 1);
+    fill_cpu(l.outputs * l.batch * l.steps, CAST(0), output_layer.delta, 1);
+    fill_cpu(l.outputs * l.batch * l.steps, CAST(0), self_layer.delta, 1);
+    fill_cpu(l.outputs * l.batch * l.steps, CAST(0), input_layer.delta, 1);
+    if(net.train) fill_cpu(l.outputs * l.batch, CAST(0), l.state, 1);
 
     for (i = 0; i < l.steps; ++i) {
         s.input = net.input;
@@ -112,10 +112,10 @@ void forward_rnn_layer(layer l, network net)
         if(l.shortcut){
             copy_cpu(l.outputs * l.batch, old_state, 1, l.state, 1);
         }else{
-            fill_cpu(l.outputs * l.batch, 0, l.state, 1);
+            fill_cpu(l.outputs * l.batch, CAST(0), l.state, 1);
         }
-        axpy_cpu(l.outputs * l.batch, 1, input_layer.output, 1, l.state, 1);
-        axpy_cpu(l.outputs * l.batch, 1, self_layer.output, 1, l.state, 1);
+        axpy_cpu(l.outputs * l.batch, CAST(1), input_layer.output, 1, l.state, 1);
+        axpy_cpu(l.outputs * l.batch, CAST(1), self_layer.output, 1, l.state, 1);
 
         s.input = l.state;
         forward_connected_layer(output_layer, s);
@@ -143,7 +143,7 @@ void backward_rnn_layer(layer l, network net)
     l.state += l.outputs*l.batch*l.steps;
     for (i = l.steps-1; i >= 0; --i) {
         copy_cpu(l.outputs * l.batch, input_layer.output, 1, l.state, 1);
-        axpy_cpu(l.outputs * l.batch, 1, self_layer.output, 1, l.state, 1);
+        axpy_cpu(l.outputs * l.batch, CAST(1), self_layer.output, 1, l.state, 1);
 
         s.input = l.state;
         s.delta = self_layer.delta;
@@ -165,7 +165,7 @@ void backward_rnn_layer(layer l, network net)
         backward_connected_layer(self_layer, s);
 
         copy_cpu(l.outputs*l.batch, self_layer.delta, 1, input_layer.delta, 1);
-        if (i > 0 && l.shortcut) axpy_cpu(l.outputs*l.batch, 1, self_layer.delta, 1, self_layer.delta - l.outputs*l.batch, 1);
+        if (i > 0 && l.shortcut) axpy_cpu(l.outputs*l.batch, CAST(1), self_layer.delta, 1, self_layer.delta - l.outputs*l.batch, 1);
         s.input = net.input + i*l.inputs*l.batch;
         if(net.delta) s.delta = net.delta + i*l.inputs*l.batch;
         else s.delta = 0;
