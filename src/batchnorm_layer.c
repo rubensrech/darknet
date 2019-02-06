@@ -73,7 +73,7 @@ void backward_scale_cpu(real *x_norm, real *delta, int batch, int n, int size, r
 {
     int i,b,f;
     for(f = 0; f < n; ++f){
-        real sum = 0;
+        real sum = CAST(0);
         for(b = 0; b < batch; ++b){
             for(i = 0; i < size; ++i){
                 int index = i + size*(f + n*b);
@@ -140,10 +140,10 @@ void forward_batchnorm_layer(layer l, network net)
         mean_cpu(l.output, l.batch, l.out_c, l.out_h*l.out_w, l.mean);
         variance_cpu(l.output, l.mean, l.batch, l.out_c, l.out_h*l.out_w, l.variance);
 
-        scal_cpu(l.out_c, .99, l.rolling_mean, 1);
-        axpy_cpu(l.out_c, .01, l.mean, 1, l.rolling_mean, 1);
-        scal_cpu(l.out_c, .99, l.rolling_variance, 1);
-        axpy_cpu(l.out_c, .01, l.variance, 1, l.rolling_variance, 1);
+        scal_cpu(l.out_c, CAST(.99), l.rolling_mean, 1);
+        axpy_cpu(l.out_c, CAST(.01), l.mean, 1, l.rolling_mean, 1);
+        scal_cpu(l.out_c, CAST(.99), l.rolling_variance, 1);
+        axpy_cpu(l.out_c, CAST(.01), l.variance, 1, l.rolling_variance, 1);
 
         normalize_cpu(l.output, l.mean, l.variance, l.batch, l.out_c, l.out_h*l.out_w);   
         copy_cpu(l.outputs*l.batch, l.output, 1, l.x_norm, 1);
