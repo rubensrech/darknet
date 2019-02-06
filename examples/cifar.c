@@ -3,11 +3,11 @@
 void train_cifar(char *cfgfile, char *weightfile)
 {
     srand(time(0));
-    real avg_loss = -1;
+    real avg_loss = CAST(-1);
     char *base = basecfg(cfgfile);
     printf("%s\n", base);
     network *net = load_network(cfgfile, weightfile, 0);
-    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
+    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", (float)net->learning_rate, (float)net->momentum, (float)net->decay);
 
     char *backup_directory = (char*)"/home/pjreddie/backup/";
     int classes = 10;
@@ -22,7 +22,7 @@ void train_cifar(char *cfgfile, char *weightfile)
         real loss = train_network_sgd(net, train, 1);
         if(avg_loss == -1) avg_loss = loss;
         avg_loss = avg_loss*.95 + loss*.05;
-        printf("%ld, %.3lf: %lf, %lf avg, %lf rate, %lf seconds, %ld images\n", get_current_batch(net), (real)(*net->seen)/N, loss, avg_loss, get_current_rate(net), sec(clock()-time), *net->seen);
+        printf("%ld, %.3lf: %lf, %lf avg, %lf rate, %f seconds, %ld images\n", get_current_batch(net), (float)(*net->seen)/N, (float)loss, (float)avg_loss, (float)get_current_rate(net), (float)sec(clock()-time), *net->seen);
         if(*net->seen/N > epoch){
             epoch = *net->seen/N;
             char buff[256];
@@ -48,11 +48,11 @@ void train_cifar(char *cfgfile, char *weightfile)
 void train_cifar_distill(char *cfgfile, char *weightfile)
 {
     srand(time(0));
-    real avg_loss = -1;
+    real avg_loss = CAST(-1);
     char *base = basecfg(cfgfile);
     printf("%s\n", base);
     network *net = load_network(cfgfile, weightfile, 0);
-    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
+    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", (float)net->learning_rate, (float)net->momentum, (float)net->decay);
 
     char *backup_directory = (char*)"/home/pjreddie/backup/";
     int classes = 10;
@@ -64,9 +64,9 @@ void train_cifar_distill(char *cfgfile, char *weightfile)
     data train = load_all_cifar10();
     matrix soft = csv_to_matrix((char*)"results/ensemble.csv");
 
-    real weight = .9;
+    real weight = CAST(.9);
     scale_matrix(soft, weight);
-    scale_matrix(train.y, 1. - weight);
+    scale_matrix(train.y, CAST(1.) - weight);
     matrix_add_matrix(soft, train.y);
 
     while(get_current_batch(net) < net->max_batches || net->max_batches == 0){
@@ -75,7 +75,7 @@ void train_cifar_distill(char *cfgfile, char *weightfile)
         real loss = train_network_sgd(net, train, 1);
         if(avg_loss == -1) avg_loss = loss;
         avg_loss = avg_loss*.95 + loss*.05;
-        printf("%ld, %.3lf: %lf, %lf avg, %lf rate, %lf seconds, %ld images\n", get_current_batch(net), (real)(*net->seen)/N, loss, avg_loss, get_current_rate(net), sec(clock()-time), *net->seen);
+        printf("%ld, %.3lf: %lf, %lf avg, %lf rate, %f seconds, %ld images\n", get_current_batch(net), (float)(*net->seen)/N, (float)loss, (float)avg_loss, (float)get_current_rate(net), (float)sec(clock()-time), *net->seen);
         if(*net->seen/N > epoch){
             epoch = *net->seen/N;
             char buff[256];
@@ -104,20 +104,20 @@ void test_cifar_multi(char *filename, char *weightfile)
     set_batch_network(net, 1);
     srand(time(0));
 
-    real avg_acc = 0;
+    real avg_acc = CAST(0);
     data test = load_cifar10_data((char*)"data/cifar/cifar-10-batches-bin/test_batch.bin");
 
     int i;
     for(i = 0; i < test.X.rows; ++i){
         image im = real_to_image(32, 32, 3, test.X.vals[i]);
 
-        real pred[10] = {0};
+        real pred[10] = {CAST(0)};
 
         real *p = network_predict(net, im.data);
-        axpy_cpu(10, 1, p, 1, pred, 1);
+        axpy_cpu(10, CAST(1), p, 1, pred, 1);
         flip_image(im);
         p = network_predict(net, im.data);
-        axpy_cpu(10, 1, p, 1, pred, 1);
+        axpy_cpu(10, CAST(1), p, 1, pred, 1);
 
         int index = max_index(pred, 10);
         int _class = max_index(test.y.vals[i], 10);
@@ -133,8 +133,8 @@ void test_cifar(char *filename, char *weightfile)
     srand(time(0));
 
     clock_t time;
-    real avg_acc = 0;
-    real avg_top5 = 0;
+    real avg_acc = CAST(0);
+    real avg_top5 = CAST(0);
     data test = load_cifar10_data((char*)"data/cifar/cifar-10-batches-bin/test_batch.bin");
 
     time=clock();
@@ -142,7 +142,7 @@ void test_cifar(char *filename, char *weightfile)
     real *acc = network_accuracies(net, test, 2);
     avg_acc += acc[0];
     avg_top5 += acc[1];
-    printf("top1: %f, %lf seconds, %d images\n", avg_acc, sec(clock()-time), test.X.rows);
+    printf("top1: %f, %f seconds, %d images\n", (float)avg_acc, (float)sec(clock()-time), test.X.rows);
     free_data(test);
 }
 
@@ -183,12 +183,12 @@ void test_cifar_csv(char *filename, char *weightfile)
         flip_image(im);
     }
     matrix pred2 = network_predict_data(net, test);
-    scale_matrix(pred, .5);
-    scale_matrix(pred2, .5);
+    scale_matrix(pred, CAST(.5));
+    scale_matrix(pred2, CAST(.5));
     matrix_add_matrix(pred2, pred);
 
     matrix_to_csv(pred);
-    fprintf(stderr, "Accuracy: %f\n", matrix_topk_accuracy(test.y, pred, 1));
+    fprintf(stderr, "Accuracy: %f\n", (float)matrix_topk_accuracy(test.y, pred, 1));
     free_data(test);
 }
 
@@ -207,12 +207,12 @@ void test_cifar_csvtrain(char *cfg, char *weights)
         flip_image(im);
     }
     matrix pred2 = network_predict_data(net, test);
-    scale_matrix(pred, .5);
-    scale_matrix(pred2, .5);
+    scale_matrix(pred, CAST(.5));
+    scale_matrix(pred2, CAST(.5));
     matrix_add_matrix(pred2, pred);
 
     matrix_to_csv(pred);
-    fprintf(stderr, "Accuracy: %f\n", matrix_topk_accuracy(test.y, pred, 1));
+    fprintf(stderr, "Accuracy: %f\n", (float)matrix_topk_accuracy(test.y, pred, 1));
     free_data(test);
 }
 
@@ -223,7 +223,7 @@ void eval_cifar_csv()
     matrix pred = csv_to_matrix((char*)"results/combined.csv");
     fprintf(stderr, "%d %d\n", pred.rows, pred.cols);
 
-    fprintf(stderr, "Accuracy: %f\n", matrix_topk_accuracy(test.y, pred, 1));
+    fprintf(stderr, "Accuracy: %f\n", (float)matrix_topk_accuracy(test.y, pred, 1));
     free_data(test);
     free_matrix(pred);
 }
