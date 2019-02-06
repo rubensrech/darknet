@@ -138,15 +138,15 @@ void forward_gru_layer(layer l, network net)
     layer wr = *(l.wr);
     layer wh = *(l.wh);
 
-    fill_cpu(l.outputs * l.batch * l.steps, 0, uz.delta, 1);
-    fill_cpu(l.outputs * l.batch * l.steps, 0, ur.delta, 1);
-    fill_cpu(l.outputs * l.batch * l.steps, 0, uh.delta, 1);
+    fill_cpu(l.outputs * l.batch * l.steps, CAST(0), uz.delta, 1);
+    fill_cpu(l.outputs * l.batch * l.steps, CAST(0), ur.delta, 1);
+    fill_cpu(l.outputs * l.batch * l.steps, CAST(0), uh.delta, 1);
 
-    fill_cpu(l.outputs * l.batch * l.steps, 0, wz.delta, 1);
-    fill_cpu(l.outputs * l.batch * l.steps, 0, wr.delta, 1);
-    fill_cpu(l.outputs * l.batch * l.steps, 0, wh.delta, 1);
+    fill_cpu(l.outputs * l.batch * l.steps, CAST(0), wz.delta, 1);
+    fill_cpu(l.outputs * l.batch * l.steps, CAST(0), wr.delta, 1);
+    fill_cpu(l.outputs * l.batch * l.steps, CAST(0), wh.delta, 1);
     if(net.train) {
-        fill_cpu(l.outputs * l.batch * l.steps, 0, l.delta, 1);
+        fill_cpu(l.outputs * l.batch * l.steps, CAST(0), l.delta, 1);
         copy_cpu(l.outputs*l.batch, l.state, 1, l.prev_state, 1);
     }
 
@@ -162,10 +162,10 @@ void forward_gru_layer(layer l, network net)
 
 
         copy_cpu(l.outputs*l.batch, uz.output, 1, l.z_cpu, 1);
-        axpy_cpu(l.outputs*l.batch, 1, wz.output, 1, l.z_cpu, 1);
+        axpy_cpu(l.outputs*l.batch, CAST(1), wz.output, 1, l.z_cpu, 1);
 
         copy_cpu(l.outputs*l.batch, ur.output, 1, l.r_cpu, 1);
-        axpy_cpu(l.outputs*l.batch, 1, wr.output, 1, l.r_cpu, 1);
+        axpy_cpu(l.outputs*l.batch, CAST(1), wr.output, 1, l.r_cpu, 1);
 
         activate_array(l.z_cpu, l.outputs*l.batch, LOGISTIC);
         activate_array(l.r_cpu, l.outputs*l.batch, LOGISTIC);
@@ -177,7 +177,7 @@ void forward_gru_layer(layer l, network net)
         forward_connected_layer(wh, s);
 
         copy_cpu(l.outputs*l.batch, uh.output, 1, l.h_cpu, 1);
-        axpy_cpu(l.outputs*l.batch, 1, wh.output, 1, l.h_cpu, 1);
+        axpy_cpu(l.outputs*l.batch, CAST(1), wh.output, 1, l.h_cpu, 1);
 
         if(l.tanh){
             activate_array(l.h_cpu, l.outputs*l.batch, TANH);
