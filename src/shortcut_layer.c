@@ -70,7 +70,7 @@ void backward_shortcut_layer(const layer l, network net)
 {
     gradient_array(l.output, l.outputs*l.batch, l.activation, l.delta);
     axpy_cpu(l.outputs*l.batch, l.alpha, l.delta, 1, net.delta, 1);
-    shortcut_cpu(l.batch, l.out_w, l.out_h, l.out_c, l.delta, l.w, l.h, l.c, 1, l.beta, net.layers[l.index].delta);
+    shortcut_cpu(l.batch, l.out_w, l.out_h, l.out_c, l.delta, l.w, l.h, l.c, CAST(1), l.beta, net.layers[l.index].delta);
 }
 
 #ifdef GPU
