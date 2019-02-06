@@ -27,11 +27,11 @@ void fix_data_captcha(data d, int mask)
 void train_captcha(char *cfgfile, char *weightfile)
 {
     srand(time(0));
-    real avg_loss = -1;
+    real avg_loss = CAST(-1);
     char *base = basecfg(cfgfile);
     printf("%s\n", base);
     network *net = load_network(cfgfile, weightfile, 0);
-    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
+    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", (float)net->learning_rate, (float)net->momentum, (float)net->decay);
     int imgs = 1024;
     int i = *net->seen/imgs;
     int solved = 1;
@@ -75,12 +75,12 @@ void train_captcha(char *cfgfile, char *weightfile)
          */
 
         load_thread = load_data_in_thread(args);
-        printf("Loaded: %lf seconds\n", sec(clock()-time));
+        printf("Loaded: %f seconds\n", (float)sec(clock()-time));
         time=clock();
         real loss = train_network(net, train);
         if(avg_loss == -1) avg_loss = loss;
         avg_loss = avg_loss*.9 + loss*.1;
-        printf("%d: %f, %f avg, %lf seconds, %ld images\n", i, loss, avg_loss, sec(clock()-time), *net->seen);
+        printf("%d: %f, %f avg, %f seconds, %ld images\n", i, (float)loss, (float)avg_loss, (float)sec(clock()-time), *net->seen);
         free_data(train);
         if(i%100==0){
             char buff[256];
@@ -118,7 +118,7 @@ void test_captcha(char *cfgfile, char *weightfile, char *filename)
         for(i = 0; i < 26; ++i){
             int index = indexes[i];
             if(i != 0) printf(", ");
-            printf("%s %f", names[index], predictions[index]);
+            printf("%s %f", names[index], (float)predictions[index]);
         }
         printf("\n");
         fflush(stdout);
@@ -156,7 +156,7 @@ void valid_captcha(char *cfgfile, char *weightfile, char *filename)
         printf("%d, ", truth);
         for(j = 0; j < outputs; ++j){
             if (j != 0) printf(", ");
-            printf("%f", predictions[j]);
+            printf("%f", (float)predictions[j]);
         }
         printf("\n");
         fflush(stdout);
