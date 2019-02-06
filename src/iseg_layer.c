@@ -111,7 +111,7 @@ void forward_iseg_layer(const layer l, network net)
 
         memset(l.counts, 0, 90*sizeof(int));
         for(i = 0; i < 90; ++i){
-            fill_cpu(ids, 0, l.sums[i], 1);
+            fill_cpu(ids, CAST(0), l.sums[i], 1);
             
             int c = net.truth[b*l.truths + i*(l.w*l.h+1)];
             if(c < 0) break;
@@ -121,7 +121,7 @@ void forward_iseg_layer(const layer l, network net)
                 real v = net.truth[b*l.truths + i*(l.w*l.h + 1) + 1 + k];
                 if(v){
                     l.delta[index] = v - l.output[index];
-                    axpy_cpu(ids, 1, l.output + b*l.outputs + l.classes*l.w*l.h + k, l.w*l.h, l.sums[i], 1);
+                    axpy_cpu(ids, CAST(1), l.output + b*l.outputs + l.classes*l.w*l.h + k, l.w*l.h, l.sums[i], 1);
                     ++l.counts[i];
                 }
             }
@@ -135,7 +135,7 @@ void forward_iseg_layer(const layer l, network net)
                 real v = net.truth[b*l.truths + i*(l.w*l.h + 1) + 1 + k];
                 if(v){
                     int z;
-                    real sum = 0;
+                    real sum = CAST(0);
                     for(z = 0; z < ids; ++z){
                         int index = b*l.outputs + (l.classes + z)*l.w*l.h + k;
                         sum += pow(l.sums[i][z]/l.counts[i] - l.output[index], 2);
@@ -149,11 +149,11 @@ void forward_iseg_layer(const layer l, network net)
         // Calculate average embedding
         for(i = 0; i < 90; ++i){
             if(!l.counts[i]) continue;
-            scal_cpu(ids, 1.f/l.counts[i], l.sums[i], 1);
+            scal_cpu(ids, CAST(1.f/l.counts[i]), l.sums[i], 1);
             if(b == 0 && net.gpu_index == 0){
-                printf("%4d, %6.3f, ", l.counts[i], mse[i]);
+                printf("%4d, %6.3f, ", l.counts[i], (float)(mse[i]));
                 for(j = 0; j < ids; ++j){
-                    printf("%6.3f,", l.sums[i][j]);
+                    printf("%6.3f,", (float)(l.sums[i][j]));
                 }
                 printf("\n");
             }
@@ -194,7 +194,7 @@ void forward_iseg_layer(const layer l, network net)
 
 void backward_iseg_layer(const layer l, network net)
 {
-    axpy_cpu(l.batch*l.inputs, 1, l.delta, 1, net.delta, 1);
+    axpy_cpu(l.batch*l.inputs, CAST(1), l.delta, 1, net.delta, 1);
 }
 
 #ifdef GPU
