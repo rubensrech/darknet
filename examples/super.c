@@ -7,9 +7,9 @@ void train_super(char *cfgfile, char *weightfile, int clear)
     srand(time(0));
     char *base = basecfg(cfgfile);
     printf("%s\n", base);
-    real avg_loss = -1;
+    real avg_loss = CAST(-1);
     network *net = load_network(cfgfile, weightfile, clear);
-    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
+    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", (float)net->learning_rate, (float)net->momentum, (float)net->decay);
     int imgs = net->batch*net->subdivisions;
     int i = *net->seen/imgs;
     data train, buffer;
@@ -39,14 +39,14 @@ void train_super(char *cfgfile, char *weightfile, int clear)
         train = buffer;
         load_thread = load_data_in_thread(args);
 
-        printf("Loaded: %lf seconds\n", sec(clock()-time));
+        printf("Loaded: %f seconds\n", (float)sec(clock()-time));
 
         time=clock();
         real loss = train_network(net, train);
         if (avg_loss < 0) avg_loss = loss;
         avg_loss = avg_loss*.9 + loss*.1;
 
-        printf("%d: %f, %f avg, %f rate, %lf seconds, %d images\n", i, loss, avg_loss, get_current_rate(net), sec(clock()-time), i*imgs);
+        printf("%d: %f, %f avg, %f rate, %f seconds, %d images\n", i, (float)loss, (float)avg_loss, (float)get_current_rate(net), (float)sec(clock()-time), i*imgs);
         if(i%1000==0){
             char buff[256];
             sprintf(buff, "%s/%s_%d.weights", backup_directory, base, i);
@@ -91,7 +91,7 @@ void test_super(char *cfgfile, char *weightfile, char *filename)
         time=clock();
         network_predict(net, X);
         image out = get_network_image(net);
-        printf("%s: Predicted in %f seconds.\n", input, sec(clock()-time));
+        printf("%s: Predicted in %f seconds.\n", input, (float)sec(clock()-time));
         save_image(out, "out");
         show_image(out, "out", 0);
 
