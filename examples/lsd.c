@@ -457,7 +457,7 @@ void inter_dcgan(char *cfgfile, char *weightfile)
         image out = get_network_image_layer(net, imlayer);
         //yuv_to_rgb(out);
         normalize_image(out);
-        printf("%s: Predicted in %f seconds.\n", input, (float6)sec(clock()-time));
+        printf("%s: Predicted in %f seconds.\n", input, (float)sec(clock()-time));
         //char buff[256];
         sprintf(buff, "out%05d", c);
         save_image(out, "out");
