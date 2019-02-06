@@ -8,7 +8,7 @@ void train_tag(char *cfgfile, char *weightfile, int clear)
     char *backup_directory = (char*)"/home/pjreddie/backup/";
     printf("%s\n", base);
     network *net = load_network(cfgfile, weightfile, clear);
-    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
+    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", (float)net->learning_rate, (float)net->momentum, (float)net->decay);
     int imgs = 1024;
     list *plist = get_paths((char*)"/home/pjreddie/tag/train.list");
     char **paths = (char **)list_to_array(plist);
@@ -49,12 +49,12 @@ void train_tag(char *cfgfile, char *weightfile, int clear)
         train = buffer;
 
         load_thread = load_data_in_thread(args);
-        printf("Loaded: %lf seconds\n", sec(clock()-time));
+        printf("Loaded: %f seconds\n", (float)sec(clock()-time));
         time=clock();
         real loss = train_network(net, train);
         if(avg_loss == -1) avg_loss = loss;
         avg_loss = avg_loss*.9 + loss*.1;
-        printf("%ld, %.3f: %f, %f avg, %f rate, %lf seconds, %ld images\n", get_current_batch(net), (real)(*net->seen)/N, loss, avg_loss, get_current_rate(net), sec(clock()-time), *net->seen);
+        printf("%ld, %.3f: %f, %f avg, %f rate, %f seconds, %ld images\n", get_current_batch(net), (float)(*net->seen)/N, (float)loss, (float)avg_loss, (float)get_current_rate(net), (float)sec(clock()-time), *net->seen);
         free_data(train);
         if(*net->seen/N > epoch){
             epoch = *net->seen/N;
@@ -111,7 +111,7 @@ void test_tag(char *cfgfile, char *weightfile, char *filename)
         time=clock();
         real *predictions = network_predict(net, X);
         top_predictions(net, 10, indexes);
-        printf("%s: Predicted in %f seconds.\n", input, sec(clock()-time));
+        printf("%s: Predicted in %f seconds.\n", input, (float)sec(clock()-time));
         for(i = 0; i < 10; ++i){
             int index = indexes[i];
             printf("%.1f%%: %s\n", predictions[index]*100, names[index]);
