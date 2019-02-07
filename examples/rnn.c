@@ -170,11 +170,11 @@ void train_char_rnn(char *cfgfile, char *weightfile, char *filename, int clear, 
     char *backup_directory = (char*)"/home/pjreddie/backup/";
     char *base = basecfg(cfgfile);
     fprintf(stderr, "%s\n", base);
-    real avg_loss = -1;
+    real avg_loss = CAST(-1);
     network *net = load_network(cfgfile, weightfile, clear);
 
     int inputs = net->inputs;
-    fprintf(stderr, "Learning Rate: %g, Momentum: %g, Decay: %g, Inputs: %d %d %d\n", net->learning_rate, net->momentum, net->decay, inputs, net->batch, net->time_steps);
+    fprintf(stderr, "Learning Rate: %g, Momentum: %g, Decay: %g, Inputs: %d %d %d\n", (float)net->learning_rate, (float)net->momentum, (float)net->decay, inputs, net->batch, net->time_steps);
     int batch = net->batch;
     int steps = net->time_steps;
     if(clear) *net->seen = 0;
@@ -200,14 +200,14 @@ void train_char_rnn(char *cfgfile, char *weightfile, char *filename, int clear, 
 
         copy_cpu(net->inputs*net->batch, p.x, 1, net->input, 1);
         copy_cpu(net->truths*net->batch, p.y, 1, net->truth, 1);
-        real loss = train_network_datum(net) / (batch);
+        real loss = train_network_datum(net) / CAST(batch);
         free(p.x);
         free(p.y);
         if (avg_loss < 0) avg_loss = loss;
         avg_loss = avg_loss*.9 + loss*.1;
 
         size_t chars = get_current_batch(net)*batch;
-        fprintf(stderr, "%d: %f, %f avg, %f rate, %lf seconds, %f epochs\n", i, loss, avg_loss, get_current_rate(net), sec(clock()-time), (real) chars/size);
+        fprintf(stderr, "%d: %f, %f avg, %f rate, %f seconds, %f epochs\n", i, (float)loss, (float)avg_loss, (float)get_current_rate(net), (float)sec(clock()-time), (float)chars/size);
 
         for(j = 0; j < streams; ++j){
             //printf("%d\n", j);
@@ -403,9 +403,9 @@ void valid_tactic_rnn(char *cfgfile, char *weightfile, char *seed)
         network_predict(net, input);
         input[(int)c] = 0;
     }
-    real sum = 0;
+    real sum = CAST(0);
     c = getc(stdin);
-    real log2 = log(2);
+    real log2 = log(CAST(2));
     int in = 0;
     while(c != EOF){
         int next = getc(stdin);
@@ -452,9 +452,9 @@ void valid_char_rnn(char *cfgfile, char *weightfile, char *seed)
         network_predict(net, input);
         input[(int)c] = 0;
     }
-    real sum = 0;
+    real sum = CAST(0);
     c = getc(stdin);
-    real log2 = log(2);
+    real log2 = log(CAST(2));
     while(c != EOF){
         int next = getc(stdin);
         if(next == EOF) break;
@@ -510,7 +510,7 @@ void vec_char_rnn(char *cfgfile, char *weightfile, char *seed)
         #endif
         printf("%s", line);
         for(i = 0; i < l.outputs; ++i){
-            printf(",%g", l.output[i]);
+            printf(",%g", (float)(l.output[i]));
         }
         printf("\n");
     }
@@ -525,7 +525,7 @@ void run_char_rnn(int argc, char **argv)
     char *filename = find_char_arg(argc, argv, (char*)"-file", (char*)"data/shakespeare.txt");
     char *seed = find_char_arg(argc, argv, (char*)"-seed", (char*)"\n\n");
     int len = find_int_arg(argc, argv, (char*)"-len", 1000);
-    real temp = find_real_arg(argc, argv, (char*)"-temp", .7);
+    real temp = find_real_arg(argc, argv, (char*)"-temp", CAST(.7));
     int rseed = find_int_arg(argc, argv, (char*)"-srand", time(0));
     int clear = find_arg(argc, argv, (char*)"-clear");
     int tokenized = find_arg(argc, argv, (char*)"-tokenized");
