@@ -6,7 +6,7 @@ void train_regressor(char *datacfg, char *cfgfile, char *weightfile, int *gpus, 
 {
     int i;
 
-    real avg_loss = -1;
+    real avg_loss = CAST(-1);
     char *base = basecfg(cfgfile);
     printf("%s\n", base);
     printf("%d\n", ngpus);
@@ -27,7 +27,7 @@ void train_regressor(char *datacfg, char *cfgfile, char *weightfile, int *gpus, 
 
     int imgs = net->batch * net->subdivisions * ngpus;
 
-    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
+    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", (float)net->learning_rate, (float)net->momentum, (float)net->decay);
     list *options = read_data_cfg(datacfg);
 
     char *backup_directory = option_find_str(options, (char*)"backup", (char*)"/backup/");
@@ -74,10 +74,10 @@ void train_regressor(char *datacfg, char *cfgfile, char *weightfile, int *gpus, 
         train = buffer;
         load_thread = load_data(args);
 
-        printf("Loaded: %lf seconds\n", sec(clock()-time));
+        printf("Loaded: %f seconds\n", (float)sec(clock()-time));
         time=clock();
 
-        real loss = 0;
+        real loss = CAST(0);
 #ifdef GPU
         if(ngpus == 1){
             loss = train_network(net, train);
@@ -89,7 +89,7 @@ void train_regressor(char *datacfg, char *cfgfile, char *weightfile, int *gpus, 
 #endif
         if(avg_loss == -1) avg_loss = loss;
         avg_loss = avg_loss*.9 + loss*.1;
-        printf("%ld, %.3f: %f, %f avg, %f rate, %lf seconds, %ld images\n", get_current_batch(net), (real)(*net->seen)/N, loss, avg_loss, get_current_rate(net), sec(clock()-time), *net->seen);
+        printf("%ld, %.3f: %f, %f avg, %f rate, %f seconds, %ld images\n", get_current_batch(net), (float)(*net->seen)/N, (float)loss, (float)avg_loss, (float)get_current_rate(net), (float)sec(clock()-time), *net->seen);
         free_data(train);
         if(*net->seen/N > epoch){
             epoch = *net->seen/N;
@@ -138,8 +138,8 @@ void predict_regressor(char *cfgfile, char *weightfile, char *filename)
         real *X = sized.data;
         time=clock();
         real *predictions = network_predict(net, X);
-        printf("Predicted: %f\n", predictions[0]);
-        printf("%s: Predicted in %f seconds.\n", input, sec(clock()-time));
+        printf("Predicted: %f\n", (float)predictions[0]);
+        printf("%s: Predicted in %f seconds.\n", input, (float)sec(clock()-time));
         free_image(im);
         free_image(sized);
         if (filename) break;
