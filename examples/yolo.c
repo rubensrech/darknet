@@ -11,7 +11,7 @@ void train_yolo(char *cfgfile, char *weightfile)
     printf("%s\n", base);
     real avg_loss = CAST(-1);
     network *net = load_network(cfgfile, weightfile, 0);
-    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", (float)net->learning_rate, net->momentum, net->decay);
+    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", (float)net->learning_rate, (float)net->momentum, (float)net->decay);
     int imgs = net->batch*net->subdivisions;
     int i = *net->seen/imgs;
     data train, buffer;
