@@ -30,7 +30,7 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
     network *net = nets[0];
 
     int imgs = net->batch * net->subdivisions * ngpus;
-    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
+    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", (float)net->learning_rate, (float)net->momentum, (float)net->decay);
     data train, buffer;
 
     layer l = net->layers[net->n - 1];
@@ -126,7 +126,7 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
         avg_loss = avg_loss*.9 + loss*.1;
 
         i = get_current_batch(net);
-        printf("%ld: %f, %f avg, %f rate, %lf seconds, %d images\n", get_current_batch(net), loss, avg_loss, get_current_rate(net), what_time_is_it_now()-time, i*imgs);
+        printf("%ld: %f, %f avg, %f rate, %lf seconds, %d images\n", get_current_batch(net), (float)loss, (float)avg_loss, (float)get_current_rate(net), what_time_is_it_now()-time, i*imgs);
         if(i%100==0){
 #ifdef GPU
             if(ngpus != 1) sync_nets(nets, ngpus, 0);
@@ -183,7 +183,7 @@ static void print_cocos(FILE *fp, char *image_path, detection *dets, int num_box
         real bh = ymax - ymin;
 
         for(j = 0; j < classes; ++j){
-            if (dets[i].prob[j]) fprintf(fp, "{\"image_id\":%d, \"category_id\":%d, \"bbox\":[%f, %f, %f, %f], \"score\":%f},\n", image_id, coco_ids[j], bx, by, bw, bh, dets[i].prob[j]);
+            if (dets[i].prob[j]) fprintf(fp, "{\"image_id\":%d, \"category_id\":%d, \"bbox\":[%f, %f, %f, %f], \"score\":%f},\n", image_id, coco_ids[j], (float)bx, (float)by, (float)bw, (float)bh, (float)(dets[i].prob[j]));
         }
     }
 }
@@ -203,8 +203,8 @@ void print_detector_detections(FILE **fps, char *id, detection *dets, int total,
         if (ymax > h) ymax = h;
 
         for(j = 0; j < classes; ++j){
-            if (dets[i].prob[j]) fprintf(fps[j], "%s %f %f %f %f %f\n", id, dets[i].prob[j],
-                    xmin, ymin, xmax, ymax);
+            if (dets[i].prob[j]) fprintf(fps[j], "%s %f %f %f %f %f\n", id, (float)(dets[i].prob[j]),
+                    (float)xmin, (float)ymin, (float)xmax, (float)ymax);
         }
     }
 }
@@ -225,8 +225,8 @@ void print_imagenet_detections(FILE *fp, int id, detection *dets, int total, int
 
         for(j = 0; j < classes; ++j){
             int _class = j;
-            if (dets[i].prob[_class]) fprintf(fp, "%d %d %f %f %f %f %f\n", id, j+1, dets[i].prob[_class],
-                    xmin, ymin, xmax, ymax);
+            if (dets[i].prob[_class]) fprintf(fp, "%d %d %f %f %f %f %f\n", id, j+1, (float)(dets[i].prob[_class]),
+                    (float)xmin, (float)ymin, (float)xmax, (float)ymax);
         }
     }
 }
@@ -245,7 +245,7 @@ void validate_detector_flip(char *datacfg, char *cfgfile, char *weightfile, char
 
     network *net = load_network(cfgfile, weightfile, 0);
     set_batch_network(net, 2);
-    fprintf(stderr, "Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
+    fprintf(stderr, "Learning Rate: %g, Momentum: %g, Decay: %g\n", (float)net->learning_rate, (float)net->momentum, (float)net->decay);
     srand(time(0));
 
     list *plist = get_paths(valid_images);
@@ -377,7 +377,7 @@ void validate_detector(char *datacfg, char *cfgfile, char *weightfile, char *out
 
     network *net = load_network(cfgfile, weightfile, 0);
     set_batch_network(net, 1);
-    fprintf(stderr, "Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
+    fprintf(stderr, "Learning Rate: %g, Momentum: %g, Decay: %g\n", (float)net->learning_rate, (float)net->momentum, (float)net->decay);
     srand(time(0));
 
     list *plist = get_paths(valid_images);
@@ -494,7 +494,7 @@ void validate_detector_recall(char *cfgfile, char *weightfile)
 {
     network *net = load_network(cfgfile, weightfile, 0);
     set_batch_network(net, 1);
-    fprintf(stderr, "Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
+    fprintf(stderr, "Learning Rate: %g, Momentum: %g, Decay: %g\n", (float)net->learning_rate, (float)net->momentum, (float)net->decay);
     srand(time(0));
 
     list *plist = get_paths((char*)"data/coco_val_5k.list");
@@ -881,17 +881,17 @@ real validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real 
     const real cur_recall = (real)tp_for_thresh / ((real)tp_for_thresh + (real)(unique_truth_count - tp_for_thresh));
     const real f1_score = CAST(2.) * cur_precision * cur_recall / (cur_precision + cur_recall);
     printf(" for thresh = %1.2f, precision = %1.2f, recall = %1.2f, F1-score = %1.2f \n",
-        thresh_calc_avg_iou, cur_precision, cur_recall, f1_score);
+        (float)thresh_calc_avg_iou, (float)cur_precision, (float)cur_recall, (float)f1_score);
 
     printf(" for thresh = %0.2f, TP = %d, FP = %d, FN = %d, average IoU = %2.2f %% \n",
-        thresh_calc_avg_iou, tp_for_thresh, fp_for_thresh, unique_truth_count - tp_for_thresh, avg_iou * 100);
+        (float)thresh_calc_avg_iou, tp_for_thresh, fp_for_thresh, unique_truth_count - tp_for_thresh, (float)(avg_iou * 100));
 
     mean_average_precision = mean_average_precision / classes;
     if (iou_thresh == 0.5) {
         printf("\n mean average precision (mAP) = %f, or %2.2f %% \n", mean_average_precision, mean_average_precision * 100);
     }
     else {
-        printf("\n average precision (AP) = %f, or %2.2f %% for IoU threshold = %f \n", mean_average_precision, mean_average_precision * 100, iou_thresh);
+        printf("\n average precision (AP) = %f, or %2.2f %% for IoU threshold = %f \n", mean_average_precision, mean_average_precision * 100, (float)iou_thresh);
     }
 
 
