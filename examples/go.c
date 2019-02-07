@@ -134,7 +134,7 @@ data random_go_moves(moves m, int n)
 void train_go(char *cfgfile, char *weightfile, char *filename, int *gpus, int ngpus, int clear)
 {
     int i;
-    real avg_loss = -1;
+    real avg_loss = CAST(-1);
     char *base = basecfg(cfgfile);
     printf("%s\n", base);
     printf("%d\n", ngpus);
@@ -151,7 +151,7 @@ void train_go(char *cfgfile, char *weightfile, char *filename, int *gpus, int ng
         nets[i]->learning_rate *= ngpus;
     }
     network *net = nets[0];
-    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
+    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", (float)net->learning_rate, (float)net->momentum, (float)net->decay);
 
     char *backup_directory = (char*)"/home/pjreddie/backup/";
 
@@ -169,7 +169,7 @@ void train_go(char *cfgfile, char *weightfile, char *filename, int *gpus, int ng
         printf("Loaded: %lf seconds\n", what_time_is_it_now() - time);
         time=what_time_is_it_now();
 
-        real loss = 0;
+        real loss = CAST(0);
 #ifdef GPU
         if(ngpus == 1){
             loss = train_network(net, train);
@@ -183,7 +183,7 @@ void train_go(char *cfgfile, char *weightfile, char *filename, int *gpus, int ng
 
         if(avg_loss == -1) avg_loss = loss;
         avg_loss = avg_loss*.95 + loss*.05;
-        printf("%ld, %.3lf: %lf, %lf avg, %lf rate, %lf seconds, %ld images\n", get_current_batch(net), (real)(*net->seen)/N, loss, avg_loss, get_current_rate(net), what_time_is_it_now()-time, *net->seen);
+        printf("%ld, %.3lf: %lf, %lf avg, %lf rate, %lf seconds, %ld images\n", get_current_batch(net), (float)(*net->seen)/N, (float)loss, (float)avg_loss, (float)get_current_rate(net), what_time_is_it_now()-time, *net->seen);
         if(*net->seen/N > epoch){
             epoch = *net->seen/N;
             char buff[256];
@@ -313,13 +313,13 @@ real predict_move2(network *net, real *board, real *move, int multi)
             if(i >= 4) flip_image(oim);
             rotate_image_cw(oim, -i);
 
-            axpy_cpu(19*19+1, 1, output, 1, move, 1);
+            axpy_cpu(19*19+1, CAST(1), output, 1, move, 1);
 
             if(i >= 4) flip_image(bim);
             rotate_image_cw(bim, -i);
         }
         result = result/8;
-        scal_cpu(19*19+1, 1./8., move, 1);
+        scal_cpu(19*19+1, CAST(1./8.), move, 1);
     }
     for(i = 0; i < 19*19; ++i){
         if(board[i] || board[i+19*19]) move[i] = 0;
@@ -412,12 +412,12 @@ real *network_predict_rotations(network *net, real *next)
         if(i >= 4) flip_image(im);
         rotate_image_cw(im, -i);
         if(j > 0){
-            axpy_cpu(19*19+2, 1, im.data, 1, pred, 1);
+            axpy_cpu(19*19+2, CAST(1), im.data, 1, pred, 1);
         }
     }
     free(in);
     free(inds);
-    scal_cpu(19*19+2, 1./n, pred, 1);
+    scal_cpu(19*19+2, CAST(1./n), pred, 1);
     return pred;
 }
 
@@ -435,7 +435,7 @@ mcts_tree *expand(real *next, real *ko, network *net)
     int i;
     real *pred = network_predict_rotations(net, next);
     copy_cpu(19*19+1, pred, 1, root->prior, 1);
-    real val = 2*pred[19*19 + 1] - 1;
+    real val = CAST(2*pred[19*19 + 1] - 1);
     root->result = val;
     for(i = 0; i < 19*19+1; ++i) {
         root->visit_count[i] = 0;
@@ -462,7 +462,7 @@ real select_mcts(mcts_tree *root, network *net, real *prev, real cpuct)
 {
     if(root->done) return -root->result;
     int i;
-    real max = -1000;
+    real max = CAST(-1000);
     int max_i = 0;
     for(i = 0; i < 19*19+1; ++i){
         root->prob[i] = root->mean[i] + cpuct*root->prior[i] * sqrt(root->total_count) / (1. + root->visit_count[i]);
@@ -549,8 +549,8 @@ typedef struct {
 move pick_move(mcts_tree *tree, real temp, int player)
 {
     int i;
-    real probs[19*19+1] = {0};
-    move m = {0};
+    real probs[19*19+1] = {CAST(0)};
+    move m = {CAST(0)};
     double sum = 0;
     /*
     for(i = 0; i < 19*19+1; ++i){
@@ -575,11 +575,11 @@ move pick_move(mcts_tree *tree, real temp, int player)
     top_k(probs, 19*19+1, nind, indexes);
     print_board(stderr, tree->board, player, indexes);
 
-    fprintf(stderr, "%d %d, Result: %f, Prior: %f, Prob: %f, Mean Value: %f, Child Result: %f, Visited: %d\n", index/19, index%19, tree->result, tree->prior[index], probs[index], tree->mean[index], (tree->children[index])?tree->children[index]->result:0, tree->visit_count[index]);
+    fprintf(stderr, "%d %d, Result: %f, Prior: %f, Prob: %f, Mean Value: %f, Child Result: %f, Visited: %d\n", index/19, index%19, (float)(tree->result), (float)(tree->prior[index]), (float)(probs[index]), (float)(tree->mean[index]), (tree->children[index])?(float)(tree->children[index]->result):0, tree->visit_count[index]);
     int ind = max_index(probs, 19*19+1);
-    fprintf(stderr, "%d %d, Result: %f, Prior: %f, Prob: %f, Mean Value: %f, Child Result: %f, Visited: %d\n", ind/19, ind%19, tree->result, tree->prior[ind], probs[ind], tree->mean[ind], (tree->children[ind])?tree->children[ind]->result:0, tree->visit_count[ind]);
+    fprintf(stderr, "%d %d, Result: %f, Prior: %f, Prob: %f, Mean Value: %f, Child Result: %f, Visited: %d\n", ind/19, ind%19, (float)(tree->result), (float)(tree->prior[ind]), (float)(probs[ind]), (float)(tree->mean[ind]), (tree->children[ind])?(float)(tree->children[ind]->result):0, tree->visit_count[ind]);
     ind = max_index(tree->prior, 19*19+1);
-    fprintf(stderr, "%d %d, Result: %f, Prior: %f, Prob: %f, Mean Value: %f, Child Result: %f, Visited: %d\n", ind/19, ind%19, tree->result, tree->prior[ind], probs[ind], tree->mean[ind], (tree->children[ind])?tree->children[ind]->result:0, tree->visit_count[ind]);
+    fprintf(stderr, "%d %d, Result: %f, Prior: %f, Prob: %f, Mean Value: %f, Child Result: %f, Visited: %d\n", ind/19, ind%19, (float)(tree->result), (float)(tree->prior[ind]), (float)(probs[ind]), (float)(tree->mean[ind]), (tree->children[ind])?(float)(tree->children[ind]->result):0, tree->visit_count[ind]);
     return m;
 }
 
@@ -737,7 +737,7 @@ void valid_go(char *cfgfile, char *weightfile, int multi, char *filename)
     printf("%s\n", base);
     network *net = load_network(cfgfile, weightfile, 0);
     set_batch_network(net, 1);
-    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
+    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", (float)net->learning_rate, (float)net->momentum, (float)net->decay);
 
     real *board = (real*)calloc(19*19*3, sizeof(real));
     real *move = (real*)calloc(19*19+2, sizeof(real));
@@ -804,7 +804,7 @@ mcts_tree *ponder(mcts_tree *tree, network *net, real *b, real *ko, int player, 
     if (tree) count = tree->total_count;
     while(!stdin_ready()){
         if (what_time_is_it_now() - t > 120) break;
-        tree = run_mcts(tree, net, b, ko, player, 100000, cpuct, .1);
+        tree = run_mcts(tree, net, b, ko, player, 100000, cpuct, CAST(.1));
     }
     fprintf(stderr, "Pondered %d moves...\n", tree->total_count - count);
     return tree;
@@ -934,15 +934,18 @@ void engine_go(char *filename, char *weightfile, int mcts_iters, real secs, real
             root = move_mcts(root, -1);
             printf("=%s \n\n", ids);
         } else if (!strcmp(buff, "komi")){
-            real komi = 0;
+            real komi = CAST(0);
 
 #if REAL == DOUBLE
-    #define FORMAT_4 "%lf"
-#else
-    #define FORMAT_4 "%f"
+            scanf("%lf", &komi);
+#elif REAL == FLOAT
+            scanf("%f", &komi);
+#elif REAL == HALF
+            float tmp0;
+            scanf("%f", &tmp0);
+            komi = tmp0;
 #endif            
 
-            scanf(FORMAT_4, &komi);
             printf("=%s \n\n", ids);
         } else if (!strcmp(buff, "showboard")){
             printf("=%s \n", ids);
@@ -985,9 +988,9 @@ void engine_go(char *filename, char *weightfile, int mcts_iters, real secs, real
             one = swap;
             move_go(board, player, r, c);
             copy_cpu(19*19*3, board, 1, one, 1);
-            if(root) fprintf(stderr, "Prior: %f\n", root->prior[r*19 + c]);
-            if(root) fprintf(stderr, "Mean: %f\n", root->mean[r*19 + c]);
-            if(root) fprintf(stderr, "Result: %f\n", root->result);
+            if(root) fprintf(stderr, "Prior: %f\n", (float)(root->prior[r*19 + c]));
+            if(root) fprintf(stderr, "Mean: %f\n", (float)(root->mean[r*19 + c]));
+            if(root) fprintf(stderr, "Result: %f\n", (float)root->result);
             root = move_mcts(root, r*19 + c);
             if(root) fprintf(stderr, "Visited: %d\n", root->total_count);
             else fprintf(stderr, "NOT VISITED\n");
@@ -1204,18 +1207,21 @@ real score_game(real *board)
         free(fgetl(p));
     }
     char *l = 0;
-    real score = 0;
+    real score = CAST(0);
     char player = 0;
     while((l = fgetl(p))){
         fprintf(stderr, "%s  \t", l);
 
 #if REAL == DOUBLE
-    #define FORMAT_5 "= %c+%lf"
-#else
-    #define FORMAT_5 "= %c+%f"
+        int n = sscanf(l, "= %c+%lf", &player, &score);
+#elif REAL == FLOAT
+        int n = sscanf(l, "= %c+%f", &player, &score);
+#elif REAL == HALF
+        float tmp1;
+        int n = sscanf(l, "= %c+%f", &player, &tmp1);
+        score = tmp1;
 #endif
 
-        int n = sscanf(l, FORMAT_5, &player, &score);
         free(l);
         if (n == 2) break;
     }
@@ -1255,9 +1261,9 @@ void self_go(char *filename, char *weightfile, char *f2, char *w2, int multi)
     int p1 = 0;
     int p2 = 0;
     int total = 0;
-    real temp = .1;
+    real temp = CAST(.1);
     int mcts_iters = 500;
-    real cpuct = 5;
+    real cpuct = CAST(5);
     while(1){
         if (done){
             tree1 = move_mcts(tree1, -1);
@@ -1298,7 +1304,7 @@ void self_go(char *filename, char *weightfile, char *f2, char *w2, int multi)
         }
         network *use = ((total%2==0) == (player==1)) ? net : net2;
         mcts_tree *t = ((total%2==0) == (player==1)) ? tree1 : tree2;
-        t = run_mcts(t, use, board, two, player, mcts_iters, cpuct, 0);
+        t = run_mcts(t, use, board, two, player, mcts_iters, cpuct, CAST(0));
         move m = pick_move(t, temp, player);
         if(((total%2==0) == (player==1))) tree1 = t;
         else tree2 = t;
@@ -1371,9 +1377,9 @@ void run_go(int argc, char **argv)
     int anon = find_arg(argc, argv, (char*)"-anon");
     int iters = find_int_arg(argc, argv, (char*)"-iters", 500);
     int resign = find_int_arg(argc, argv, (char*)"-resign", 175);
-    real cpuct = find_real_arg(argc, argv, (char*)"-cpuct", 5);
-    real temp = find_real_arg(argc, argv, (char*)"-temp", .1);
-    real time = find_real_arg(argc, argv, (char*)"-time", 0);
+    real cpuct = find_real_arg(argc, argv, (char*)"-cpuct", CAST(5));
+    real temp = find_real_arg(argc, argv, (char*)"-temp", CAST(.1));
+    real time = find_real_arg(argc, argv, (char*)"-time", CAST(0));
     if(0==strcmp(argv[2], "train")) train_go(cfg, weights, c2, gpus, ngpus, clear);
     else if(0==strcmp(argv[2], "valid")) valid_go(cfg, weights, multi, c2);
     else if(0==strcmp(argv[2], "self")) self_go(cfg, weights, c2, w2, multi);
