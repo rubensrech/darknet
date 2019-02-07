@@ -7,11 +7,11 @@
 real abs_mean(real *x, int n)
 {
     int i;
-    real sum = 0;
+    real sum = CAST(0);
     for (i = 0; i < n; ++i){
         sum += fabs(x[i]);
     }
-    return sum/n;
+    return CAST(sum/n);
 }
 
 void calculate_loss(real *output, real *delta, int n, real thresh)
@@ -84,9 +84,9 @@ void optimize_picture(network *net, image orig, int max_layer, real scale, real 
 
     //rate = rate / abs_mean(out.data, out.w*out.h*out.c);
     image gray = make_image(out.w, out.h, out.c);
-    fill_image(gray, .5);
-    axpy_cpu(orig.w*orig.h*orig.c, -1, orig.data, 1, gray.data, 1);
-    axpy_cpu(orig.w*orig.h*orig.c, .1, gray.data, 1, out.data, 1);
+    fill_image(gray, CAST(.5);
+    axpy_cpu(orig.w*orig.h*orig.c, CAST(-1), orig.data, 1, gray.data, 1);
+    axpy_cpu(orig.w*orig.h*orig.c, CAST(.1), gray.data, 1, out.data, 1);
 
     if(norm) normalize_array(out.data, out.w*out.h*out.c);
     axpy_cpu(orig.w*orig.h*orig.c, rate, out.data, 1, orig.data, 1);
@@ -162,14 +162,14 @@ void reconstruct_picture(network *net, real *features, image recon, image update
 #endif
 
         //normalize_array(delta.data, delta.w*delta.h*delta.c);
-        axpy_cpu(recon.w*recon.h*recon.c, 1, delta.data, 1, update.data, 1);
+        axpy_cpu(recon.w*recon.h*recon.c, CAST(1), delta.data, 1, update.data, 1);
         //smooth(recon, update, lambda, smooth_size);
 
         axpy_cpu(recon.w*recon.h*recon.c, rate, update.data, 1, recon.data, 1);
         scal_cpu(recon.w*recon.h*recon.c, momentum, update.data, 1);
 
         real mag = mag_array(delta.data, recon.w*recon.h*recon.c);
-        printf("mag: %f\n", mag);
+        printf("mag: %f\n", (float)mag);
         //scal_cpu(recon.w*recon.h*recon.c, 600/mag, recon.data, 1);
 
         constrain_image(recon);
@@ -303,12 +303,12 @@ void run_nightmare(int argc, char **argv)
     int rounds = find_int_arg(argc, argv, (char*)"-rounds", 1);
     int iters = find_int_arg(argc, argv, (char*)"-iters", 10);
     int octaves = find_int_arg(argc, argv, (char*)"-octaves", 4);
-    real zoom = find_real_arg(argc, argv, (char*)"-zoom", 1.);
-    real rate = find_real_arg(argc, argv, (char*)"-rate", .04);
-    real thresh = find_real_arg(argc, argv, (char*)"-thresh", 1.);
-    real rotate = find_real_arg(argc, argv, (char*)"-rotate", 0);
-    real momentum = find_real_arg(argc, argv, (char*)"-momentum", .9);
-    real lambda = find_real_arg(argc, argv, (char*)"-lambda", .01);
+    real zoom = find_real_arg(argc, argv, (char*)"-zoom", CAST(1.));
+    real rate = find_real_arg(argc, argv, (char*)"-rate", CAST(.04));
+    real thresh = find_real_arg(argc, argv, (char*)"-thresh", CAST(1.));
+    real rotate = find_real_arg(argc, argv, (char*)"-rotate", CAST(0));
+    real momentum = find_real_arg(argc, argv, (char*)"-momentum", CAST(.9));
+    real lambda = find_real_arg(argc, argv, (char*)"-lambda", CAST(.01));
     char *prefix = find_char_arg(argc, argv, (char*)"-prefix", 0);
     int reconstruct = find_arg(argc, argv, (char*)"-reconstruct");
     int smooth_size = find_int_arg(argc, argv, (char*)"-smooth", 1);
@@ -320,7 +320,7 @@ void run_nightmare(int argc, char **argv)
     set_batch_network(net, 1);
     image im = load_image_color(input, 0, 0);
     if(0){
-        real scale = 1;
+        real scale = CAST(1);
         if(im.w > 512 || im.h > 512){
             if(im.w > im.h) scale = 512.0/im.w;
             else scale = 512.0/im.h;
@@ -380,7 +380,7 @@ void run_nightmare(int argc, char **argv)
             }else{
                 int layer = max_layer + rand()%range - range/2;
                 int octave = rand()%octaves;
-                optimize_picture(net, im, layer, 1/pow(1.33333333, octave), rate, thresh, norm);
+                optimize_picture(net, im, layer, CAST(1/pow(1.33333333, octave)), rate, thresh, norm);
             }
         }
         fprintf(stderr, "done\n");
