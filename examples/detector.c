@@ -12,7 +12,7 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
     srand(time(0));
     char *base = basecfg(cfgfile);
     printf("%s\n", base);
-    real avg_loss = -1;
+    real avg_loss = CAST(-1);
     network **nets = (network**)calloc(ngpus, sizeof(network));
 
     srand(time(0));
@@ -112,7 +112,7 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
         printf("Loaded: %lf seconds\n", what_time_is_it_now()-time);
 
         time=what_time_is_it_now();
-        real loss = 0;
+        real loss = CAST(0);
 #ifdef GPU
         if(ngpus == 1){
             loss = train_network(net, train);
@@ -167,10 +167,10 @@ static void print_cocos(FILE *fp, char *image_path, detection *dets, int num_box
     int i, j;
     int image_id = get_coco_image_id(image_path);
     for(i = 0; i < num_boxes; ++i){
-        real xmin = dets[i].bbox.x - dets[i].bbox.w/2.;
-        real xmax = dets[i].bbox.x + dets[i].bbox.w/2.;
-        real ymin = dets[i].bbox.y - dets[i].bbox.h/2.;
-        real ymax = dets[i].bbox.y + dets[i].bbox.h/2.;
+        real xmin = dets[i].bbox.x - dets[i].bbox.w/CAST(2.);
+        real xmax = dets[i].bbox.x + dets[i].bbox.w/CAST(2.);
+        real ymin = dets[i].bbox.y - dets[i].bbox.h/CAST(2.);
+        real ymax = dets[i].bbox.y + dets[i].bbox.h/CAST(2.);
 
         if (xmin < 0) xmin = 0;
         if (ymin < 0) ymin = 0;
@@ -192,10 +192,10 @@ void print_detector_detections(FILE **fps, char *id, detection *dets, int total,
 {
     int i, j;
     for(i = 0; i < total; ++i){
-        real xmin = dets[i].bbox.x - dets[i].bbox.w/2. + 1;
-        real xmax = dets[i].bbox.x + dets[i].bbox.w/2. + 1;
-        real ymin = dets[i].bbox.y - dets[i].bbox.h/2. + 1;
-        real ymax = dets[i].bbox.y + dets[i].bbox.h/2. + 1;
+        real xmin = dets[i].bbox.x - dets[i].bbox.w/CAST(2.) + CAST(1);
+        real xmax = dets[i].bbox.x + dets[i].bbox.w/CAST(2.) + CAST(1);
+        real ymin = dets[i].bbox.y - dets[i].bbox.h/CAST(2.) + CAST(1);
+        real ymax = dets[i].bbox.y + dets[i].bbox.h/CAST(2.) + CAST(1);
 
         if (xmin < 1) xmin = 1;
         if (ymin < 1) ymin = 1;
@@ -213,10 +213,10 @@ void print_imagenet_detections(FILE *fp, int id, detection *dets, int total, int
 {
     int i, j;
     for(i = 0; i < total; ++i){
-        real xmin = dets[i].bbox.x - dets[i].bbox.w/2.;
-        real xmax = dets[i].bbox.x + dets[i].bbox.w/2.;
-        real ymin = dets[i].bbox.y - dets[i].bbox.h/2.;
-        real ymax = dets[i].bbox.y + dets[i].bbox.h/2.;
+        real xmin = dets[i].bbox.x - dets[i].bbox.w/CAST(2.);
+        real xmax = dets[i].bbox.x + dets[i].bbox.w/CAST(2.);
+        real ymin = dets[i].bbox.y - dets[i].bbox.h/CAST(2.);
+        real ymax = dets[i].bbox.y + dets[i].bbox.h/CAST(2.);
 
         if (xmin < 0) xmin = 0;
         if (ymin < 0) ymin = 0;
@@ -285,8 +285,8 @@ void validate_detector_flip(char *datacfg, char *cfgfile, char *weightfile, char
     int i=0;
     int t;
 
-    real thresh = .005;
-    real nms = .45;
+    real thresh = CAST(.005);
+    real nms = CAST(.45);
 
     int nthreads = 4;
     image *val = (image*)calloc(nthreads, sizeof(image));
@@ -336,7 +336,7 @@ void validate_detector_flip(char *datacfg, char *cfgfile, char *weightfile, char
             int num = 0;
             // !!!
             int letterbox = 1;
-            detection *dets = get_network_boxes(net, w, h, thresh, .5, map, 0, &num, letterbox);
+            detection *dets = get_network_boxes(net, w, h, thresh, CAST(.5), map, 0, &num, letterbox);
             if (nms) do_nms_sort(dets, num, classes, nms);
             if (coco){
                 print_cocos(fp, path, dets, num, classes, w, h);
@@ -418,8 +418,8 @@ void validate_detector(char *datacfg, char *cfgfile, char *weightfile, char *out
     int i=0;
     int t;
 
-    real thresh = .005;
-    real nms = .45;
+    real thresh = CAST(.005);
+    real nms = CAST(.45);
 
     int nthreads = 4;
     image *val = (image*)calloc(nthreads, sizeof(image));
@@ -464,7 +464,7 @@ void validate_detector(char *datacfg, char *cfgfile, char *weightfile, char *out
             int nboxes = 0;
             // !!!
             int letterbox = (args.type == LETTERBOX_DATA);
-            detection *dets = get_network_boxes(net, w, h, thresh, .5, map, 0, &nboxes, letterbox);
+            detection *dets = get_network_boxes(net, w, h, thresh, CAST(.5), map, 0, &nboxes, letterbox);
             if (nms) do_nms_sort(dets, nboxes, classes, nms);
             if (coco){
                 print_cocos(fp, path, dets, nboxes, classes, w, h);
@@ -507,14 +507,14 @@ void validate_detector_recall(char *cfgfile, char *weightfile)
     int m = plist->size;
     int i=0;
 
-    real thresh = .001;
-    real iou_thresh = .5;
-    real nms = .4;
+    real thresh = CAST(.001);
+    real iou_thresh = CAST(.5);
+    real nms = CAST(.4);
 
     int total = 0;
     int correct = 0;
     int proposals = 0;
-    real avg_iou = 0;
+    real avg_iou = CAST(0);
 
     for(i = 0; i < m; ++i){
         char *path = paths[i];
@@ -525,7 +525,7 @@ void validate_detector_recall(char *cfgfile, char *weightfile)
         int nboxes = 0;
         // !!!
         int letterbox = 1;
-        detection *dets = get_network_boxes(net, sized.w, sized.h, thresh, .5, 0, 1, &nboxes, letterbox);
+        detection *dets = get_network_boxes(net, sized.w, sized.h, thresh, CAST(.5), 0, 1, &nboxes, letterbox);
         if (nms) do_nms_obj(dets, nboxes, 1, nms);
 
         char labelpath[4096];
@@ -544,7 +544,7 @@ void validate_detector_recall(char *cfgfile, char *weightfile)
         for (j = 0; j < num_labels; ++j) {
             ++total;
             box t = {truth[j].x, truth[j].y, truth[j].w, truth[j].h};
-            real best_iou = 0;
+            real best_iou = CAST(0);
             for(k = 0; k < l.w*l.h*l.n; ++k){
                 real iou = box_iou(dets[k].bbox, t);
                 if(dets[k].objectness > thresh && iou > best_iou){
@@ -566,7 +566,7 @@ void validate_detector_recall(char *cfgfile, char *weightfile)
 
 typedef struct {
     box b;
-    float p;
+    real p;
     int class_id;
     int image_index;
     int truth_flag;
@@ -577,7 +577,7 @@ int detections_comparator(const void *pa, const void *pb)
 {
     box_prob a = *(box_prob *)pa;
     box_prob b = *(box_prob *)pb;
-    float diff = a.p - b.p;
+    real diff = a.p - b.p;
     if (diff < 0) return 1;
     else if (diff > 0) return -1;
     return 0;
@@ -620,8 +620,8 @@ real validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real 
     int i = 0;
     int t;
 
-    const real thresh = .005;
-    const real nms = .45;
+    const real thresh = CAST(.005);
+    const real nms = CAST(.45);
     //const real iou_thresh = 0.5;
 
     int nthreads = 4;
@@ -640,7 +640,7 @@ real validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real 
     //args.type = LETTERBOX_DATA;
 
     //const real thresh_calc_avg_iou = 0.24;
-    real avg_iou = 0;
+    real avg_iou = CAST(0);
     int tp_for_thresh = 0;
     int fp_for_thresh = 0;
 
@@ -678,7 +678,7 @@ real validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real 
             network_predict(net, X);
 
             int nboxes = 0;
-            float hier_thresh = 0;
+            real hier_thresh = CAST(0);
             detection *dets;
             if (args.type == LETTERBOX_DATA) {
                 int letterbox = 1;
@@ -730,7 +730,7 @@ real validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real 
                         detections[detections_count - 1].unique_truth_index = -1;
 
                         int truth_index = -1;
-                        real max_iou = 0;
+                        real max_iou = CAST(0);
                         for (j = 0; j < num_labels; ++j)
                         {
                             box t = { truth[j].x, truth[j].y, truth[j].w, truth[j].h };
@@ -879,7 +879,7 @@ real validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real 
 
     const real cur_precision = (real)tp_for_thresh / ((real)tp_for_thresh + (real)fp_for_thresh);
     const real cur_recall = (real)tp_for_thresh / ((real)tp_for_thresh + (real)(unique_truth_count - tp_for_thresh));
-    const real f1_score = 2.F * cur_precision * cur_recall / (cur_precision + cur_recall);
+    const real f1_score = CAST(2.) * cur_precision * cur_recall / (cur_precision + cur_recall);
     printf(" for thresh = %1.2f, precision = %1.2f, recall = %1.2f, F1-score = %1.2f \n",
         thresh_calc_avg_iou, cur_precision, cur_recall, f1_score);
 
@@ -918,7 +918,7 @@ real validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real 
         free_network(net);
     }
 
-    return mean_average_precision;
+    return CAST(mean_average_precision);
 }
 
 void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filename, real thresh, real hier_thresh, char *outfile, int fullscreen)
@@ -941,7 +941,7 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
     double time;
     char buff[256];
     char *input = buff;
-    real nms=.45;
+    real nms = CAST(.45);
     while(1) {
         if (filename) {
             strncpy(input, filename, 256);
@@ -1164,9 +1164,9 @@ void network_detect(network *net, image im, real thresh, real hier_thresh, real 
 void run_detector(int argc, char **argv)
 {
     char *prefix = find_char_arg(argc, argv, (char*)"-prefix", 0);
-    real thresh = find_real_arg(argc, argv, (char*)"-thresh", .5);
-    real iou_thresh = find_real_arg(argc, argv, (char*)"-iou_thresh", .5);    // 0.5 for mAP
-    real hier_thresh = find_real_arg(argc, argv, (char*)"-hier", .5);
+    real thresh = find_real_arg(argc, argv, (char*)"-thresh", CAST(.5));
+    real iou_thresh = find_real_arg(argc, argv, (char*)"-iou_thresh", CAST(.5));    // 0.5 for mAP
+    real hier_thresh = find_real_arg(argc, argv, (char*)"-hier", CAST(.5));
     int cam_index = find_int_arg(argc, argv, (char*)"-c", 0);
     int frame_skip = find_int_arg(argc, argv, (char*)"-s", 0);
     int avg = find_int_arg(argc, argv, (char*)"-avg", 3);
