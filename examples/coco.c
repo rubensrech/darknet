@@ -16,9 +16,9 @@ void train_coco(char *cfgfile, char *weightfile)
     srand(time(0));
     char *base = basecfg(cfgfile);
     printf("%s\n", base);
-    real avg_loss = -1;
+    real avg_loss = CAST(-1);
     network *net = load_network(cfgfile, weightfile, 0);
-    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
+    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", (float)net->learning_rate, (float)net->momentum, (float)net->decay);
     int imgs = net->batch*net->subdivisions;
     int i = *net->seen/imgs;
     data train, buffer;
@@ -61,7 +61,7 @@ void train_coco(char *cfgfile, char *weightfile)
         train = buffer;
         load_thread = load_data_in_thread(args);
 
-        printf("Loaded: %lf seconds\n", sec(clock()-time));
+        printf("Loaded: %f seconds\n", (float)sec(clock()-time));
 
         /*
            image im = real_to_image(net->w, net->h, 3, train.X.vals[113]);
@@ -76,7 +76,7 @@ void train_coco(char *cfgfile, char *weightfile)
         if (avg_loss < 0) avg_loss = loss;
         avg_loss = avg_loss*.9 + loss*.1;
 
-        printf("%d: %f, %f avg, %f rate, %lf seconds, %d images\n", i, loss, avg_loss, get_current_rate(net), sec(clock()-time), i*imgs);
+        printf("%d: %f, %f avg, %f rate, %f seconds, %d images\n", i, (float)loss, (float)avg_loss, (float)get_current_rate(net), (float)sec(clock()-time), i*imgs);
         if(i%1000==0 || (i < 1000 && i%100 == 0)){
             char buff[256];
             sprintf(buff, "%s/%s_%d.weights", backup_directory, base, i);
@@ -98,10 +98,10 @@ static void print_cocos(FILE *fp, int image_id, detection *dets, int num_boxes, 
 {
     int i, j;
     for(i = 0; i < num_boxes; ++i){
-        real xmin = dets[i].bbox.x - dets[i].bbox.w/2.;
-        real xmax = dets[i].bbox.x + dets[i].bbox.w/2.;
-        real ymin = dets[i].bbox.y - dets[i].bbox.h/2.;
-        real ymax = dets[i].bbox.y + dets[i].bbox.h/2.;
+        real xmin = dets[i].bbox.x - dets[i].bbox.w/CAST(2.);
+        real xmax = dets[i].bbox.x + dets[i].bbox.w/CAST(2.);
+        real ymin = dets[i].bbox.y - dets[i].bbox.h/CAST(2.);
+        real ymax = dets[i].bbox.y + dets[i].bbox.h/CAST(2.);
 
         if (xmin < 0) xmin = 0;
         if (ymin < 0) ymin = 0;
@@ -114,7 +114,7 @@ static void print_cocos(FILE *fp, int image_id, detection *dets, int num_boxes, 
         real bh = ymax - ymin;
 
         for(j = 0; j < classes; ++j){
-            if (dets[i].prob[j]) fprintf(fp, "{\"image_id\":%d, \"category_id\":%d, \"bbox\":[%f, %f, %f, %f], \"score\":%f},\n", image_id, coco_ids[j], bx, by, bw, bh, dets[i].prob[j]);
+            if (dets[i].prob[j]) fprintf(fp, "{\"image_id\":%d, \"category_id\":%d, \"bbox\":[%f, %f, %f, %f], \"score\":%f},\n", image_id, coco_ids[j], (float)bx, (float)by, (float)bw, (float)bh, (float)(dets[i].prob[j]));
         }
     }
 }
@@ -129,7 +129,7 @@ void validate_coco(char *cfg, char *weights)
 {
     network *net = load_network(cfg, weights, 0);
     set_batch_network(net, 1);
-    fprintf(stderr, "Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
+    fprintf(stderr, "Learning Rate: %g, Momentum: %g, Decay: %g\n", (float)net->learning_rate, (float)net->momentum, (float)net->decay);
     srand(time(0));
 
     char *base = (char*)"results/";
@@ -150,9 +150,9 @@ void validate_coco(char *cfg, char *weights)
     int i=0;
     int t;
 
-    real thresh = .01;
+    real thresh = CAST(.01);
     int nms = 1;
-    real iou_thresh = .5;
+    real iou_thresh = CAST(.5);
 
     int nthreads = 8;
     image *val = (image*)calloc(nthreads, sizeof(image));
@@ -196,7 +196,7 @@ void validate_coco(char *cfg, char *weights)
             int nboxes = 0;
             // !!!
             int letterbox = (args.type == LETTERBOX_DATA);
-            detection *dets = get_network_boxes(net, w, h, thresh, 0, 0, 0, &nboxes, letterbox);
+            detection *dets = get_network_boxes(net, w, h, thresh, CAST(0), 0, 0, &nboxes, letterbox);
             if (nms) do_nms_sort(dets, l.side*l.side*l.n, classes, iou_thresh);
             print_cocos(fp, image_id, dets, l.side*l.side*l.n, classes, w, h);
             free_detections(dets, nboxes);
@@ -215,7 +215,7 @@ void validate_coco_recall(char *cfgfile, char *weightfile)
 {
     network *net = load_network(cfgfile, weightfile, 0);
     set_batch_network(net, 1);
-    fprintf(stderr, "Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
+    fprintf(stderr, "Learning Rate: %g, Momentum: %g, Decay: %g\n", (float)net->learning_rate, (float)net->momentum, (float)net->decay);
     srand(time(0));
 
     char *base = (char*)"results/comp4_det_test_";
@@ -237,14 +237,14 @@ void validate_coco_recall(char *cfgfile, char *weightfile)
     int m = plist->size;
     int i=0;
 
-    real thresh = .001;
+    real thresh = CAST(.001);
     int nms = 0;
-    real iou_thresh = .5;
+    real iou_thresh = CAST(.5);
 
     int total = 0;
     int correct = 0;
     int proposals = 0;
-    real avg_iou = 0;
+    real avg_iou = CAST(0);
 
     for(i = 0; i < m; ++i){
         char *path = paths[i];
@@ -256,8 +256,8 @@ void validate_coco_recall(char *cfgfile, char *weightfile)
         int nboxes = 0;
         // !!!
         int letterbox = 1;
-        detection *dets = get_network_boxes(net, orig.w, orig.h, thresh, 0, 0, 1, &nboxes, letterbox);
-        if (nms) do_nms_obj(dets, side*side*l.n, 1, nms);
+        detection *dets = get_network_boxes(net, orig.w, orig.h, thresh, CAST(0), 0, 1, &nboxes, letterbox);
+        if (nms) do_nms_obj(dets, side*side*l.n, 1, CAST(nms));
 
         char labelpath[4096];
         find_replace(path, (char*)"images", (char*)"labels", labelpath);
@@ -275,7 +275,7 @@ void validate_coco_recall(char *cfgfile, char *weightfile)
         for (j = 0; j < num_labels; ++j) {
             ++total;
             box t = {truth[j].x, truth[j].y, truth[j].w, truth[j].h};
-            real best_iou = 0;
+            real best_iou = CAST(0);
             for(k = 0; k < side*side*l.n; ++k){
                 real iou = box_iou(dets[k].bbox, t);
                 if(dets[k].objectness > thresh && iou > best_iou){
@@ -302,7 +302,7 @@ void test_coco(char *cfgfile, char *weightfile, char *filename, real thresh)
     layer l = net->layers[net->n-1];
     set_batch_network(net, 1);
     srand(2222222);
-    real nms = .4;
+    real nms = CAST(.4);
     clock_t time;
     char buff[256];
     char *input = buff;
@@ -321,12 +321,12 @@ void test_coco(char *cfgfile, char *weightfile, char *filename, real thresh)
         real *X = sized.data;
         time=clock();
         network_predict(net, X);
-        printf("%s: Predicted in %f seconds.\n", input, sec(clock()-time));
+        printf("%s: Predicted in %f seconds.\n", input, (float)sec(clock()-time));
 
         int nboxes = 0;
         // !!!
         int letterbox = 1;
-        detection *dets = get_network_boxes(net, 1, 1, thresh, 0, 0, 0, &nboxes, letterbox);
+        detection *dets = get_network_boxes(net, 1, 1, thresh, CAST(0), 0, 0, &nboxes, letterbox);
         if (nms) do_nms_sort(dets, l.side*l.side*l.n, l.classes, nms);
 
         draw_detections(im, dets, l.side*l.side*l.n, thresh, coco_classes, alphabet, 80);
@@ -342,7 +342,7 @@ void test_coco(char *cfgfile, char *weightfile, char *filename, real thresh)
 void run_coco(int argc, char **argv)
 {
     char *prefix = find_char_arg(argc, argv, (char*)"-prefix", 0);
-    real thresh = find_real_arg(argc, argv, (char*)"-thresh", .2);
+    real thresh = find_real_arg(argc, argv, (char*)"-thresh", CAST(.2));
     int cam_index = find_int_arg(argc, argv, (char*)"-c", 0);
     int frame_skip = find_int_arg(argc, argv, (char*)"-s", 0);
 
@@ -359,5 +359,5 @@ void run_coco(int argc, char **argv)
     else if(0==strcmp(argv[2], "train")) train_coco(cfg, weights);
     else if(0==strcmp(argv[2], "valid")) validate_coco(cfg, weights);
     else if(0==strcmp(argv[2], "recall")) validate_coco_recall(cfg, weights);
-    else if(0==strcmp(argv[2], "demo")) demo(cfg, weights, thresh, cam_index, filename, coco_classes, 80, frame_skip, prefix, avg, .5, 0,0,0,0);
+    else if(0==strcmp(argv[2], "demo")) demo(cfg, weights, thresh, cam_index, filename, coco_classes, 80, frame_skip, prefix, avg, CAST(.5), 0,0,0,0);
 }
