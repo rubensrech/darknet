@@ -19,7 +19,7 @@ void train_classifier(char *datacfg, char *cfgfile, char *weightfile, int *gpus,
 {
     int i;
 
-    real avg_loss = -1;
+    real avg_loss = CAST(-1);
     char *base = basecfg(cfgfile);
     printf("%s\n", base);
     printf("%d\n", ngpus);
@@ -40,7 +40,7 @@ void train_classifier(char *datacfg, char *cfgfile, char *weightfile, int *gpus,
 
     int imgs = net->batch * net->subdivisions * ngpus;
 
-    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
+    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", (float)net->learning_rate, (float)net->momentum, (float)net->decay);
     list *options = read_data_cfg(datacfg);
 
     char *backup_directory = option_find_str(options, (char*)"backup", (char*)"/backup/");
@@ -129,7 +129,7 @@ void train_classifier(char *datacfg, char *cfgfile, char *weightfile, int *gpus,
         printf("Loaded: %lf seconds\n", what_time_is_it_now()-time);
         time = what_time_is_it_now();
 
-        real loss = 0;
+        real loss = CAST(0);
 #ifdef GPU
         if(ngpus == 1){
             loss = train_network(net, train);
@@ -141,7 +141,7 @@ void train_classifier(char *datacfg, char *cfgfile, char *weightfile, int *gpus,
 #endif
         if(avg_loss == -1) avg_loss = loss;
         avg_loss = avg_loss*.9 + loss*.1;
-        printf("%ld, %.3lf: %lf, %lf avg, %lf rate, %lf seconds, %ld images\n", get_current_batch(net), (real)(*net->seen)/N, loss, avg_loss, get_current_rate(net), what_time_is_it_now()-time, *net->seen);
+        printf("%ld, %.3f: %f, %f avg, %f rate, %lf seconds, %ld images\n", get_current_batch(net), (float)(*net->seen)/N, (float)loss, (float)avg_loss, (float)get_current_rate(net), what_time_is_it_now()-time, *net->seen);
         free_data(train);
         if(*net->seen/N > epoch){
             epoch = *net->seen/N;
@@ -188,8 +188,8 @@ void validate_classifier_crop(char *datacfg, char *filename, char *weightfile)
     free_list(plist);
 
     clock_t time;
-    real avg_acc = 0;
-    real avg_topk = 0;
+    real avg_acc = CAST(0);
+    real avg_topk = CAST(0);
     int splits = m/1000;
     int num = (i+1)*m/splits - i*m/splits;
 
@@ -220,13 +220,13 @@ void validate_classifier_crop(char *datacfg, char *filename, char *weightfile)
             args.paths = part;
             load_thread = load_data_in_thread(args);
         }
-        printf("Loaded: %d images in %lf seconds\n", val.X.rows, sec(clock()-time));
+        printf("Loaded: %d images in %f seconds\n", val.X.rows, (float)sec(clock()-time));
 
         time=clock();
         real *acc = network_accuracies(net, val, topk);
         avg_acc += acc[0];
         avg_topk += acc[1];
-        printf("%d: top 1: %f, top %d: %f, %lf seconds, %d images\n", i, avg_acc/i, topk, avg_topk/i, sec(clock()-time), val.X.rows);
+        printf("%d: top 1: %f, top %d: %f, %f seconds, %d images\n", i, (float)avg_acc/i, topk, (float)avg_topk/i, (float)sec(clock()-time), val.X.rows);
         free_data(val);
     }
 }
@@ -252,8 +252,8 @@ void validate_classifier_10(char *datacfg, char *filename, char *weightfile)
     int m = plist->size;
     free_list(plist);
 
-    real avg_acc = 0;
-    real avg_topk = 0;
+    real avg_acc = CAST(0);
+    real avg_topk = CAST(0);
     int *indexes = (int*)calloc(topk, sizeof(int));
 
     for(i = 0; i < m; ++i){
@@ -285,7 +285,7 @@ void validate_classifier_10(char *datacfg, char *filename, char *weightfile)
         for(j = 0; j < 10; ++j){
             real *p = network_predict(net, images[j].data);
             if(net->hierarchy) hierarchy_predictions(p, net->outputs, net->hierarchy, 1, 1);
-            axpy_cpu(classes, 1, p, 1, pred, 1);
+            axpy_cpu(classes, CAST(1), p, 1, pred, 1);
             free_image(images[j]);
         }
         free_image(im);
@@ -321,8 +321,8 @@ void validate_classifier_full(char *datacfg, char *filename, char *weightfile)
     int m = plist->size;
     free_list(plist);
 
-    real avg_acc = 0;
-    real avg_topk = 0;
+    real avg_acc = CAST(0);
+    real avg_topk = CAST(0);
     int *indexes = (int*)calloc(topk, sizeof(int));
 
     int size = net->w;
@@ -381,8 +381,8 @@ void validate_classifier_single(char *datacfg, char *filename, char *weightfile)
     int m = plist->size;
     free_list(plist);
 
-    real avg_acc = 0;
-    real avg_topk = 0;
+    real avg_acc = CAST(0);
+    real avg_topk = CAST(0);
     int *indexes = (int*)calloc(topk, sizeof(int));
 
     for(i = 0; i < m; ++i){
@@ -412,8 +412,8 @@ void validate_classifier_single(char *datacfg, char *filename, char *weightfile)
             if(indexes[j] == _class) avg_topk += 1;
         }
 
-        printf("%s, %d, %f, %f, \n", paths[i], _class, pred[0], pred[1]);
-        printf("%d: top 1: %f, top %d: %f\n", i, avg_acc/(i+1), topk, avg_topk/(i+1));
+        printf("%s, %d, %f, %f, \n", paths[i], _class, (float)(pred[0]), (float)(pred[1]));
+        printf("%d: top 1: %f, top %d: %f\n", i, (float)avg_acc/(i+1), topk, (float)avg_topk/(i+1));
     }
 }
 
@@ -441,8 +441,8 @@ void validate_classifier_multi(char *datacfg, char *cfg, char *weights)
     int m = plist->size;
     free_list(plist);
 
-    real avg_acc = 0;
-    real avg_topk = 0;
+    real avg_acc = CAST(0);
+    real avg_topk = CAST(0);
     int *indexes = (int*)calloc(topk, sizeof(int));
 
     for(i = 0; i < m; ++i){
@@ -461,10 +461,10 @@ void validate_classifier_multi(char *datacfg, char *cfg, char *weights)
             resize_network(net, r.w, r.h);
             real *p = network_predict(net, r.data);
             if(net->hierarchy) hierarchy_predictions(p, net->outputs, net->hierarchy, 1 , 1);
-            axpy_cpu(classes, 1, p, 1, pred, 1);
+            axpy_cpu(classes, CAST(1), p, 1, pred, 1);
             flip_image(r);
             p = network_predict(net, r.data);
-            axpy_cpu(classes, 1, p, 1, pred, 1);
+            axpy_cpu(classes, CAST(1), p, 1, pred, 1);
             if(r.data != im.data) free_image(r);
         }
         free_image(im);
@@ -510,8 +510,8 @@ void try_classifier(char *datacfg, char *cfgfile, char *weightfile, char *filena
         image orig = load_image_color(input, 0, 0);
         image r = resize_min(orig, 256);
         image im = crop_image(r, (r.w - 224 - 1)/2 + 1, (r.h - 224 - 1)/2 + 1, 224, 224);
-        real mean[] = {0.48263312050943, 0.45230225481413, 0.40099074308742};
-        real std[] = {0.22590347483426, 0.22120921437787, 0.22103996251583};
+        real mean[] = {CAST(0.48263312050943), CAST(0.45230225481413), CAST(0.40099074308742)};
+        real std[] = {CAST(0.22590347483426), CAST(0.22120921437787), CAST(0.22103996251583)};
         real var[3];
         var[0] = std[0]*std[0];
         var[1] = std[1]*std[1];
@@ -525,13 +525,13 @@ void try_classifier(char *datacfg, char *cfgfile, char *weightfile, char *filena
 
         layer l = net->layers[layer_num];
         for(i = 0; i < l.c; ++i){
-            if(l.rolling_mean) printf("%f %f %f\n", l.rolling_mean[i], l.rolling_variance[i], l.scales[i]);
+            if(l.rolling_mean) printf("%f %f %f\n", (float)(l.rolling_mean[i]), (float)(l.rolling_variance[i]), (float)(l.scales[i]));
         }
 #ifdef GPU
         cuda_pull_array(l.output_gpu, l.output, l.outputs);
 #endif
         for(i = 0; i < l.outputs; ++i){
-            printf("%f\n", l.output[i]);
+            printf("%f\n", (float)(l.output[i]));
         }
         /*
 
@@ -547,10 +547,10 @@ void try_classifier(char *datacfg, char *cfgfile, char *weightfile, char *filena
          */
 
         top_predictions(net, top, indexes);
-        printf("%s: Predicted in %f seconds.\n", input, sec(clock()-time));
+        printf("%s: Predicted in %f seconds.\n", input, (float)sec(clock()-time));
         for(i = 0; i < top; ++i){
             int index = indexes[i];
-            printf("%s: %f\n", names[index], predictions[index]);
+            printf("%s: %f\n", names[index], (float)(predictions[index]));
         }
         free_image(im);
         if (filename) break;
@@ -597,7 +597,7 @@ void predict_classifier(char *datacfg, char *cfgfile, char *weightfile, char *fi
         real *predictions = network_predict(net, X);
         if(net->hierarchy) hierarchy_predictions(predictions, net->outputs, net->hierarchy, 1, 1);
         top_k(predictions, net->outputs, top, indexes);
-        fprintf(stderr, "%s: Predicted in %f seconds.\n", input, sec(clock()-time));
+        fprintf(stderr, "%s: Predicted in %f seconds.\n", input, (float)sec(clock()-time));
         for(i = 0; i < top; ++i){
             int index = indexes[i];
             //if(net->hierarchy) printf("%d, %s: %f, parent: %s \n",index, names[index], predictions[index], (net->hierarchy->parent[index] >= 0) ? names[net->hierarchy->parent[index]] : "Root");
@@ -730,7 +730,7 @@ void test_classifier(char *datacfg, char *cfgfile, char *weightfile, int target_
             if (curr + net->batch > m) args.n = m - curr;
             load_thread = load_data_in_thread(args);
         }
-        fprintf(stderr, "Loaded: %d images in %lf seconds\n", val.X.rows, sec(clock()-time));
+        fprintf(stderr, "Loaded: %d images in %f seconds\n", val.X.rows, (float)sec(clock()-time));
 
         time=clock();
         matrix pred = network_predict_data(net, val);
@@ -743,14 +743,14 @@ void test_classifier(char *datacfg, char *cfgfile, char *weightfile, int target_
         for(i = 0; i < pred.rows; ++i){
             printf("%s", paths[curr-net->batch+i]);
             for(j = 0; j < pred.cols; ++j){
-                printf("\t%g", pred.vals[i][j]);
+                printf("\t%g", (float)(pred.vals[i][j]));
             }
             printf("\n");
         }
 
         free_matrix(pred);
 
-        fprintf(stderr, "%lf seconds, %d images, %d total\n", sec(clock()-time), val.X.rows, curr);
+        fprintf(stderr, "%f seconds, %d images, %d total\n", (float)sec(clock()-time), val.X.rows, curr);
         free_data(val);
     }
 }
@@ -787,7 +787,7 @@ void file_output_classifier(char *datacfg, char *filename, char *weightfile, cha
 
         printf("%s", paths[i]);
         for(j = 0; j < classes; ++j){
-            printf("\t%g", pred[j]);
+            printf("\t%g", (float)(pred[j]));
         }
         printf("\n");
     }
