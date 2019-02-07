@@ -9,9 +9,9 @@ void train_yolo(char *cfgfile, char *weightfile)
     srand(time(0));
     char *base = basecfg(cfgfile);
     printf("%s\n", base);
-    real avg_loss = -1;
+    real avg_loss = CAST(-1);
     network *net = load_network(cfgfile, weightfile, 0);
-    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
+    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", (float)net->learning_rate, net->momentum, net->decay);
     int imgs = net->batch*net->subdivisions;
     int i = *net->seen/imgs;
     data train, buffer;
@@ -54,14 +54,14 @@ void train_yolo(char *cfgfile, char *weightfile)
         train = buffer;
         load_thread = load_data_in_thread(args);
 
-        printf("Loaded: %lf seconds\n", sec(clock()-time));
+        printf("Loaded: %f seconds\n", (float)sec(clock()-time));
 
         time=clock();
         real loss = train_network(net, train);
         if (avg_loss < 0) avg_loss = loss;
         avg_loss = avg_loss*.9 + loss*.1;
 
-        printf("%d: %f, %f avg, %f rate, %lf seconds, %d images\n", i, loss, avg_loss, get_current_rate(net), sec(clock()-time), i*imgs);
+        printf("%d: %f, %f avg, %f rate, %f seconds, %d images\n", i, (float)loss, (float)avg_loss, (float)get_current_rate(net), (float)sec(clock()-time), i*imgs);
         if(i%1000==0 || (i < 1000 && i%100 == 0)){
             char buff[256];
             sprintf(buff, "%s/%s_%d.weights", backup_directory, base, i);
@@ -78,10 +78,10 @@ void print_yolo_detections(FILE **fps, char *id, int total, int classes, int w, 
 {
     int i, j;
     for(i = 0; i < total; ++i){
-        real xmin = dets[i].bbox.x - dets[i].bbox.w/2.;
-        real xmax = dets[i].bbox.x + dets[i].bbox.w/2.;
-        real ymin = dets[i].bbox.y - dets[i].bbox.h/2.;
-        real ymax = dets[i].bbox.y + dets[i].bbox.h/2.;
+        real xmin = dets[i].bbox.x - dets[i].bbox.w/CAST(2.);
+        real xmax = dets[i].bbox.x + dets[i].bbox.w/CAST(2.);
+        real ymin = dets[i].bbox.y - dets[i].bbox.h/CAST(2.);
+        real ymax = dets[i].bbox.y + dets[i].bbox.h/CAST(2.);
 
         if (xmin < 0) xmin = 0;
         if (ymin < 0) ymin = 0;
@@ -89,8 +89,8 @@ void print_yolo_detections(FILE **fps, char *id, int total, int classes, int w, 
         if (ymax > h) ymax = h;
 
         for(j = 0; j < classes; ++j){
-            if (dets[i].prob[j]) fprintf(fps[j], "%s %f %f %f %f %f\n", id, dets[i].prob[j],
-                    xmin, ymin, xmax, ymax);
+            if (dets[i].prob[j]) fprintf(fps[j], "%s %f %f %f %f %f\n", id, (float)(dets[i].prob[j]),
+                    (float)xmin, (float)ymin, (float)xmax, (float)ymax);
         }
     }
 }
@@ -99,7 +99,7 @@ void validate_yolo(char *cfg, char *weights)
 {
     network *net = load_network(cfg, weights, 0);
     set_batch_network(net, 1);
-    fprintf(stderr, "Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
+    fprintf(stderr, "Learning Rate: %g, Momentum: %g, Decay: %g\n", (float)net->learning_rate, (float)net->momentum, (float)net->decay);
     srand(time(0));
 
     char *base = (char*)"results/comp4_det_test_";
@@ -123,9 +123,9 @@ void validate_yolo(char *cfg, char *weights)
     int i=0;
     int t;
 
-    real thresh = .001;
+    real thresh = CAST(.001);
     int nms = 1;
-    real iou_thresh = .5;
+    real iou_thresh = CAST(.5);
 
     int nthreads = 8;
     image *val = (image*)calloc(nthreads, sizeof(image));
@@ -169,7 +169,7 @@ void validate_yolo(char *cfg, char *weights)
             int nboxes = 0;
             // !!!
             int letter_box = (args.type == LETTERBOX_DATA);
-            detection *dets = get_network_boxes(net, w, h, thresh, 0, 0, 0, &nboxes, letter_box);
+            detection *dets = get_network_boxes(net, w, h, thresh, CAST(0), 0, 0, &nboxes, letter_box);
             if (nms) do_nms_sort(dets, l.side*l.side*l.n, classes, iou_thresh);
             print_yolo_detections(fps, id, l.side*l.side*l.n, classes, w, h, dets);
             free_detections(dets, nboxes);
@@ -185,7 +185,7 @@ void validate_yolo_recall(char *cfg, char *weights)
 {
     network *net = load_network(cfg, weights, 0);
     set_batch_network(net, 1);
-    fprintf(stderr, "Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
+    fprintf(stderr, "Learning Rate: %g, Momentum: %g, Decay: %g\n", (float)net->learning_rate, (float)net->momentum, (float)net->decay);
     srand(time(0));
 
     char *base = (char*)"results/comp4_det_test_";
@@ -207,14 +207,14 @@ void validate_yolo_recall(char *cfg, char *weights)
     int m = plist->size;
     int i=0;
 
-    real thresh = .001;
-    real iou_thresh = .5;
-    real nms = 0;
+    real thresh = CAST(.001);
+    real iou_thresh = CAST(.5);
+    real nms = CAST(0);
 
     int total = 0;
     int correct = 0;
     int proposals = 0;
-    real avg_iou = 0;
+    real avg_iou = CAST(0);
 
     for(i = 0; i < m; ++i){
         char *path = paths[i];
@@ -226,7 +226,7 @@ void validate_yolo_recall(char *cfg, char *weights)
         int nboxes = 0;
         // !!!
         int letter_box = 1;
-        detection *dets = get_network_boxes(net, orig.w, orig.h, thresh, 0, 0, 1, &nboxes, letter_box);
+        detection *dets = get_network_boxes(net, orig.w, orig.h, thresh, CAST(0), 0, 1, &nboxes, letter_box);
         if (nms) do_nms_obj(dets, side*side*l.n, 1, nms);
 
         char labelpath[4096];
@@ -245,7 +245,7 @@ void validate_yolo_recall(char *cfg, char *weights)
         for (j = 0; j < num_labels; ++j) {
             ++total;
             box t = {truth[j].x, truth[j].y, truth[j].w, truth[j].h};
-            real best_iou = 0;
+            real best_iou = CAST(0);
             for(k = 0; k < side*side*l.n; ++k){
                 real iou = box_iou(dets[k].bbox, t);
                 if(dets[k].objectness > thresh && iou > best_iou){
@@ -276,7 +276,7 @@ void test_yolo(char *cfgfile, char *weightfile, char *filename, real thresh)
     clock_t time;
     char buff[256];
     char *input = buff;
-    real nms=.4;
+    real nms = CAST(.4);
     while(1){
         if(filename){
             strncpy(input, filename, 256);
@@ -292,12 +292,12 @@ void test_yolo(char *cfgfile, char *weightfile, char *filename, real thresh)
         real *X = sized.data;
         time=clock();
         network_predict(net, X);
-        printf("%s: Predicted in %f seconds.\n", input, sec(clock()-time));
+        printf("%s: Predicted in %f seconds.\n", input, (float)sec(clock()-time));
 
         int nboxes = 0;
         // !!!
         int letter_box = 1;
-        detection *dets = get_network_boxes(net, 1, 1, thresh, 0, 0, 0, &nboxes, letter_box);
+        detection *dets = get_network_boxes(net, 1, 1, thresh, CAST(0), 0, 0, &nboxes, letter_box);
         if (nms) do_nms_sort(dets, l.side*l.side*l.n, l.classes, nms);
 
         draw_detections(im, dets, l.side*l.side*l.n, thresh, voc_names, alphabet, 20);
@@ -313,7 +313,7 @@ void test_yolo(char *cfgfile, char *weightfile, char *filename, real thresh)
 void run_yolo(int argc, char **argv)
 {
     char *prefix = find_char_arg(argc, argv, (char*)"-prefix", 0);
-    real thresh = find_real_arg(argc, argv, (char*)"-thresh", .2);
+    real thresh = find_real_arg(argc, argv, (char*)"-thresh", CAST(.2));
     int cam_index = find_int_arg(argc, argv, (char*)"-c", 0);
     int frame_skip = find_int_arg(argc, argv, (char*)"-s", 0);
     if(argc < 4){
@@ -329,5 +329,5 @@ void run_yolo(int argc, char **argv)
     else if(0==strcmp(argv[2], "train")) train_yolo(cfg, weights);
     else if(0==strcmp(argv[2], "valid")) validate_yolo(cfg, weights);
     else if(0==strcmp(argv[2], "recall")) validate_yolo_recall(cfg, weights);
-    else if(0==strcmp(argv[2], "demo")) demo(cfg, weights, thresh, cam_index, filename, voc_names, 20, frame_skip, prefix, avg, .5, 0,0,0,0);
+    else if(0==strcmp(argv[2], "demo")) demo(cfg, weights, thresh, cam_index, filename, voc_names, 20, frame_skip, prefix, avg, CAST(.5), 0,0,0,0);
 }
