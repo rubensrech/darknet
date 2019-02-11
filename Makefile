@@ -6,7 +6,7 @@ DEBUG=0
 
 # Choose data type precision: float, double, half
 # Default data type precision: float
-REAL=double
+REAL=half
 # Set FLOAT_WEIGHTS to 1, if REAL = 'double' or 'half' and
 # the network weights are FLOAT
 # PS.: The weights will be loaded as float and
@@ -91,6 +91,7 @@ EXECOBJA=captcha.o lsd.o super.o art.o tag.o cifar.o go.o rnn.o segmenter.o regr
 ifeq ($(GPU), 1) 
 LDFLAGS+= -lstdc++ 
 OBJ+=convolutional_kernels.o deconvolutional_kernels.o activation_kernels.o im2col_kernels.o col2im_kernels.o blas_kernels.o crop_layer_kernels.o dropout_layer_kernels.o maxpool_layer_kernels.o avgpool_layer_kernels.o
+OBJ+=real.o
 endif
 
 EXECOBJ = $(addprefix $(OBJDIR), $(EXECOBJA))
