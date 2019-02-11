@@ -2,12 +2,12 @@
 #include "curand.h"
 #include "cublas_v2.h"
 
-extern "C" {
+// extern "C" {
 #include "crop_layer.h"
 #include "utils.h"
 #include "cuda.h"
 #include "image.h"
-}
+// }
 
 /* make_real3
  * Based on CUDA vector_functions.h
@@ -193,7 +193,7 @@ __global__ void forward_crop_layer_kernel(real *input, real *rand, int size, int
     output[count] = bilinear_interpolate_kernel(input, w, h, rx, ry, k);
 }
 
-extern "C" void forward_crop_layer_gpu(crop_layer layer, network net)
+void forward_crop_layer_gpu(crop_layer layer, network net)
 {
     cuda_random(layer.rand_gpu, layer.batch*8);
 
