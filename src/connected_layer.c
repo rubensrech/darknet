@@ -280,7 +280,7 @@ void update_connected_layer_gpu(layer l, update_args a)
         }
 
         axpy_gpu(l.inputs*l.outputs, -decay*CAST(batch), l.weights_gpu, 1, l.weight_updates_gpu, 1);
-        axpy_gpu(l.inputs*l.outputs, learning_rate/batch, l.weight_updates_gpu, 1, l.weights_gpu, 1);
+        axpy_gpu(l.inputs*l.outputs, learning_rate/CAST(batch), l.weight_updates_gpu, 1, l.weights_gpu, 1);
         scal_gpu(l.inputs*l.outputs, momentum, l.weight_updates_gpu, 1);
     }
 }
