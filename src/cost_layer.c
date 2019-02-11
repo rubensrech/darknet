@@ -128,8 +128,8 @@ void forward_cost_layer_gpu(cost_layer l, network net)
 {
     if (!net.truth) return;
     if(l.smooth){
-        scal_gpu(l.batch*l.inputs, (1-l.smooth), net.truth_gpu, 1);
-        add_gpu(l.batch*l.inputs, l.smooth * 1./l.inputs, net.truth_gpu, 1);
+        scal_gpu(l.batch*l.inputs, CAST(1-l.smooth), net.truth_gpu, 1);
+        add_gpu(l.batch*l.inputs, CAST(l.smooth * 1./l.inputs), net.truth_gpu, 1);
     }
 
     if(l.cost_type == SMOOTH){
@@ -143,11 +143,11 @@ void forward_cost_layer_gpu(cost_layer l, network net)
     }
 
     if (l.cost_type == SEG && l.noobject_scale != 1) {
-        scale_mask_gpu(l.batch*l.inputs, l.delta_gpu, 0, net.truth_gpu, l.noobject_scale);
-        scale_mask_gpu(l.batch*l.inputs, l.output_gpu, 0, net.truth_gpu, l.noobject_scale);
+        scale_mask_gpu(l.batch*l.inputs, l.delta_gpu, CAST(0), net.truth_gpu, l.noobject_scale);
+        scale_mask_gpu(l.batch*l.inputs, l.output_gpu, CAST(0), net.truth_gpu, l.noobject_scale);
     }
     if (l.cost_type == MASKED) {
-        mask_gpu(l.batch*l.inputs, net.delta_gpu, SECRET_NUM, net.truth_gpu, 0);
+        mask_gpu(l.batch*l.inputs, net.delta_gpu, CAST(SECRET_NUM), net.truth_gpu, CAST(0));
     }
 
     if(l.ratio){
@@ -156,12 +156,12 @@ void forward_cost_layer_gpu(cost_layer l, network net)
         int n = (1-l.ratio) * l.batch*l.inputs;
         real thresh = l.delta[n];
         thresh = 0;
-        printf("%f\n", thresh);
+        printf("%f\n", (float)thresh);
         supp_gpu(l.batch*l.inputs, thresh, l.delta_gpu, 1);
     }
 
     if(l.thresh){
-        supp_gpu(l.batch*l.inputs, l.thresh*1./l.inputs, l.delta_gpu, 1);
+        supp_gpu(l.batch*l.inputs, CAST(l.thresh*1./l.inputs), l.delta_gpu, 1);
     }
 
     cuda_pull_array(l.output_gpu, l.output, l.batch*l.inputs);

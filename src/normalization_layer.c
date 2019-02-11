@@ -113,13 +113,13 @@ void forward_normalization_layer_gpu(const layer layer, network net)
     int w = layer.w;
     int h = layer.h;
     int c = layer.c;
-    scal_gpu(w*h*c*layer.batch, 0, layer.squared_gpu, 1);
+    scal_gpu(w*h*c*layer.batch, CAST(0), layer.squared_gpu, 1);
 
     for(b = 0; b < layer.batch; ++b){
         real *squared = layer.squared_gpu + w*h*c*b;
         real *norms   = layer.norms_gpu + w*h*c*b;
         real *input   = net.input_gpu + w*h*c*b;
-        pow_gpu(w*h*c, 2, input, 1, squared, 1);
+        pow_gpu(w*h*c, CAST(2), input, 1, squared, 1);
 
         const_gpu(w*h, layer.kappa, norms, 1);
         for(k = 0; k < layer.size/2; ++k){

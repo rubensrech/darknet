@@ -24,7 +24,7 @@
     using namespace half_float::literal;
     typedef half_float::half real;
     
-    #define REAL_MAX half(65504)
+    #define REAL_MAX CAST(65504)
     #define CUDNN_DATA_REAL CUDNN_DATA_HALF
 
 #else
@@ -43,5 +43,7 @@ typedef struct __device_builtin__ {
     real y;
     real z;
 } real3;
+
+void float2half_array(float* src, real* dst, size_t n);
 
 #endif

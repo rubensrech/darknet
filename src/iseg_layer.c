@@ -219,7 +219,7 @@ void backward_iseg_layer_gpu(const layer l, network net)
     for (b = 0; b < l.batch; ++b){
         //if(l.extra) gradient_array_gpu(l.output_gpu + b*l.outputs + l.classes*l.w*l.h, l.extra*l.w*l.h, LOGISTIC, l.delta_gpu + b*l.outputs + l.classes*l.w*l.h);
     }
-    axpy_gpu(l.batch*l.inputs, 1, l.delta_gpu, 1, net.delta_gpu, 1);
+    axpy_gpu(l.batch*l.inputs, CAST(1), l.delta_gpu, 1, net.delta_gpu, 1);
 }
 #endif
 

@@ -410,17 +410,17 @@ void forward_lstm_layer_gpu(layer l, network state)
     layer ug = *(l.ug);
     layer uo = *(l.uo);
 
-    fill_gpu(l.outputs * l.batch * l.steps, 0, wf.delta_gpu, 1);
-    fill_gpu(l.outputs * l.batch * l.steps, 0, wi.delta_gpu, 1);
-    fill_gpu(l.outputs * l.batch * l.steps, 0, wg.delta_gpu, 1);
-    fill_gpu(l.outputs * l.batch * l.steps, 0, wo.delta_gpu, 1);
+    fill_gpu(l.outputs * l.batch * l.steps, CAST(0), wf.delta_gpu, 1);
+    fill_gpu(l.outputs * l.batch * l.steps, CAST(0), wi.delta_gpu, 1);
+    fill_gpu(l.outputs * l.batch * l.steps, CAST(0), wg.delta_gpu, 1);
+    fill_gpu(l.outputs * l.batch * l.steps, CAST(0), wo.delta_gpu, 1);
 
-    fill_gpu(l.outputs * l.batch * l.steps, 0, uf.delta_gpu, 1);
-    fill_gpu(l.outputs * l.batch * l.steps, 0, ui.delta_gpu, 1);
-    fill_gpu(l.outputs * l.batch * l.steps, 0, ug.delta_gpu, 1);
-    fill_gpu(l.outputs * l.batch * l.steps, 0, uo.delta_gpu, 1);
+    fill_gpu(l.outputs * l.batch * l.steps, CAST(0), uf.delta_gpu, 1);
+    fill_gpu(l.outputs * l.batch * l.steps, CAST(0), ui.delta_gpu, 1);
+    fill_gpu(l.outputs * l.batch * l.steps, CAST(0), ug.delta_gpu, 1);
+    fill_gpu(l.outputs * l.batch * l.steps, CAST(0), uo.delta_gpu, 1);
     if (state.train) {
-        fill_gpu(l.outputs * l.batch * l.steps, 0, l.delta_gpu, 1);
+        fill_gpu(l.outputs * l.batch * l.steps, CAST(0), l.delta_gpu, 1);
     }
 
     for (i = 0; i < l.steps; ++i) {
@@ -437,16 +437,16 @@ void forward_lstm_layer_gpu(layer l, network state)
         forward_connected_layer_gpu(uo, s);							
 
         copy_gpu(l.outputs*l.batch, wf.output_gpu, 1, l.f_gpu, 1);
-        axpy_gpu(l.outputs*l.batch, 1, uf.output_gpu, 1, l.f_gpu, 1);
+        axpy_gpu(l.outputs*l.batch, CAST(1), uf.output_gpu, 1, l.f_gpu, 1);
 
         copy_gpu(l.outputs*l.batch, wi.output_gpu, 1, l.i_gpu, 1);	
-        axpy_gpu(l.outputs*l.batch, 1, ui.output_gpu, 1, l.i_gpu, 1);	
+        axpy_gpu(l.outputs*l.batch, CAST(1), ui.output_gpu, 1, l.i_gpu, 1);	
 
         copy_gpu(l.outputs*l.batch, wg.output_gpu, 1, l.g_gpu, 1);	
-        axpy_gpu(l.outputs*l.batch, 1, ug.output_gpu, 1, l.g_gpu, 1);	
+        axpy_gpu(l.outputs*l.batch, CAST(1), ug.output_gpu, 1, l.g_gpu, 1);	
 
         copy_gpu(l.outputs*l.batch, wo.output_gpu, 1, l.o_gpu, 1);	
-        axpy_gpu(l.outputs*l.batch, 1, uo.output_gpu, 1, l.o_gpu, 1);	
+        axpy_gpu(l.outputs*l.batch, CAST(1), uo.output_gpu, 1, l.o_gpu, 1);	
 
         activate_array_gpu(l.f_gpu, l.outputs*l.batch, LOGISTIC);		
         activate_array_gpu(l.i_gpu, l.outputs*l.batch, LOGISTIC);		
@@ -456,7 +456,7 @@ void forward_lstm_layer_gpu(layer l, network state)
         copy_gpu(l.outputs*l.batch, l.i_gpu, 1, l.temp_gpu, 1);		
         mul_gpu(l.outputs*l.batch, l.g_gpu, 1, l.temp_gpu, 1);		
         mul_gpu(l.outputs*l.batch, l.f_gpu, 1, l.c_gpu, 1);			
-        axpy_gpu(l.outputs*l.batch, 1, l.temp_gpu, 1, l.c_gpu, 1);	
+        axpy_gpu(l.outputs*l.batch, CAST(1), l.temp_gpu, 1, l.c_gpu, 1);	
 
         copy_gpu(l.outputs*l.batch, l.c_gpu, 1, l.h_gpu, 1);			
         activate_array_gpu(l.h_gpu, l.outputs*l.batch, TANH);		
@@ -522,16 +522,16 @@ void backward_lstm_layer_gpu(layer l, network state)
         l.dh_gpu = (i == 0) ? 0 : l.delta_gpu - l.outputs*l.batch;
 
         copy_gpu(l.outputs*l.batch, wf.output_gpu, 1, l.f_gpu, 1);			
-        axpy_gpu(l.outputs*l.batch, 1, uf.output_gpu, 1, l.f_gpu, 1);			
+        axpy_gpu(l.outputs*l.batch, CAST(1), uf.output_gpu, 1, l.f_gpu, 1);			
 
         copy_gpu(l.outputs*l.batch, wi.output_gpu, 1, l.i_gpu, 1);			
-        axpy_gpu(l.outputs*l.batch, 1, ui.output_gpu, 1, l.i_gpu, 1);			
+        axpy_gpu(l.outputs*l.batch, CAST(1), ui.output_gpu, 1, l.i_gpu, 1);			
 
         copy_gpu(l.outputs*l.batch, wg.output_gpu, 1, l.g_gpu, 1);			
-        axpy_gpu(l.outputs*l.batch, 1, ug.output_gpu, 1, l.g_gpu, 1);			
+        axpy_gpu(l.outputs*l.batch, CAST(1), ug.output_gpu, 1, l.g_gpu, 1);			
 
         copy_gpu(l.outputs*l.batch, wo.output_gpu, 1, l.o_gpu, 1);			
-        axpy_gpu(l.outputs*l.batch, 1, uo.output_gpu, 1, l.o_gpu, 1);			
+        axpy_gpu(l.outputs*l.batch, CAST(1), uo.output_gpu, 1, l.o_gpu, 1);			
 
         activate_array_gpu(l.f_gpu, l.outputs*l.batch, LOGISTIC);			
         activate_array_gpu(l.i_gpu, l.outputs*l.batch, LOGISTIC);		
@@ -547,7 +547,7 @@ void backward_lstm_layer_gpu(layer l, network state)
         mul_gpu(l.outputs*l.batch, l.o_gpu, 1, l.temp2_gpu, 1);			
 
         gradient_array_gpu(l.temp_gpu, l.outputs*l.batch, TANH, l.temp2_gpu);
-        axpy_gpu(l.outputs*l.batch, 1, l.dc_gpu, 1, l.temp2_gpu, 1);		
+        axpy_gpu(l.outputs*l.batch, CAST(1), l.dc_gpu, 1, l.temp2_gpu, 1);		
 
         copy_gpu(l.outputs*l.batch, l.c_gpu, 1, l.temp_gpu, 1);			
         activate_array_gpu(l.temp_gpu, l.outputs*l.batch, TANH);			

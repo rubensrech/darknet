@@ -1,4 +1,10 @@
-int gpu_index = 0;
+#ifdef __cplusplus
+extern "C" {
+#endif
+    int gpu_index = 0;
+#ifdef __cplusplus
+}
+#endif
 
 #ifdef GPU
 
@@ -97,7 +103,7 @@ real *cuda_make_array(real *x, size_t n)
         status = cudaMemcpy(x_gpu, x, size, cudaMemcpyHostToDevice);
         check_error(status);
     } else {
-        fill_gpu(n, 0, x_gpu, 1);
+        fill_gpu(n, CAST(0), x_gpu, 1);
     }
     if(!x_gpu) error("Cuda malloc failed\n");
     return x_gpu;
@@ -115,19 +121,29 @@ void cuda_random(real *x_gpu, size_t n)
     }
 #if REAL == DOUBLE
     curandGenerateUniformDouble(gen[i], x_gpu, n);
-#else
+#elif REAL == FLOAT
     curandGenerateUniform(gen[i], x_gpu, n);
+#elif REAL == HALF
+    float *tmp;
+    cudaError_t status = cudaMalloc((void**) &tmp, sizeof(real) * n);
+	check_error(status);
+
+    curandGenerateUniform(gen[i], tmp, n);
+    float2half_array(tmp, x_gpu, n);
+
+    // Doesn't matter the type
+    cuda_free((real*)tmp);
 #endif
     check_error(cudaPeekAtLastError());
 }
 
 real cuda_compare(real *x_gpu, real *x, size_t n, char *s)
 {
-    real *tmp = calloc(n, sizeof(real));
+    real *tmp = (real*)calloc(n, sizeof(real));
     cuda_pull_array(x_gpu, tmp, n);
     //int i;
     //for(i = 0; i < n; ++i) printf("%f %f\n", tmp[i], x[i]);
-    axpy_cpu(n, -1, x, 1, tmp, 1);
+    axpy_cpu(n, CAST(-1), x, 1, tmp, 1);
     real err = dot_cpu(n, tmp, 1, tmp, 1);
     printf("Error %s: %f\n", s, sqrt(err/n));
     free(tmp);
@@ -170,7 +186,7 @@ void cuda_pull_array(real *x_gpu, real *x, size_t n)
 
 real cuda_mag_array(real *x_gpu, size_t n)
 {
-    real *temp = calloc(n, sizeof(real));
+    real *temp = (real*)calloc(n, sizeof(real));
     cuda_pull_array(x_gpu, temp, n);
     real m = mag_array(temp, n);
     free(temp);

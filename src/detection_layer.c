@@ -268,7 +268,7 @@ void forward_detection_layer_gpu(const detection_layer l, network net)
 
 void backward_detection_layer_gpu(detection_layer l, network net)
 {
-    axpy_gpu(l.batch*l.inputs, 1, l.delta_gpu, 1, net.delta_gpu, 1);
+    axpy_gpu(l.batch*l.inputs, CAST(1), l.delta_gpu, 1, net.delta_gpu, 1);
     //copy_gpu(l.batch*l.inputs, l.delta_gpu, 1, net.delta_gpu, 1);
 }
 #endif

@@ -897,7 +897,7 @@ network *parse_network_cfg_custom(char *filename, int batch)
         if(gpu_index >= 0){
             net->workspace = cuda_make_array(0, (workspace_size-1)/sizeof(real)+1);
         }else {
-            net->workspace = calloc(1, workspace_size);
+            net->workspace = (real*)calloc(1, workspace_size);
         }
 #else
         net->workspace = (real*)calloc(1, workspace_size);

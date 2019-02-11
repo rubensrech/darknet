@@ -73,10 +73,10 @@ void reset_network_state(network *net, int b)
         #ifdef GPU
         layer l = net->layers[i];
         if(l.state_gpu){
-            fill_gpu(l.outputs, 0, l.state_gpu + l.outputs*b, 1);
+            fill_gpu(l.outputs, CAST(0), l.state_gpu + l.outputs*b, 1);
         }
         if(l.h_gpu){
-            fill_gpu(l.outputs, 0, l.h_gpu + l.outputs*b, 1);
+            fill_gpu(l.outputs, CAST(0), l.h_gpu + l.outputs*b, 1);
         }
         #endif
     }
@@ -427,7 +427,7 @@ int resize_network(network *net, int w, int h)
         }
     }else {
         free(net->workspace);
-        net->workspace = calloc(1, workspace_size);
+        net->workspace = (real*)calloc(1, workspace_size);
     }
 #else
     free(net->workspace);
@@ -774,7 +774,7 @@ void forward_network_gpu(network *netp)
         net.index = i;
         layer l = net.layers[i];
         if(l.delta_gpu){
-            fill_gpu(l.outputs * l.batch, 0, l.delta_gpu, 1);
+            fill_gpu(l.outputs * l.batch, CAST(0), l.delta_gpu, 1);
         }
         l.forward_gpu(l, net);
         net.input_gpu = l.output_gpu;
@@ -843,9 +843,9 @@ void harmless_update_network_gpu(network *netp)
     int i;
     for(i = 0; i < net.n; ++i){
         layer l = net.layers[i];
-        if(l.weight_updates_gpu) fill_gpu(l.nweights, 0, l.weight_updates_gpu, 1);
-        if(l.bias_updates_gpu) fill_gpu(l.nbiases, 0, l.bias_updates_gpu, 1);
-        if(l.scale_updates_gpu) fill_gpu(l.nbiases, 0, l.scale_updates_gpu, 1);
+        if(l.weight_updates_gpu) fill_gpu(l.nweights, CAST(0), l.weight_updates_gpu, 1);
+        if(l.bias_updates_gpu) fill_gpu(l.nbiases, CAST(0), l.bias_updates_gpu, 1);
+        if(l.scale_updates_gpu) fill_gpu(l.nbiases, CAST(0), l.scale_updates_gpu, 1);
     }
 }
 
@@ -878,14 +878,14 @@ pthread_t train_network_in_thread(network *net, data d, real *err)
 void merge_weights(layer l, layer base)
 {
     if (l.type == CONVOLUTIONAL) {
-        axpy_cpu(l.n, 1, l.bias_updates, 1, base.biases, 1);
-        axpy_cpu(l.nweights, 1, l.weight_updates, 1, base.weights, 1);
+        axpy_cpu(l.n, CAST(1), l.bias_updates, 1, base.biases, 1);
+        axpy_cpu(l.nweights, CAST(1), l.weight_updates, 1, base.weights, 1);
         if (l.scales) {
-            axpy_cpu(l.n, 1, l.scale_updates, 1, base.scales, 1);
+            axpy_cpu(l.n, CAST(1), l.scale_updates, 1, base.scales, 1);
         }
     } else if(l.type == CONNECTED) {
-        axpy_cpu(l.outputs, 1, l.bias_updates, 1, base.biases, 1);
-        axpy_cpu(l.outputs*l.inputs, 1, l.weight_updates, 1, base.weights, 1);
+        axpy_cpu(l.outputs, CAST(1), l.bias_updates, 1, base.biases, 1);
+        axpy_cpu(l.outputs*l.inputs, CAST(1), l.weight_updates, 1, base.weights, 1);
     }
 }
 
@@ -1030,14 +1030,14 @@ void sync_layer(network **nets, int n, int j)
     int i;
     network *net = nets[0];
     layer base = net->layers[j];
-    scale_weights(base, 0);
+    scale_weights(base, CAST(0));
     for (i = 0; i < n; ++i) {
         cuda_set_device(nets[i]->gpu_index);
         layer l = nets[i]->layers[j];
         pull_weights(l);
         merge_weights(l, base);
     }
-    scale_weights(base, 1./n);
+    scale_weights(base, CAST(1./n));
     for (i = 0; i < n; ++i) {
         cuda_set_device(nets[i]->gpu_index);
         layer l = nets[i]->layers[j];
@@ -1098,7 +1098,7 @@ real train_networks(network **nets, int n, data d, int interval)
     pthread_t *threads = (pthread_t *) calloc(n, sizeof(pthread_t));
     real *errors = (real *) calloc(n, sizeof(real));
 
-    real sum = 0;
+    real sum = CAST(0);
     for(i = 0; i < n; ++i){
         data p = get_data_part(d, i, n);
         threads[i] = train_network_in_thread(nets[i], p, errors + i);
@@ -1118,7 +1118,7 @@ real train_networks(network **nets, int n, data d, int interval)
     //cudaDeviceSynchronize();
     free(threads);
     free(errors);
-    return (real)sum/(n);
+    return CAST((real)sum/(n));
 }
 
 void pull_network_output(network *net)
