@@ -6,6 +6,7 @@
 #define HALF        2
 
 #define CAST(v)     real(v)
+#define CAST_DEV(v) real_device(v)
 
 #if REAL == DOUBLE
     typedef double real;
@@ -19,6 +20,7 @@
         typedef __half real_device;
     #endif
 
+    #define HALF_ROUND_STYLE 1  // 1: nearest, -1: truncate (fastest, default)
     #include "half.hpp"
     using half_float::half;
     using namespace half_float::literal;
@@ -44,6 +46,9 @@ typedef struct __device_builtin__ {
     real z;
 } real3;
 
+#if REAL == HALF
 void float2half_array(float* src, real* dst, size_t n);
+half habs(half a);
+#endif
 
 #endif
