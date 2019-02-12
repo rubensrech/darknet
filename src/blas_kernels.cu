@@ -462,7 +462,7 @@ __global__ void mul_kernel(int N, real *X, int INCX, real *Y, int INCY)
 }
 
 
-extern "C" void normalize_gpu(real *x, real *mean, real *variance, int batch, int filters, int spatial)
+void normalize_gpu(real *x, real *mean, real *variance, int batch, int filters, int spatial)
 {
     size_t N = batch*filters*spatial;
     normalize_kernel<<<cuda_gridsize(N), BLOCK>>>(N, x, mean, variance, batch, filters, spatial);
@@ -899,7 +899,7 @@ void inter_gpu(int NX, real *X, int NY, real *Y, int B, real *OUT)
     check_error(cudaPeekAtLastError());
 }
 
-extern "C" void weighted_sum_gpu(real *a, real *b, real *s, int num, real *c)
+void weighted_sum_gpu(real *a, real *b, real *s, int num, real *c)
 {
     weighted_sum_kernel<<<cuda_gridsize(num), BLOCK>>>(num, a, b, s, c);
     check_error(cudaPeekAtLastError());
