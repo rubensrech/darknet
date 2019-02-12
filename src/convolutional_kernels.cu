@@ -53,11 +53,11 @@ __global__ void binarize_weights_kernel(real_device *weights, int n, int size, r
     int f = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
     if (f >= n) return;
     int i = 0;
-    real mean = 0;
+    real_device mean = 0;
     for(i = 0; i < size; ++i){
         mean += fabsf(weights[f*size + i]);
     }
-    mean = mean / size;
+    mean = mean / CAST_DEV(size);
     for(i = 0; i < size; ++i){
         binary[f*size + i] = (__hgt(weights[f*size + i], 0)) ? mean : -mean;
         //binary[f*size + i] = weights[f*size + i];
