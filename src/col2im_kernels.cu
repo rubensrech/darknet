@@ -10,15 +10,15 @@
 // src: https://github.com/BVLC/caffe/blob/master/src/caffe/util/im2col.cu
 // You may also want to read: https://github.com/BVLC/caffe/blob/master/LICENSE
 
-__global__ void col2im_gpu_kernel(const int n, const real* data_col,
+__global__ void col2im_gpu_kernel(const int n, const real_device *data_col,
         const int height, const int width, const int ksize,
         const int pad,
         const int stride,
         const int height_col, const int width_col,
-        real *data_im) {
+        real_device *data_im) {
     int index = blockIdx.x*blockDim.x+threadIdx.x;
     for(; index < n; index += blockDim.x*gridDim.x){
-        real val = 0;
+        real_device val = 0;
         int w = index % width + pad;
         int h = (index / width) % height + pad;
         int c = index / (width * height);
@@ -51,8 +51,8 @@ void col2im_gpu(real *data_col,
     int num_kernels = channels * height * width;
     col2im_gpu_kernel<<<(num_kernels+BLOCK-1)/BLOCK,
         BLOCK>>>(
-                num_kernels, data_col, height, width, ksize, pad,
+                num_kernels, (real_device*)data_col, height, width, ksize, pad,
                 stride, height_col,
-                width_col, data_im);
+                width_col, (real_device*)data_im);
 }
 
