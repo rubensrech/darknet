@@ -51,4 +51,30 @@ void float2half_array(float* src, real* dst, size_t n);
 half habs(half a);
 #endif
 
+/* Math functions */
+
+#ifdef __NVCC__
+
+__device__ __forceinline__ real_device exp_real(real_device x) {
+#if REAL == HALF
+	return hexp(x);
+#elif REAL == FLOAT
+	return expf(x);
+#elif REAL == DOUBLE
+	return exp(x);
+#endif
+}
+
+__device__ __forceinline__ real_device floor_real(real_device x) {
+#if REAL == HALF
+	return hfloor(x);
+#elif REAL == FLOAT
+	return floorf(x);
+#elif REAL == DOUBLE
+	return floor(x);
+#endif
+}
+
+#endif
+
 #endif
