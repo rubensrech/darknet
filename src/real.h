@@ -51,7 +51,7 @@ typedef struct __device_builtin__ {
     real_device x;
     real_device y;
     real_device z;
-} real3;
+} real_device3;
 
 /* Math functions */
 
@@ -146,6 +146,26 @@ __device__ __forceinline__ real_device atomicAdd_real(real_device *x, real_devic
 	return old;
 #else
 	return atomicAdd(x, val);
+#endif
+}
+
+__device__ __forceinline__ real_device cos_real(real_device x) {
+#if REAL == HALF
+	return hcos(x);
+#elif REAL == FLOAT
+	return cosf(x);
+#elif REAL == DOUBLE
+	return cos(x);
+#endif
+}
+
+__device__ __forceinline__ real_device sin_real(real_device x) {
+#if REAL == HALF
+	return hsin(x);
+#elif REAL == FLOAT
+	return sinf(x);
+#elif REAL == DOUBLE
+	return sin(x);
 #endif
 }
 
