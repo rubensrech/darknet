@@ -527,7 +527,7 @@ void train_prog(char *cfg, char *weight, char *acfg, char *aweight, int clear, i
     int i, j, k;
     layer imlayer = gnet->layers[gnet->n-1];
 
-    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", gnet->learning_rate, gnet->momentum, gnet->decay);
+    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", (float)gnet->learning_rate, (float)gnet->momentum, (float)gnet->decay);
     int imgs = gnet->batch*gnet->subdivisions;
     i = *gnet->seen/imgs;
     data train, buffer;
@@ -557,16 +557,16 @@ void train_prog(char *cfg, char *weight, char *acfg, char *aweight, int clear, i
     int y_size = gnet->truths*gnet->batch;
     real *imerror = cuda_make_array(0, y_size);
 
-    real aloss_avg = -1;
+    real aloss_avg = CAST(-1);
 
     if (maxbatch == 0) maxbatch = gnet->max_batches;
     while (get_current_batch(gnet) < maxbatch) {
         {
             int cb = get_current_batch(gnet);
-            real alpha = (real) cb / (maxbatch/2);
+            real alpha = CAST((real)cb / (maxbatch/2));
             if(alpha > 1) alpha = 1;
-            real beta = 1 - alpha;
-            printf("%f %f\n", alpha, beta);
+            real beta = CAST(1) - alpha;
+            printf("%f %f\n", (float)alpha, (float)beta);
             set_network_alpha_beta(gnet, alpha, beta);
             set_network_alpha_beta(anet, beta, alpha);
         }
@@ -578,7 +578,7 @@ void train_prog(char *cfg, char *weight, char *acfg, char *aweight, int clear, i
 
         load_thread = load_data_in_thread(args);
 
-        printf("Loaded: %lf seconds\n", sec(clock()-time));
+        printf("Loaded: %f seconds\n", (float)sec(clock()-time));
 
         data gen = copy_data(train);
         for (j = 0; j < imgs; ++j) {
@@ -602,8 +602,8 @@ void train_prog(char *cfg, char *weight, char *acfg, char *aweight, int clear, i
             *gnet->seen += gnet->batch;
             forward_network(gnet);
 
-            fill_gpu(imlayer.outputs*imlayer.batch, 0, imerror, 1);
-            fill_cpu(anet->truths*anet->batch, 1, anet->truth, 1);
+            fill_gpu(imlayer.outputs*imlayer.batch, CAST(0), imerror, 1);
+            fill_cpu(anet->truths*anet->batch, CAST(1), anet->truth, 1);
             copy_cpu(anet->inputs*anet->batch, imlayer.output, 1, anet->input, 1);
             anet->delta_gpu = imerror;
             forward_network(anet);
@@ -611,10 +611,10 @@ void train_prog(char *cfg, char *weight, char *acfg, char *aweight, int clear, i
 
             //real genaloss = *anet->cost / anet->batch;
 
-            scal_gpu(imlayer.outputs*imlayer.batch, 1, imerror, 1);
-            scal_gpu(imlayer.outputs*imlayer.batch, 0, gnet->layers[gnet->n-1].delta_gpu, 1);
+            scal_gpu(imlayer.outputs*imlayer.batch, CAST(1), imerror, 1);
+            scal_gpu(imlayer.outputs*imlayer.batch, CAST(0), gnet->layers[gnet->n-1].delta_gpu, 1);
 
-            axpy_gpu(imlayer.outputs*imlayer.batch, 1, imerror, 1, gnet->layers[gnet->n-1].delta_gpu, 1);
+            axpy_gpu(imlayer.outputs*imlayer.batch, CAST(1), imerror, 1, gnet->layers[gnet->n-1].delta_gpu, 1);
 
             backward_network(gnet);
 
@@ -647,7 +647,7 @@ void train_prog(char *cfg, char *weight, char *acfg, char *aweight, int clear, i
         if (aloss_avg < 0) aloss_avg = aloss;
         aloss_avg = aloss_avg*.9 + aloss*.1;
 
-        printf("%d: adv: %f | adv_avg: %f, %f rate, %lf seconds, %d images\n", i, aloss, aloss_avg, get_current_rate(gnet), sec(clock()-time), i*imgs);
+        printf("%d: adv: %f | adv_avg: %f, %f rate, %f seconds, %d images\n", i, (float)aloss, (float)aloss_avg, (float)get_current_rate(gnet), (float)sec(clock()-time), i*imgs);
         if(i%10000==0){
             char buff[256];
             sprintf(buff, "%s/%s_%d.weights", backup_directory, base, i);
@@ -690,7 +690,7 @@ void train_dcgan(char *cfg, char *weight, char *acfg, char *aweight, int clear, 
         }
     }
 
-    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", gnet->learning_rate, gnet->momentum, gnet->decay);
+    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", (float)gnet->learning_rate, (float)gnet->momentum, (float)gnet->decay);
     int imgs = gnet->batch*gnet->subdivisions;
     i = *gnet->seen/imgs;
     data train, buffer;
@@ -723,7 +723,7 @@ void train_dcgan(char *cfg, char *weight, char *acfg, char *aweight, int clear, 
 
     //int ay_size = anet->truths*anet->batch;
 
-    real aloss_avg = -1;
+    real aloss_avg = CAST(-1);
 
     //data generated = copy_data(train);
 
@@ -739,7 +739,7 @@ void train_dcgan(char *cfg, char *weight, char *acfg, char *aweight, int clear, 
 
         load_thread = load_data_in_thread(args);
 
-        printf("Loaded: %lf seconds\n", sec(clock()-time));
+        printf("Loaded: %f seconds\n", (float)sec(clock()-time));
 
         data gen = copy_data(train);
         for (j = 0; j < imgs; ++j) {
@@ -756,7 +756,7 @@ void train_dcgan(char *cfg, char *weight, char *acfg, char *aweight, int clear, 
             }
             for(z = 0; z < gnet->batch; ++z){
                 real mag = mag_array(gnet->input + z*gnet->inputs, gnet->inputs);
-                scale_array(gnet->input + z*gnet->inputs, gnet->inputs, 1./mag);
+                scale_array(gnet->input + z*gnet->inputs, gnet->inputs, CAST(1./mag));
             }
             /*
                for(z = 0; z < 100; ++z){
@@ -771,8 +771,8 @@ void train_dcgan(char *cfg, char *weight, char *acfg, char *aweight, int clear, 
             *gnet->seen += gnet->batch;
             forward_network(gnet);
 
-            fill_gpu(imlayer.outputs*imlayer.batch, 0, imerror, 1);
-            fill_cpu(anet->truths*anet->batch, 1, anet->truth, 1);
+            fill_gpu(imlayer.outputs*imlayer.batch, CAST(0), imerror, 1);
+            fill_cpu(anet->truths*anet->batch, CAST(1), anet->truth, 1);
             copy_cpu(anet->inputs*anet->batch, imlayer.output, 1, anet->input, 1);
             anet->delta_gpu = imerror;
             forward_network(anet);
@@ -781,13 +781,13 @@ void train_dcgan(char *cfg, char *weight, char *acfg, char *aweight, int clear, 
             //real genaloss = *anet->cost / anet->batch;
             //printf("%f\n", genaloss);
 
-            scal_gpu(imlayer.outputs*imlayer.batch, 1, imerror, 1);
-            scal_gpu(imlayer.outputs*imlayer.batch, 0, gnet->layers[gnet->n-1].delta_gpu, 1);
+            scal_gpu(imlayer.outputs*imlayer.batch, CAST(1), imerror, 1);
+            scal_gpu(imlayer.outputs*imlayer.batch, CAST(0), gnet->layers[gnet->n-1].delta_gpu, 1);
 
             //printf("realness %f\n", cuda_mag_array(imerror, imlayer.outputs*imlayer.batch));
             //printf("features %f\n", cuda_mag_array(gnet->layers[gnet->n-1].delta_gpu, imlayer.outputs*imlayer.batch));
 
-            axpy_gpu(imlayer.outputs*imlayer.batch, 1, imerror, 1, gnet->layers[gnet->n-1].delta_gpu, 1);
+            axpy_gpu(imlayer.outputs*imlayer.batch, CAST(1), imerror, 1, gnet->layers[gnet->n-1].delta_gpu, 1);
 
             backward_network(gnet);
 
@@ -841,7 +841,7 @@ void train_dcgan(char *cfg, char *weight, char *acfg, char *aweight, int clear, 
         if (aloss_avg < 0) aloss_avg = aloss;
         aloss_avg = aloss_avg*.9 + aloss*.1;
 
-        printf("%d: adv: %f | adv_avg: %f, %f rate, %lf seconds, %d images\n", i, aloss, aloss_avg, get_current_rate(gnet), sec(clock()-time), i*imgs);
+        printf("%d: adv: %f | adv_avg: %f, %f rate, %f seconds, %d images\n", i, (float)aloss, (float)aloss_avg, (float)get_current_rate(gnet), (float)sec(clock()-time), i*imgs);
         if(i%10000==0){
             char buff[256];
             sprintf(buff, "%s/%s_%d.weights", backup_directory, base, i);
@@ -886,7 +886,7 @@ void train_colorizer(char *cfg, char *weight, char *acfg, char *aweight, int cle
         }
     }
 
-    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
+    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", (float)net->learning_rate, (float)net->momentum, (float)net->decay);
     int imgs = net->batch*net->subdivisions;
     i = *net->seen/imgs;
     data train, buffer;
@@ -924,8 +924,8 @@ void train_colorizer(char *cfg, char *weight, char *acfg, char *aweight, int cle
 
     real *imerror = cuda_make_array(0, imlayer.outputs*imlayer.batch);
 
-    real aloss_avg = -1;
-    real gloss_avg = -1;
+    real aloss_avg = CAST(-1);
+    real gloss_avg = CAST(-1);
 
     //data generated = copy_data(train);
 
@@ -936,7 +936,7 @@ void train_colorizer(char *cfg, char *weight, char *acfg, char *aweight, int cle
         train = buffer;
         load_thread = load_data_in_thread(args);
 
-        printf("Loaded: %lf seconds\n", sec(clock()-time));
+        printf("Loaded: %f seconds\n", (float)sec(clock()-time));
 
         data gray = copy_data(train);
         for(j = 0; j < imgs; ++j){
@@ -946,7 +946,7 @@ void train_colorizer(char *cfg, char *weight, char *acfg, char *aweight, int cle
             gray.y.vals[j][0] = .05;
         }
         time=clock();
-        real gloss = 0;
+        real gloss = CAST(0);
 
         for(j = 0; j < net->subdivisions; ++j){
             get_next_batch(train, net->batch, j*net->batch, pixs, 0);
@@ -963,21 +963,21 @@ void train_colorizer(char *cfg, char *weight, char *acfg, char *aweight, int cle
             *net->seen += net->batch;
             forward_network_gpu(net);
 
-            fill_gpu(imlayer.outputs*imlayer.batch, 0, imerror, 1);
+            fill_gpu(imlayer.outputs*imlayer.batch, CAST(0), imerror, 1);
             copy_gpu(anet->inputs*anet->batch, imlayer.output_gpu, 1, anet->input_gpu, 1);
-            fill_gpu(anet->inputs*anet->batch, .95, anet->truth_gpu, 1);
+            fill_gpu(anet->inputs*anet->batch, CAST(.95), anet->truth_gpu, 1);
             anet->delta_gpu = imerror;
             forward_network_gpu(anet);
             backward_network_gpu(anet);
 
-            scal_gpu(imlayer.outputs*imlayer.batch, 1./100., net->layers[net->n-1].delta_gpu, 1);
+            scal_gpu(imlayer.outputs*imlayer.batch, CAST(1./100.), net->layers[net->n-1].delta_gpu, 1);
 
-            scal_gpu(imlayer.outputs*imlayer.batch, 1, imerror, 1);
+            scal_gpu(imlayer.outputs*imlayer.batch, CAST(1), imerror, 1);
 
-            printf("realness %f\n", cuda_mag_array(imerror, imlayer.outputs*imlayer.batch));
-            printf("features %f\n", cuda_mag_array(net->layers[net->n-1].delta_gpu, imlayer.outputs*imlayer.batch));
+            printf("realness %f\n", (float)cuda_mag_array(imerror, imlayer.outputs*imlayer.batch));
+            printf("features %f\n", (float)cuda_mag_array(net->layers[net->n-1].delta_gpu, imlayer.outputs*imlayer.batch));
 
-            axpy_gpu(imlayer.outputs*imlayer.batch, 1, imerror, 1, net->layers[net->n-1].delta_gpu, 1);
+            axpy_gpu(imlayer.outputs*imlayer.batch, CAST(1), imerror, 1, net->layers[net->n-1].delta_gpu, 1);
 
             backward_network_gpu(net);
 
@@ -1012,7 +1012,7 @@ void train_colorizer(char *cfg, char *weight, char *acfg, char *aweight, int cle
         aloss_avg = aloss_avg*.9 + aloss*.1;
         gloss_avg = gloss_avg*.9 + gloss*.1;
 
-        printf("%d: gen: %f, adv: %f | gen_avg: %f, adv_avg: %f, %f rate, %lf seconds, %d images\n", i, gloss, aloss, gloss_avg, aloss_avg, get_current_rate(net), sec(clock()-time), i*imgs);
+        printf("%d: gen: %f, adv: %f | gen_avg: %f, adv_avg: %f, %f rate, %f seconds, %d images\n", i, (float)gloss, (float)aloss, (float)gloss_avg, (float)aloss_avg, (float)get_current_rate(net), (float)sec(clock()-time), i*imgs);
         if(i%1000==0){
             char buff[256];
             sprintf(buff, "%s/%s_%d.weights", backup_directory, base, i);
