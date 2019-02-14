@@ -7,7 +7,7 @@
 #include "cuda.h"
 // }
 
-__global__ void forward_maxpool_layer_kernel(int n, int in_h, int in_w, int in_c, int stride, int size, int pad, real *input, real *output, int *indexes)
+__global__ void forward_maxpool_layer_kernel(int n, int in_h, int in_w, int in_c, int stride, int size, int pad, real_device *input, real_device *output, int *indexes)
 {
     int h = (in_h + pad - size)/stride + 1;
     int w = (in_w + pad - size)/stride + 1;
@@ -28,7 +28,7 @@ __global__ void forward_maxpool_layer_kernel(int n, int in_h, int in_w, int in_c
     int h_offset = -pad/2;
 
     int out_index = j + w*(i + h*(k + c*b));
-    real max = -INFINITY;
+    real_device max = -INFINITY;
     int max_i = -1;
     int l, m;
     for(l = 0; l < size; ++l){
@@ -38,7 +38,7 @@ __global__ void forward_maxpool_layer_kernel(int n, int in_h, int in_w, int in_c
             int index = cur_w + in_w*(cur_h + in_h*(k + b*in_c));
             int valid = (cur_h >= 0 && cur_h < in_h &&
                     cur_w >= 0 && cur_w < in_w);
-            real val = (valid != 0) ? input[index] : -INFINITY;
+            real_device val = (valid != 0) ? input[index] : CAST_DEV(-INFINITY);
             max_i = (val > max) ? index : max_i;
             max   = (val > max) ? val   : max;
         }
@@ -47,7 +47,7 @@ __global__ void forward_maxpool_layer_kernel(int n, int in_h, int in_w, int in_c
     indexes[out_index] = max_i;
 }
 
-__global__ void backward_maxpool_layer_kernel(int n, int in_h, int in_w, int in_c, int stride, int size, int pad, real *delta, real *prev_delta, int *indexes)
+__global__ void backward_maxpool_layer_kernel(int n, int in_h, int in_w, int in_c, int stride, int size, int pad, real_device *delta, real_device *prev_delta, int *indexes)
 {
     int h = (in_h + pad - size)/stride + 1;
     int w = (in_w + pad - size)/stride + 1;
@@ -69,7 +69,7 @@ __global__ void backward_maxpool_layer_kernel(int n, int in_h, int in_w, int in_
     int w_offset = -pad/2;
     int h_offset = -pad/2;
 
-    real d = 0;
+    real_device d = 0;
     int l, m;
     for(l = -area; l < area+1; ++l){
         for(m = -area; m < area+1; ++m){
@@ -78,7 +78,7 @@ __global__ void backward_maxpool_layer_kernel(int n, int in_h, int in_w, int in_
             int out_index = out_w + w*(out_h + h*(k + c*b));
             int valid = (out_w >= 0 && out_w < w &&
                      out_h >= 0 && out_h < h);
-            d += (valid && indexes[out_index] == index) ? delta[out_index] : 0;
+            d += (valid && indexes[out_index] == index) ? delta[out_index] : CAST_DEV(0);
         }
     }
     prev_delta[index] += d;
@@ -92,7 +92,7 @@ void forward_maxpool_layer_gpu(maxpool_layer layer, network net)
 
     size_t n = h*w*c*layer.batch;
 
-    forward_maxpool_layer_kernel<<<cuda_gridsize(n), BLOCK>>>(n, layer.h, layer.w, layer.c, layer.stride, layer.size, layer.pad, net.input_gpu, layer.output_gpu, layer.indexes_gpu);
+    forward_maxpool_layer_kernel<<<cuda_gridsize(n), BLOCK>>>(n, layer.h, layer.w, layer.c, layer.stride, layer.size, layer.pad, (real_device*)net.input_gpu, (real_device*)layer.output_gpu, layer.indexes_gpu);
     check_error(cudaPeekAtLastError());
 }
 
@@ -100,7 +100,7 @@ void backward_maxpool_layer_gpu(maxpool_layer layer, network net)
 {
     size_t n = layer.h*layer.w*layer.c*layer.batch;
 
-    backward_maxpool_layer_kernel<<<cuda_gridsize(n), BLOCK>>>(n, layer.h, layer.w, layer.c, layer.stride, layer.size, layer.pad, layer.delta_gpu, net.delta_gpu, layer.indexes_gpu);
+    backward_maxpool_layer_kernel<<<cuda_gridsize(n), BLOCK>>>(n, layer.h, layer.w, layer.c, layer.stride, layer.size, layer.pad, (real_device*)layer.delta_gpu, (real_device*)net.delta_gpu, layer.indexes_gpu);
     check_error(cudaPeekAtLastError());
 }
 
