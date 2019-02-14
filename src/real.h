@@ -37,23 +37,23 @@
 
 #endif
 
-/* real3
- * Based on vector_types.h
- */
-typedef struct __device_builtin__ {
-    real x;
-    real y;
-    real z;
-} real3;
-
 #if REAL == HALF
 void float2half_array(float* src, real* dst, size_t n);
 half habs(half a);
 #endif
 
-/* Math functions */
-
 #ifdef __NVCC__
+
+/* real3
+ * Based on vector_types.h
+ */
+typedef struct __device_builtin__ {
+    real_device x;
+    real_device y;
+    real_device z;
+} real3;
+
+/* Math functions */
 
 __device__ __forceinline__ real_device exp_real(real_device x) {
 #if REAL == HALF
@@ -72,6 +72,80 @@ __device__ __forceinline__ real_device floor_real(real_device x) {
 	return floorf(x);
 #elif REAL == DOUBLE
 	return floor(x);
+#endif
+}
+
+__device__ __forceinline__ real_device pow_real(real_device x, real_device y) {
+#if REAL == HALF
+	return CAST_DEV(powf(float(x), float(y)));
+#elif REAL == FLOAT
+	return powf(x, y);
+#elif REAL == DOUBLE
+	return pow(x, y);
+#endif
+}
+
+__device__ __forceinline__ real_device sqrt_real(real_device x) {
+#if REAL == HALF
+	return hsqrt(x);
+#elif REAL == FLOAT
+	return sqrtf(x);
+#elif REAL == DOUBLE
+	return sqrt(x);
+#endif
+}
+
+__device__ __forceinline__ real_device min_real(real_device x, real_device y) {
+#if REAL == HALF
+	return fminf(x, y);
+#elif REAL == FLOAT
+	return fminf(x, y);
+#elif REAL == DOUBLE
+	return fmin(x, y);
+#endif
+}
+
+__device__ __forceinline__ real_device max_real(real_device x, real_device y) {
+#if REAL == HALF
+	return fmaxf(x, y);
+#elif REAL == FLOAT
+	return fmaxf(x, y);
+#elif REAL == DOUBLE
+	return fmax(x, y);
+#endif
+}
+
+__device__ __forceinline__ real_device fabs_real(real_device x) {
+#if REAL == HALF
+	return fabsf(x);
+#elif REAL == FLOAT
+	return fabsf(x);
+#elif REAL == DOUBLE
+	return fabs(x);
+#endif
+}
+
+__device__ __forceinline__ real_device log_real(real_device x) {
+#if REAL == HALF
+	return hlog(x);
+#elif REAL == FLOAT
+	return logf(x);
+#elif REAL == DOUBLE
+	return log(x);
+#endif
+}
+
+__device__ __forceinline__ real_device atomicAdd_real(real_device *x, real_device val) {
+#if REAL == HALF
+    #if __CUDA_ARCH__ > 700
+        return atomicAdd((__half*)x, (__half)val);
+    #endif
+
+	__half old = *x;
+	*x += val;
+	return old;
+#else
+	return atomicAdd(x, val);
 #endif
 }
 
