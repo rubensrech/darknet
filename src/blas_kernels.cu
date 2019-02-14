@@ -482,7 +482,7 @@ __global__ void l2norm_kernel(int N, real_device *x, real_device *dx, int batch,
         sum += pow_real(x[index], 2);
     }
     sum = sqrt_real(sum);
-    if(__heq(sum, 0)) sum = CAST_DEV(1);
+    if(sum == CAST_DEV(0)) sum = CAST_DEV(1);
     //printf("%f\n", sum);
     for(f = 0; f < filters; ++f){
         int index = b*filters*spatial + f*spatial + i;
@@ -750,13 +750,13 @@ __global__ void smooth_l1_kernel(int n, real_device *pred, real_device *truth, r
     if(i < n){
         real_device diff = truth[i] - pred[i];
         real_device abs_val = fabs_real(diff);
-        if(__hlt(abs_val, 1)) {
+        if(abs_val < CAST_DEV(1)) {
             error[i] = diff * diff;
             delta[i] = diff;
         }
         else {
             error[i] = CAST_DEV(2)*abs_val - CAST_DEV(1);
-            delta[i] = (__hgt(diff, 0)) ? 1 : -1;
+            delta[i] = (diff > CAST_DEV(0)) ? 1 : -1;
         }
     }
 }
@@ -823,7 +823,7 @@ __global__ void l1_kernel(int n, real_device *pred, real_device *truth, real_dev
     if(i < n){
         real_device diff = truth[i] - pred[i];
         error[i] = fabs_real(diff);
-        delta[i] = (__hgt(diff, 0)) ? 1 : -1;
+        delta[i] = (diff > CAST_DEV(0)) ? 1 : -1;
     }
 }
 
@@ -838,7 +838,7 @@ __global__ void wgan_kernel(int n, real_device *pred, real_device *truth, real_d
     int i = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
     if(i < n){
         error[i] = truth[i] ? -pred[i] : pred[i];
-        delta[i] = (__hgt(truth[i], 0)) ? 1 : -1;
+        delta[i] = (truth[i] > CAST_DEV(0)) ? 1 : -1;
     }
 }
 
@@ -943,7 +943,7 @@ __device__ void softmax_device(real_device *input, int n, real_device temp, int 
     real_device largest = -INFINITY;
     for(i = 0; i < n; ++i){
         int val = input[i*stride];
-        largest = (__hgt(val, largest)) ? CAST_DEV(val) : largest;
+        largest = (CAST_DEV(val) > largest) ? CAST_DEV(val) : largest;
     }
     for(i = 0; i < n; ++i){
         real_device e = exp_real(input[i*stride]/temp - largest/temp);

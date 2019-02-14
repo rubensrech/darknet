@@ -10,20 +10,20 @@
 
 __device__ real_device lhtan_activate_kernel(real_device x)
 {
-    if(__hlt(x, 0)) return CAST_DEV(.001f)*x;
-    if(__hgt(x, 1)) return CAST_DEV(.001f) * (x - CAST_DEV(1.f)) + CAST_DEV(1.f);
+    if(x < CAST_DEV(0)) return CAST_DEV(.001f)*x;
+    if(x > CAST_DEV(1)) return CAST_DEV(.001f) * (x - CAST_DEV(1.f)) + CAST_DEV(1.f);
     return x;
 }
 __device__ real_device lhtan_gradient_kernel(real_device x)
 {
-    if(__hgt(x, 0) && __hlt(x, 1)) return 1;
+    if((x > CAST_DEV(0)) && (x < CAST_DEV(1))) return 1;
     return .001;
 }
 
 __device__ real_device hardtan_activate_kernel(real_device x)
 {
-    if (__hlt(x, -1)) return -1;
-    if (__hgt(x, 1)) return 1;
+    if (x < CAST_DEV(-1)) return -1;
+    if (x > CAST_DEV(1)) return 1;
     return x;
 }
 __device__ real_device linear_activate_kernel(real_device x){
@@ -36,30 +36,30 @@ __device__ real_device loggy_activate_kernel(real_device x){
     return CAST_DEV(2.f) / (CAST_DEV(1.f) + exp_real(-x)) - CAST_DEV(1);
 }
 __device__ real_device relu_activate_kernel(real_device x){
-    return x * CAST_DEV(__hgt(x,0));
+    return x * CAST_DEV(x > CAST_DEV(0));
 }
 __device__ real_device elu_activate_kernel(real_device x){
-    return CAST_DEV(__hge(x, 0))*x + CAST_DEV(__hlt(x, 0)) * (exp_real(x) - CAST_DEV(1));
+    return CAST_DEV(x >= CAST_DEV(0))*x + CAST_DEV(x < CAST_DEV(0)) * (exp_real(x) - CAST_DEV(1));
 }
 __device__ real_device selu_activate_kernel(real_device x){
-    return CAST_DEV(__hge(x, 0))*CAST_DEV(1.0507f)*x + CAST_DEV(__hlt(x, 0))*CAST_DEV(1.0507f*1.6732f) * (exp_real(x) - CAST_DEV(1));
+    return CAST_DEV(x >= CAST_DEV(0))*CAST_DEV(1.0507f)*x + CAST_DEV(x < CAST_DEV(0))*CAST_DEV(1.0507f*1.6732f) * (exp_real(x) - CAST_DEV(1));
 }
 __device__ real_device relie_activate_kernel(real_device x){
-    return (__hgt(x,0)) ? x : CAST_DEV(.01f)*x;
+    return (x > CAST_DEV(0)) ? x : CAST_DEV(.01f)*x;
 }
 __device__ real_device ramp_activate_kernel(real_device x){
-    return x*CAST_DEV(__hgt(x, 0)) + CAST_DEV(.1f)*x;
+    return x*CAST_DEV(x > CAST_DEV(0)) + CAST_DEV(.1f)*x;
 }
 __device__ real_device leaky_activate_kernel(real_device x){
-    return (__hgt(x,0)) ? x : CAST_DEV(.1f)*x;
+    return (x > CAST_DEV(0)) ? x : CAST_DEV(.1f)*x;
 }
 __device__ real_device tanh_activate_kernel(real_device x){
     return (CAST_DEV(2.f) / (CAST_DEV(1) + exp_real(CAST_DEV(-2)*x)) - CAST_DEV(1));
 }
 __device__ real_device plse_activate_kernel(real_device x)
 {
-    if(__hlt(x, -4)) return CAST_DEV(.01f) * (x + CAST_DEV(4));
-    if(__hgt(x, 4))  return CAST_DEV(.01f) * (x - CAST_DEV(4)) + CAST_DEV(1);
+    if(x < CAST_DEV(-4)) return CAST_DEV(.01f) * (x + CAST_DEV(4));
+    if(x > CAST_DEV(4))  return CAST_DEV(.01f) * (x - CAST_DEV(4)) + CAST_DEV(1);
     return CAST_DEV(.125f)*x + CAST_DEV(.5f);
 }
 __device__ real_device stair_activate_kernel(real_device x)
@@ -71,7 +71,7 @@ __device__ real_device stair_activate_kernel(real_device x)
  
 
 __device__ real_device hardtan_gradient_kernel(real_device x) {
-    if (__hgt(x, -1) && __hlt(x, 1)) return 1;
+    if ((x > CAST_DEV(-1)) && (x < CAST_DEV(1))) return 1;
     return 0;
 }
 __device__ real_device linear_gradient_kernel(real_device x){
@@ -86,28 +86,28 @@ __device__ real_device loggy_gradient_kernel(real_device x)
     return CAST_DEV(2)*(CAST_DEV(1)-y)*y;
 }
 __device__ real_device relu_gradient_kernel(real_device x){
-    return CAST_DEV(__hgt(x, 0));
+    return CAST_DEV(x > CAST_DEV(0));
 }
 __device__ real_device elu_gradient_kernel(real_device x){
-    return CAST_DEV(__hge(x,0)) + CAST_DEV(__hlt(x,0))*(x + CAST_DEV(1));
+    return CAST_DEV(x >= CAST_DEV(0)) + CAST_DEV(x < CAST_DEV(0))*(x + CAST_DEV(1));
 }
 __device__ real_device selu_gradient_kernel(real_device x){
-    return CAST_DEV(__hge(x, 0))*CAST_DEV(1.0507) + CAST_DEV(__hlt(x, 0))*(x + CAST_DEV(1.0507*1.6732));
+    return CAST_DEV(x >= CAST_DEV(0))*CAST_DEV(1.0507) + CAST_DEV(x < CAST_DEV(0))*(x + CAST_DEV(1.0507*1.6732));
 }
 __device__ real_device relie_gradient_kernel(real_device x){
-    return (__hgt(x,0)) ? 1 : .01f;
+    return (x > CAST_DEV(0)) ? 1 : .01f;
 }
 __device__ real_device ramp_gradient_kernel(real_device x){
-    return CAST_DEV(__hgt(x,0)) + CAST_DEV(.1f);
+    return CAST_DEV(x > CAST_DEV(0)) + CAST_DEV(.1f);
 }
 __device__ real_device leaky_gradient_kernel(real_device x){
-    return (__hgt(x,0)) ? 1 : .1f;
+    return (x > CAST_DEV(0)) ? 1 : .1f;
 }
 __device__ real_device tanh_gradient_kernel(real_device x){
     return CAST_DEV(1)-x*x;
 }
 __device__ real_device plse_gradient_kernel(real_device x){
-    return (__hlt(x, 0) || __hgt(x,1)) ? .01f : .125f;
+    return ((x < CAST_DEV(0)) || (x > CAST_DEV(1))) ? .01f : .125f;
 }
 __device__ real_device stair_gradient_kernel(real_device x) {
     if (floor_real(x) == x) return 0;

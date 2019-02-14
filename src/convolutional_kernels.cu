@@ -17,7 +17,7 @@ __global__ void binarize_kernel(real_device *x, int n, real_device *binary)
 {
     int i = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
     if (i >= n) return;
-    binary[i] = (__hge(x[i], 0)) ? 1 : -1;  // binary[i] = (x[i] >= 0) ? 1 : -1;
+    binary[i] = (x[i] >= CAST_DEV(0)) ? 1 : -1;
 }
 
 void binarize_gpu(real *x, int n, real *binary)
@@ -37,7 +37,7 @@ __global__ void binarize_input_kernel(real_device *input, int n, int size, real_
     }
     mean = mean / CAST_DEV(n);
     for(i = 0; i < n; ++i){
-        binary[i*size + s] = (__hgt(input[i*size + s], 0)) ? mean : -mean;
+        binary[i*size + s] = (input[i*size + s] > CAST_DEV(0)) ? mean : -mean;
     }
 }
 
@@ -59,7 +59,7 @@ __global__ void binarize_weights_kernel(real_device *weights, int n, int size, r
     }
     mean = mean / CAST_DEV(size);
     for(i = 0; i < size; ++i){
-        binary[f*size + i] = (__hgt(weights[f*size + i], 0)) ? mean : -mean;
+        binary[f*size + i] = (weights[f*size + i] > CAST_DEV(0)) ? mean : -mean;
         //binary[f*size + i] = weights[f*size + i];
     }
 }
