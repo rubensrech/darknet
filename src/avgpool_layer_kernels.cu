@@ -7,7 +7,7 @@
 #include "cuda.h"
 // }
 
-__global__ void forward_avgpool_layer_kernel(int n, int w, int h, int c, real *input, real *output)
+__global__ void forward_avgpool_layer_kernel(int n, int w, int h, int c, real_device *input, real_device *output)
 {
     int id = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
     if(id >= n) return;
@@ -26,7 +26,7 @@ __global__ void forward_avgpool_layer_kernel(int n, int w, int h, int c, real *i
     output[out_index] /= w*h;
 }
 
-__global__ void backward_avgpool_layer_kernel(int n, int w, int h, int c, real *in_delta, real *out_delta)
+__global__ void backward_avgpool_layer_kernel(int n, int w, int h, int c, real_device *in_delta, real_device *out_delta)
 {
     int id = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
     if(id >= n) return;
@@ -39,7 +39,7 @@ __global__ void backward_avgpool_layer_kernel(int n, int w, int h, int c, real *
     int out_index = (k + c*b);
     for(i = 0; i < w*h; ++i){
         int in_index = i + h*w*(k + b*c);
-        in_delta[in_index] += out_delta[out_index] / (w*h);
+        in_delta[in_index] += out_delta[out_index] / CAST_DEV(w*h);
     }
 }
 
@@ -47,7 +47,7 @@ void forward_avgpool_layer_gpu(avgpool_layer layer, network net)
 {
     size_t n = layer.c*layer.batch;
 
-    forward_avgpool_layer_kernel<<<cuda_gridsize(n), BLOCK>>>(n, layer.w, layer.h, layer.c, net.input_gpu, layer.output_gpu);
+    forward_avgpool_layer_kernel<<<cuda_gridsize(n), BLOCK>>>(n, layer.w, layer.h, layer.c, (real_device*)net.input_gpu, (real_device*)layer.output_gpu);
     check_error(cudaPeekAtLastError());
 }
 
@@ -55,7 +55,7 @@ void backward_avgpool_layer_gpu(avgpool_layer layer, network net)
 {
     size_t n = layer.c*layer.batch;
 
-    backward_avgpool_layer_kernel<<<cuda_gridsize(n), BLOCK>>>(n, layer.w, layer.h, layer.c, net.delta_gpu, layer.delta_gpu);
+    backward_avgpool_layer_kernel<<<cuda_gridsize(n), BLOCK>>>(n, layer.w, layer.h, layer.c, (real_device*)net.delta_gpu, (real_device*)layer.delta_gpu);
     check_error(cudaPeekAtLastError());
 }
 
