@@ -146,7 +146,7 @@ void reconstruct_picture(network *net, real *features, image recon, image update
 
         forward_network_gpu(net);
         cuda_push_array(l.delta_gpu, features, l.outputs);
-        axpy_gpu(l.outputs, -1, l.output_gpu, 1, l.delta_gpu, 1);
+        axpy_gpu(l.outputs, CAST(-1), l.output_gpu, 1, l.delta_gpu, 1);
         backward_network_gpu(net);
 
         cuda_pull_array(net->delta_gpu, delta.data, delta.w*delta.h*delta.c);
