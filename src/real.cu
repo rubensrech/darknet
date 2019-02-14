@@ -12,7 +12,7 @@ __global__ void float2half_array_kernel(float* src, __half* dst, size_t n) {
 		dst[i] = __float2half(src[i]);
 }
 
-void float2half_array(float* src, half* dst, size_t n) {
+void float2half_array(float* src, real* dst, size_t n) {
 	float2half_array_kernel<<<cuda_gridsize(n), BLOCK>>>(src, (__half*)dst, n);
 	check_error(cudaPeekAtLastError());
 }

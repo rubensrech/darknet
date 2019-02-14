@@ -15,6 +15,8 @@ extern "C" {
 #include <stdlib.h>
 #include <time.h>
 
+#include "real.h"
+
 void cuda_set_device(int n)
 {
     gpu_index = n;
