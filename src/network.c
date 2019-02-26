@@ -531,7 +531,7 @@ detection *make_network_boxes(network *net, real thresh, int *num)
     if(num) *num = nboxes;
     detection *dets = (detection*)calloc(nboxes, sizeof(detection));
     for(i = 0; i < nboxes; ++i){
-        dets[i].prob = (real*)calloc(l.classes, sizeof(real));
+        dets[i].prob = (float*)calloc(l.classes, sizeof(float));
         if(l.coords > 4){
             dets[i].mask = (real*)calloc(l.coords-4, sizeof(real));
         }

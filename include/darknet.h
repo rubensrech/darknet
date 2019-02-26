@@ -518,9 +518,9 @@ typedef struct{
 typedef struct detection{
     box bbox;
     int classes;
-    real *prob;
+    float *prob;
     real *mask;
-    real objectness;
+    float objectness;
     int sort_class;
 } detection;
 

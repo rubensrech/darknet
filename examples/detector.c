@@ -718,7 +718,7 @@ real validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real 
             for (i = 0; i < nboxes; ++i) {
                 int class_id;
                 for (class_id = 0; class_id < classes; ++class_id) {
-                    real prob = dets[i].prob[class_id];
+                    float prob = dets[i].prob[class_id];
                     if (prob > 0) {
                         detections_count++;
                         detections = (box_prob*)realloc(detections, detections_count * sizeof(box_prob));
@@ -973,6 +973,7 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
         // !!!
         int letterbox = 1;
         detection *dets = get_network_boxes(net, im.w, im.h, thresh, hier_thresh, 0, 1, &nboxes, letterbox);
+        printf("Detections: %d\n", nboxes);
         //printf("%d\n", nboxes);
         //if (nms) do_nms_obj(boxes, probs, l.w*l.h*l.n, l.classes, nms);
         if (nms) do_nms_sort(dets, nboxes, l.classes, nms);
