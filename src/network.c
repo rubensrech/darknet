@@ -768,15 +768,27 @@ void forward_network_gpu(network *netp)
     if(net.truth){
         cuda_push_array(net.truth_gpu, net.truth, net.truths*net.batch);
     }
+    
+
+double time;
 
     int i;
     for(i = 0; i < net.n; ++i){
         net.index = i;
         layer l = net.layers[i];
+
+time = what_time_is_it_now();
+
         if(l.delta_gpu){
             fill_gpu(l.outputs * l.batch, CAST(0), l.delta_gpu, 1);
         }
         l.forward_gpu(l, net);
+
+cudaDeviceSynchronize();
+// > Time spent per layer
+printf("%3.7f\n", 1000*(what_time_is_it_now()-time));
+// printf("Layer: %2d, type: %15s, time: %3.7f ms.\n", i, get_layer_string(l.type), 1000*(what_time_is_it_now()-time));
+
         net.input_gpu = l.output_gpu;
         net.input = l.output;
         if(l.truth) {

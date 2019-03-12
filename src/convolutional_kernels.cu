@@ -102,6 +102,9 @@ void forward_convolutional_layer_gpu(convolutional_layer l, network net)
                 l.output_gpu);
 
 #else
+
+// double time, ttime = 0;
+
     int i, j;
     int m = l.n/l.groups;
     int k = l.size*l.size*l.c/l.groups;
@@ -118,9 +121,20 @@ void forward_convolutional_layer_gpu(convolutional_layer l, network net)
             } else {
                 im2col_gpu(im, l.c/l.groups, l.h, l.w, l.size, l.stride, l.pad, b);
             }
+
+// time = what_time_is_it_now();
+
             gemm_gpu(0,0,m,n,k,CAST(1),a,k,b,n,CAST(1),c,n);
+
+// cudaDeviceSynchronize();
+// ttime += 1000*(what_time_is_it_now()-time);
+
         }
     }
+
+// > Time spent by GEMM per CONV layer
+// printf(">> Time: %3.7f ms.\n", ttime); 
+
 #endif
 
     if (l.batch_normalize) {

@@ -1162,6 +1162,76 @@ void network_detect(network *net, image im, real thresh, real hier_thresh, real 
 }
 */
 
+int iteration = 0;
+
+void test(char *filename) {
+    char *datacfg = (char *)"cfg/coco.data";
+    char *cfgfile = (char *)"cfg/yolov3-tiny.cfg";
+    char *weightfile = (char *)"../yolov3-tiny2.weights";
+    real thresh = CAST(0.3);
+    real hier_thresh = CAST(0.5);
+
+    // Load config (classes names file)
+    list *options = read_data_cfg(datacfg);
+
+    // Load classes names
+    char *name_list = option_find_str(options, (char *)"names", (char *)"data/names.list");
+    char **names = get_labels(name_list);
+
+    // Load alphabet letters images
+    image **alphabet = load_alphabet();
+
+    // Load neural network
+    network *net = load_network(cfgfile, weightfile, 0);
+    set_batch_network(net, 1);
+    srand(2222222);
+
+    char buff[256];
+    char *input = buff;
+    real nms = CAST(.45);
+
+    strncpy(input, filename, 256);
+
+    // Load input image
+    image im = load_image_color(input, 0, 0);
+    image sized = letterbox_image(im, net->w, net->h);
+
+    layer l = net->layers[net->n - 1];
+
+    real *X = sized.data;
+
+    int nboxes = 0;
+    detection *dets;
+
+double ttime = what_time_is_it_now();
+
+for (iteration = 0; iteration < 10; iteration++)
+{
+        // Run predictor
+        network_predict(net, X);
+        printf("\n");
+
+        // Generate outputs
+
+        int letterbox = 1;
+        dets = get_network_boxes(net, im.w, im.h, thresh, hier_thresh, 0, 1, &nboxes, letterbox);
+}
+
+// > Time spent for prediction + probabilities calculation
+printf("Total Time: %f ms.\n", (what_time_is_it_now() - ttime) * 1000);
+
+    // printf("Detections: %d\n", nboxes);
+    //if (nms) do_nms_obj(boxes, probs, l.w*l.h*l.n, l.classes, nms);
+    if (nms)
+        do_nms_sort(dets, nboxes, l.classes, nms);
+    draw_detections(im, dets, nboxes, thresh, names, alphabet, l.classes);
+    free_detections(dets, nboxes);
+
+    save_image(im, "predictions");
+    free_image(im);
+    free_image(sized);
+}
+
 void run_detector(int argc, char **argv)
 {
     char *prefix = find_char_arg(argc, argv, (char*)"-prefix", 0);
@@ -1216,7 +1286,11 @@ void run_detector(int argc, char **argv)
     else if(0==strcmp(argv[2], "valid2")) validate_detector_flip(datacfg, cfg, weights, outfile);
     else if(0==strcmp(argv[2], "recall")) validate_detector_recall(cfg, weights);
     else if(0==strcmp(argv[2], "map")) validate_detector_map(datacfg, cfg, weights, thresh, iou_thresh, NULL);
-    else if(0==strcmp(argv[2], "demo")) {
+    else if(0 == strcmp(argv[2], "rubens")) {
+        // ./darknet detector rubens <filename>
+        filename = datacfg;
+        test(filename);
+    } else if(0==strcmp(argv[2], "demo")) {
         list *options = read_data_cfg(datacfg);
         int classes = option_find_int(options, (char*)"classes", 20);
         char *name_list = option_find_str(options, (char*)"names", (char*)"data/names.list");
