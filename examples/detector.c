@@ -566,7 +566,7 @@ void validate_detector_recall(char *cfgfile, char *weightfile)
 
 typedef struct {
     box b;
-    real p;
+    float p;
     int class_id;
     int image_index;
     int truth_flag;
@@ -577,14 +577,13 @@ int detections_comparator(const void *pa, const void *pb)
 {
     box_prob a = *(box_prob *)pa;
     box_prob b = *(box_prob *)pb;
-    real diff = a.p - b.p;
+    float diff = a.p - b.p;
     if (diff < 0) return 1;
     else if (diff > 0) return -1;
     return 0;
 }
 
-real validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real thresh_calc_avg_iou, const real iou_thresh, network *existing_net)
-{
+double validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real thresh_calc_avg_iou, const real iou_thresh, network *existing_net) {
     list *options = read_data_cfg(datacfg);
     char *valid_images = option_find_str(options, (char*)"valid", (char*)"data/train.txt");
     char *difficult_valid_images = option_find_str(options, (char*)"difficult", NULL);
@@ -597,11 +596,9 @@ real validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real 
     if (weightfile) {
         load_weights(net, weightfile);
     }
-    // fuse_conv_batchnorm(*net);
-    // calculate_binary_weights(net);
 
     srand(time(0));
-    printf("\n calculation mAP (mean average precision)...\n");
+    printf("\nCalculation mAP (mean average precision)...\n");
 
     list *plist = get_paths(valid_images);
     char **paths = (char **)list_to_array(plist);    
@@ -612,7 +609,6 @@ real validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real 
         paths_dif = (char **)list_to_array(plist_dif);
     }
 
-
     layer l = net->layers[net->n - 1];
     int classes = l.classes;
 
@@ -622,7 +618,6 @@ real validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real 
 
     const real thresh = CAST(.005);
     const real nms = CAST(.45);
-    //const real iou_thresh = 0.5;
 
     int nthreads = 4;
     if (m < 4) nthreads = m;
@@ -635,12 +630,9 @@ real validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real 
     load_args args = { 0 };
     args.w = net->w;
     args.h = net->h;
-    // args.c = net.c;
     args.type = IMAGE_DATA;
-    //args.type = LETTERBOX_DATA;
 
-    //const real thresh_calc_avg_iou = 0.24;
-    real avg_iou = CAST(0);
+    double avg_iou = 0;
     int tp_for_thresh = 0;
     int fp_for_thresh = 0;
 
@@ -656,9 +648,16 @@ real validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real 
         args.resized = &buf_resized[t];
         thr[t] = load_data_in_thread(args);
     }
-    time_t start = time(0);
+    
+    double loadTime, tLoadTime = 0;
+    double detTime, tDetTime = 0;
+
     for (i = nthreads; i < m + nthreads; i += nthreads) {
-        fprintf(stderr, "\r%d", i);
+        fprintf(stderr, "\r%d ", i);
+
+        loadTime = what_time_is_it_now();
+        // > Load images data
+        // >> load_data_in_thread is SLOWER in HALF because imgs data need to be CASTED
         for (t = 0; t < nthreads && i + t - nthreads < m; ++t) {
             pthread_join(thr[t], 0);
             val[t] = buf[t];
@@ -670,7 +669,13 @@ real validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real 
             args.resized = &buf_resized[t];
             thr[t] = load_data_in_thread(args);
         }
+        tLoadTime += what_time_is_it_now() - loadTime;
+
+        // > Detection
         for (t = 0; t < nthreads && i + t - nthreads < m; ++t) {
+
+            detTime = what_time_is_it_now();
+
             const int image_index = i + t - nthreads;
             char *path = paths[image_index];
             char *id = basecfg(path);
@@ -683,12 +688,12 @@ real validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real 
             if (args.type == LETTERBOX_DATA) {
                 int letterbox = 1;
                 dets = get_network_boxes(net, val[t].w, val[t].h, thresh, hier_thresh, 0, 1, &nboxes, letterbox);
-            }
-            else {
+            } else {
                 int letterbox = 0;
                 dets = get_network_boxes(net, 1, 1, thresh, hier_thresh, 0, 0, &nboxes, letterbox);
             }
 
+            // Lots of HALF arithmetich on CPU! (box_iou,...)
             if (nms) do_nms_sort(dets, nboxes, l.classes, nms);
 
             char labelpath[4096];
@@ -703,13 +708,10 @@ real validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real 
             // difficult
             box_label *truth_dif = NULL;
             int num_labels_dif = 0;
-            if (paths_dif)
-            {
+            if (paths_dif) {
                 char *path_dif = paths_dif[image_index];
-
                 char labelpath_dif[4096];
                 replace_image_to_label(path_dif, labelpath_dif);
-
                 truth_dif = read_boxes(labelpath_dif, &num_labels_dif);
             }
 
@@ -730,13 +732,10 @@ real validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real 
                         detections[detections_count - 1].unique_truth_index = -1;
 
                         int truth_index = -1;
-                        real max_iou = CAST(0);
-                        for (j = 0; j < num_labels; ++j)
-                        {
+                        double max_iou = 0;
+                        for (j = 0; j < num_labels; ++j) {
                             box t = { truth[j].x, truth[j].y, truth[j].w, truth[j].h };
-                            //printf(" IoU = %f, prob = %f, class_id = %d, truth[j].id = %d \n",
-                            //    box_iou(dets[i].bbox, t), prob, class_id, truth[j].id);
-                            real current_iou = box_iou(dets[i].bbox, t);
+                            double current_iou = box_iou(dets[i].bbox, t);
                             if (current_iou > iou_thresh && class_id == truth[j].id) {
                                 if (current_iou > max_iou) {
                                     max_iou = current_iou;
@@ -749,12 +748,11 @@ real validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real 
                         if (truth_index > -1) {
                             detections[detections_count - 1].truth_flag = 1;
                             detections[detections_count - 1].unique_truth_index = truth_index;
-                        }
-                        else {
+                        } else {
                             // if object is difficult then remove detection
                             for (j = 0; j < num_labels_dif; ++j) {
                                 box t = { truth_dif[j].x, truth_dif[j].y, truth_dif[j].w, truth_dif[j].h };
-                                real current_iou = box_iou(dets[i].bbox, t);
+                                double current_iou = box_iou(dets[i].bbox, t);
                                 if (current_iou > iou_thresh && class_id == truth_dif[j].id) {
                                     --detections_count;
                                     break;
@@ -773,15 +771,17 @@ real validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real 
                             if (truth_index > -1 && found == 0) {
                                 avg_iou += max_iou;
                                 ++tp_for_thresh;
-                            }
-                            else
+                            } else
                                 fp_for_thresh++;
                         }
                     }
+
                 }
             }
 
             unique_truth_count += num_labels;
+
+            tDetTime += what_time_is_it_now() - detTime;
 
             free_detections(dets, nboxes);
             free(id);
@@ -807,7 +807,7 @@ real validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real 
     for (i = 0; i < classes; ++i) {
         pr[i] = (pr_t*)calloc(detections_count, sizeof(pr_t));
     }
-    printf("\n detections_count = %d, unique_truth_count = %d  \n", detections_count, unique_truth_count);
+    printf("\ndetections_count = %d, unique_truth_count = %d\n", detections_count, unique_truth_count);
 
     int *truth_flags = (int*)calloc(unique_truth_count, sizeof(int));
 
@@ -827,18 +827,15 @@ real validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real 
         box_prob d = detections[rank];
         // if (detected && isn't detected before)
         if (d.truth_flag == 1) {
-            if (truth_flags[d.unique_truth_index] == 0)
-            {
+            if (truth_flags[d.unique_truth_index] == 0) {
                 truth_flags[d.unique_truth_index] = 1;
                 pr[d.class_id][rank].tp++;    // true-positive
             }
-        }
-        else {
+        } else {
             pr[d.class_id][rank].fp++;    // false-positive
         }
 
-        for (i = 0; i < classes; ++i)
-        {
+        for (i = 0; i < classes; ++i) {
             const int tp = pr[i][rank].tp;
             const int fp = pr[i][rank].fp;
             const int fn = truth_classes_count[i] - tp;    // false-negative = objects - true-positive
@@ -861,8 +858,7 @@ real validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real 
         for (point = 0; point < 11; ++point) {
             double cur_recall = point * 0.1;
             double cur_precision = 0;
-            for (rank = 0; rank < detections_count; ++rank)
-            {
+            for (rank = 0; rank < detections_count; ++rank) {
                 if (pr[i][rank].recall >= cur_recall) {    // > or >=
                     if (pr[i][rank].precision > cur_precision) {
                         cur_precision = pr[i][rank].precision;
@@ -877,21 +873,18 @@ real validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real 
         mean_average_precision += avg_precision;
     }
 
-    const real cur_precision = (real)tp_for_thresh / ((real)tp_for_thresh + (real)fp_for_thresh);
-    const real cur_recall = (real)tp_for_thresh / ((real)tp_for_thresh + (real)(unique_truth_count - tp_for_thresh));
-    const real f1_score = CAST(2.) * cur_precision * cur_recall / (cur_precision + cur_recall);
-    printf(" for thresh = %1.2f, precision = %1.2f, recall = %1.2f, F1-score = %1.2f \n",
-        (float)thresh_calc_avg_iou, (float)cur_precision, (float)cur_recall, (float)f1_score);
+    const double cur_precision = (double)tp_for_thresh / ((double)tp_for_thresh + (double)fp_for_thresh);
+    const double cur_recall = (double)tp_for_thresh / ((double)tp_for_thresh + (double)(unique_truth_count - tp_for_thresh));
+    const double f1_score = 2. * cur_precision * cur_recall / (cur_precision + cur_recall);
 
-    printf(" for thresh = %0.2f, TP = %d, FP = %d, FN = %d, average IoU = %2.2f %% \n",
-        (float)thresh_calc_avg_iou, tp_for_thresh, fp_for_thresh, unique_truth_count - tp_for_thresh, (float)(avg_iou * 100));
+    printf("for thresh = %1.2f, precision = %1.2f, recall = %1.2f, F1-score = %1.2f \n", (float)thresh_calc_avg_iou, cur_precision, cur_recall, f1_score);
+    printf("for thresh = %0.2f, TP = %d, FP = %d, FN = %d, average IoU = %2.2f %% \n", (float)thresh_calc_avg_iou, tp_for_thresh, fp_for_thresh, unique_truth_count - tp_for_thresh, avg_iou * 100);
 
     mean_average_precision = mean_average_precision / classes;
     if (iou_thresh == 0.5) {
-        printf("\n mean average precision (mAP) = %f, or %2.2f %% \n", mean_average_precision, mean_average_precision * 100);
-    }
-    else {
-        printf("\n average precision (AP) = %f, or %2.2f %% for IoU threshold = %f \n", mean_average_precision, mean_average_precision * 100, (float)iou_thresh);
+        printf("\nmean average precision (mAP) = %f, or %2.2f %% \n", mean_average_precision, mean_average_precision * 100);
+    }  else {
+        printf("\naverage precision (AP) = %f, or %2.2f %% for IoU threshold = %f \n", mean_average_precision, mean_average_precision * 100, (float)iou_thresh);
     }
 
 
@@ -902,23 +895,22 @@ real validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real 
     free(detections);
     free(truth_classes_count);
 
-    fprintf(stderr, "Total Detection Time: %f Seconds\n", (double)(time(0) - start));
     if (reinforcement_fd != NULL) fclose(reinforcement_fd);
 
     // free memory
     free_ptrs((void **)names, net->layers[net->n - 1].classes);
-    // !!!
-    // free_list_contents_kvp(options);
     free_list(options);
 
     if (existing_net) {
         //set_batch_network(&net, initial_batch);
-    }
-    else {
+    } else {
         free_network(net);
     }
 
-    return CAST(mean_average_precision);
+    printf("Load time: %f seconds\n", tLoadTime);
+    printf("Detection time: %f seconds\n", tDetTime);
+
+    return mean_average_precision;
 }
 
 void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filename, real thresh, real hier_thresh, char *outfile, int fullscreen)
@@ -996,172 +988,6 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
     }
 }
 
-/*
-void censor_detector(char *datacfg, char *cfgfile, char *weightfile, int cam_index, const char *filename, int class, real thresh, int skip)
-{
-#ifdef OPENCV
-    char *base = basecfg(cfgfile);
-    network *net = load_network(cfgfile, weightfile, 0);
-    set_batch_network(net, 1);
-
-    srand(2222222);
-    CvCapture * cap;
-
-    int w = 1280;
-    int h = 720;
-
-    if(filename){
-        cap = cvCaptureFromFile(filename);
-    }else{
-        cap = cvCaptureFromCAM(cam_index);
-    }
-
-    if(w){
-        cvSetCaptureProperty(cap, CV_CAP_PROP_FRAME_WIDTH, w);
-    }
-    if(h){
-        cvSetCaptureProperty(cap, CV_CAP_PROP_FRAME_HEIGHT, h);
-    }
-
-    if(!cap) error("Couldn't connect to webcam.\n");
-    cvNamedWindow(base, CV_WINDOW_NORMAL); 
-    cvResizeWindow(base, 512, 512);
-    real fps = 0;
-    int i;
-    real nms = .45;
-
-    while(1){
-        image in = get_image_from_stream(cap);
-        //image in_s = resize_image(in, net->w, net->h);
-        image in_s = letterbox_image(in, net->w, net->h);
-        layer l = net->layers[net->n-1];
-
-        real *X = in_s.data;
-        network_predict(net, X);
-        int nboxes = 0;
-        detection *dets = get_network_boxes(net, in.w, in.h, thresh, 0, 0, 0, &nboxes);
-        //if (nms) do_nms_obj(boxes, probs, l.w*l.h*l.n, l.classes, nms);
-        if (nms) do_nms_sort(dets, nboxes, l.classes, nms);
-
-        for(i = 0; i < nboxes; ++i){
-            if(dets[i].prob[class] > thresh){
-                box b = dets[i].bbox;
-                int left  = b.x-b.w/2.;
-                int top   = b.y-b.h/2.;
-                censor_image(in, left, top, b.w, b.h);
-            }
-        }
-        show_image(in, base);
-        cvWaitKey(10);
-        free_detections(dets, nboxes);
-
-
-        free_image(in_s);
-        free_image(in);
-
-
-        real curr = 0;
-        fps = .9*fps + .1*curr;
-        for(i = 0; i < skip; ++i){
-            image in = get_image_from_stream(cap);
-            free_image(in);
-        }
-    }
-    #endif
-}
-
-void extract_detector(char *datacfg, char *cfgfile, char *weightfile, int cam_index, const char *filename, int class, real thresh, int skip)
-{
-#ifdef OPENCV
-    char *base = basecfg(cfgfile);
-    network *net = load_network(cfgfile, weightfile, 0);
-    set_batch_network(net, 1);
-
-    srand(2222222);
-    CvCapture * cap;
-
-    int w = 1280;
-    int h = 720;
-
-    if(filename){
-        cap = cvCaptureFromFile(filename);
-    }else{
-        cap = cvCaptureFromCAM(cam_index);
-    }
-
-    if(w){
-        cvSetCaptureProperty(cap, CV_CAP_PROP_FRAME_WIDTH, w);
-    }
-    if(h){
-        cvSetCaptureProperty(cap, CV_CAP_PROP_FRAME_HEIGHT, h);
-    }
-
-    if(!cap) error("Couldn't connect to webcam.\n");
-    cvNamedWindow(base, CV_WINDOW_NORMAL); 
-    cvResizeWindow(base, 512, 512);
-    real fps = 0;
-    int i;
-    int count = 0;
-    real nms = .45;
-
-    while(1){
-        image in = get_image_from_stream(cap);
-        //image in_s = resize_image(in, net->w, net->h);
-        image in_s = letterbox_image(in, net->w, net->h);
-        layer l = net->layers[net->n-1];
-
-        show_image(in, base);
-
-        int nboxes = 0;
-        real *X = in_s.data;
-        network_predict(net, X);
-        detection *dets = get_network_boxes(net, in.w, in.h, thresh, 0, 0, 1, &nboxes);
-        //if (nms) do_nms_obj(boxes, probs, l.w*l.h*l.n, l.classes, nms);
-        if (nms) do_nms_sort(dets, nboxes, l.classes, nms);
-
-        for(i = 0; i < nboxes; ++i){
-            if(dets[i].prob[class] > thresh){
-                box b = dets[i].bbox;
-                int size = b.w*in.w > b.h*in.h ? b.w*in.w : b.h*in.h;
-                int dx  = b.x*in.w-size/2.;
-                int dy  = b.y*in.h-size/2.;
-                image bim = crop_image(in, dx, dy, size, size);
-                char buff[2048];
-                sprintf(buff, "results/extract/%07d", count);
-                ++count;
-                save_image(bim, buff);
-                free_image(bim);
-            }
-        }
-        free_detections(dets, nboxes);
-
-
-        free_image(in_s);
-        free_image(in);
-
-
-        real curr = 0;
-        fps = .9*fps + .1*curr;
-        for(i = 0; i < skip; ++i){
-            image in = get_image_from_stream(cap);
-            free_image(in);
-        }
-    }
-    #endif
-}
-*/
-
-/*
-void network_detect(network *net, image im, real thresh, real hier_thresh, real nms, detection *dets)
-{
-    network_predict_image(net, im);
-    layer l = net->layers[net->n-1];
-    int nboxes = num_boxes(net);
-    fill_network_boxes(net, im.w, im.h, thresh, hier_thresh, 0, 0, dets);
-    if (nms) do_nms_sort(dets, nboxes, l.classes, nms);
-}
-*/
-
 int iteration = 0;
 
 void test(char *filename) {
@@ -1203,10 +1029,10 @@ void test(char *filename) {
     int nboxes = 0;
     detection *dets;
 
-double ttime = what_time_is_it_now();
+    double ttime = what_time_is_it_now();
 
-for (iteration = 0; iteration < 10; iteration++)
-{
+    for (iteration = 0; iteration < 10; iteration++)
+    {
         // Run predictor
         network_predict(net, X);
         printf("\n");
@@ -1215,10 +1041,10 @@ for (iteration = 0; iteration < 10; iteration++)
 
         int letterbox = 1;
         dets = get_network_boxes(net, im.w, im.h, thresh, hier_thresh, 0, 1, &nboxes, letterbox);
-}
+    }
 
-// > Time spent for prediction + probabilities calculation
-printf("Total Time: %f ms.\n", (what_time_is_it_now() - ttime) * 1000);
+    // > Time spent for prediction + probabilities calculation
+    printf("Total Time: %f ms.\n", (what_time_is_it_now() - ttime) * 1000);
 
     // printf("Detections: %d\n", nboxes);
     //if (nms) do_nms_obj(boxes, probs, l.w*l.h*l.n, l.classes, nms);
