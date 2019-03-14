@@ -651,6 +651,7 @@ double validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, rea
     
     double loadTime, tLoadTime = 0;
     double detTime, tDetTime = 0;
+    double totalTime = what_time_is_it_now();
 
     for (i = nthreads; i < m + nthreads; i += nthreads) {
         fprintf(stderr, "\r%d ", i);
@@ -887,6 +888,9 @@ double validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, rea
         printf("\naverage precision (AP) = %f, or %2.2f %% for IoU threshold = %f \n", mean_average_precision, mean_average_precision * 100, (float)iou_thresh);
     }
 
+    printf("Load time: %f seconds\n", tLoadTime);
+    printf("Detection time: %f seconds\n", tDetTime);
+    printf("Total time: %f seconds\n", what_time_is_it_now() - totalTime);
 
     for (i = 0; i < classes; ++i) {
         free(pr[i]);
@@ -906,9 +910,6 @@ double validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, rea
     } else {
         free_network(net);
     }
-
-    printf("Load time: %f seconds\n", tLoadTime);
-    printf("Detection time: %f seconds\n", tDetTime);
 
     return mean_average_precision;
 }
@@ -988,8 +989,79 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
     }
 }
 
-int iteration = 0;
+void test(char *filename) {
+    char *datacfg = (char *)"../cfg/coco.data";
+    char *cfgfile = (char *)"cfg/yolov3-tiny.cfg";
+    char *weightfile = (char *)"../yolov3-tiny2.weights";
 
+    list *options = read_data_cfg(datacfg);
+    char *valid_images = option_find_str(options, (char*)"valid", (char*)"data/train.txt");
+
+    network *net;
+    net = parse_network_cfg_custom(cfgfile, 1);    // set batch=1
+    if (weightfile) {
+        load_weights(net, weightfile);
+    }
+
+    srand(time(0));
+
+    list *plist = get_paths(valid_images);
+    char **paths = (char **)list_to_array(plist);  
+
+    int m = plist->size;
+
+    int nthreads = 4;
+    if (m < 4) nthreads = m;
+    image *val = (image*)calloc(nthreads, sizeof(image));
+    image *val_resized = (image*)calloc(nthreads, sizeof(image));
+    image *buf = (image*)calloc(nthreads, sizeof(image));
+    image *buf_resized = (image*)calloc(nthreads, sizeof(image));
+    pthread_t *thr = (pthread_t*)calloc(nthreads, sizeof(pthread_t));
+
+    load_args args = { 0 };
+    args.w = net->w;
+    args.h = net->h;
+    args.type = IMAGE_DATA;
+
+
+    int i = 0;
+    int t;
+
+    double loadTime = what_time_is_it_now();
+
+    for (t = 0; t < nthreads; ++t) {
+        args.path = paths[i + t];
+        args.im = &buf[t];
+        args.resized = &buf_resized[t];
+        thr[t] = load_data_in_thread(args);
+    }
+
+    for (i = nthreads; i < m + nthreads; i += nthreads) {
+        // fprintf(stderr, "\r%d ", i);
+
+        // Get loaded image from each thread
+        for (t = 0; t < nthreads && ((i + t) - nthreads < m); ++t) {
+            pthread_join(thr[t], 0);
+            val[t] = buf[t];
+            val_resized[t] = buf_resized[t];
+        }
+
+        // Start new threads to load next images
+        for (t = 0; t < nthreads && ((i + t) < m); ++t) {
+            args.path = paths[i + t];
+            args.im = &buf[t];
+            args.resized = &buf_resized[t];
+            thr[t] = load_data_in_thread(args);
+        }
+
+
+    }
+
+    printf("Load time: %f seconds\n", what_time_is_it_now() - loadTime);
+
+}
+
+/* // Rubens Test 1
 void test(char *filename) {
     char *datacfg = (char *)"cfg/coco.data";
     char *cfgfile = (char *)"cfg/yolov3-tiny.cfg";
@@ -1031,8 +1103,8 @@ void test(char *filename) {
 
     double ttime = what_time_is_it_now();
 
-    for (iteration = 0; iteration < 10; iteration++)
-    {
+    int iteration = 0;
+    for (iteration = 0; iteration < 10; iteration++) {
         // Run predictor
         network_predict(net, X);
         printf("\n");
@@ -1047,7 +1119,6 @@ void test(char *filename) {
     printf("Total Time: %f ms.\n", (what_time_is_it_now() - ttime) * 1000);
 
     // printf("Detections: %d\n", nboxes);
-    //if (nms) do_nms_obj(boxes, probs, l.w*l.h*l.n, l.classes, nms);
     if (nms)
         do_nms_sort(dets, nboxes, l.classes, nms);
     draw_detections(im, dets, nboxes, thresh, names, alphabet, l.classes);
@@ -1057,6 +1128,8 @@ void test(char *filename) {
     free_image(im);
     free_image(sized);
 }
+*/
+
 
 void run_detector(int argc, char **argv)
 {
