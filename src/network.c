@@ -92,7 +92,7 @@ real get_current_rate(network *net)
     size_t batch_num = get_current_batch(net);
     int i;
     real rate;
-    if (batch_num < net->burn_in) return net->learning_rate * pow((real)batch_num / CAST(net->burn_in), net->power);
+    if (batch_num < net->burn_in) return net->learning_rate * pow(CAST((float)batch_num / net->burn_in), net->power);
     switch (net->policy) {
         case CONSTANT:
             return net->learning_rate;
@@ -108,7 +108,7 @@ real get_current_rate(network *net)
         case EXP:
             return net->learning_rate * pow(net->gamma, CAST(batch_num));
         case POLY:
-            return net->learning_rate * pow(CAST(1 - (real)batch_num / net->max_batches), net->power);
+            return net->learning_rate * pow(CAST(1 - (float)batch_num / net->max_batches), net->power);
         case RANDOM:
             return net->learning_rate * pow(rand_uniform(CAST(0),CAST(1)), net->power);
         case SIG:
@@ -308,7 +308,7 @@ real train_network_sgd(network *net, data d, int n)
         real err = train_network_datum(net);
         sum += err;
     }
-    return (real)sum/CAST(n*batch);
+    return CAST((float)sum/(n*batch));
 }
 
 real train_network(network *net, data d)
@@ -324,7 +324,7 @@ real train_network(network *net, data d)
         real err = train_network_datum(net);
         sum += err;
     }
-    return (real)sum/CAST(n*batch);
+    return CAST((float)sum/(n*batch));
 }
 
 void set_temp_network(network *net, real t)
@@ -1129,7 +1129,7 @@ real train_networks(network **nets, int n, data d, int interval)
     //cudaDeviceSynchronize();
     free(threads);
     free(errors);
-    return CAST((real)sum/(n));
+    return CAST((float)sum/(n));
 }
 
 void pull_network_output(network *net)

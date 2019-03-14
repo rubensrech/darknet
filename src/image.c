@@ -24,7 +24,7 @@ real colors[6][3] = {
 
 real get_color(int c, int x, int max)
 {
-    real ratio = CAST(((real)x/max)*5);
+    real ratio = CAST(((float)x/max)*5);
     int i = floor(ratio);
     int j = ceil(ratio);
     ratio -= i;
@@ -644,8 +644,8 @@ void place_image(image im, int w, int h, int dx, int dy, image canvas)
     for(c = 0; c < im.c; ++c){
         for(y = 0; y < h; ++y){
             for(x = 0; x < w; ++x){
-                real rx = CAST(((real)x / w) * im.w);
-                real ry = CAST(((real)y / h) * im.h);
+                real rx = CAST(((float)x / w) * im.w);
+                real ry = CAST(((float)y / h) * im.h);
                 real val = bilinear_interpolate(im, rx, ry, c);
                 set_pixel(canvas, x + dx, y + dy, c, val);
             }
@@ -805,7 +805,7 @@ void letterbox_image_into(image im, int w, int h, image boxed)
 {
     int new_w = im.w;
     int new_h = im.h;
-    if (((real)w/im.w) < ((real)h/im.h)) {
+    if (((float)w/im.w) < ((float)h/im.h)) {
         new_w = w;
         new_h = (im.h * w)/im.w;
     } else {
@@ -821,7 +821,7 @@ image letterbox_image(image im, int w, int h)
 {
     int new_w = im.w;
     int new_h = im.h;
-    if (((real)w/im.w) < ((real)h/im.h)) {
+    if (((float)w/im.w) < ((float)h/im.h)) {
         new_w = w;
         new_h = (im.h * w)/im.w;
     } else {
@@ -884,7 +884,7 @@ augment_args random_augment_args(image im, real angle, real aspect, int low, int
     aspect = rand_scale(aspect);
     int r = rand_int(low, high);
     int min = (im.h < im.w*aspect) ? im.h : im.w*aspect;
-    real scale = CAST((real)r / min);
+    real scale = CAST((float)r / min);
 
     real rad = rand_uniform(-angle, angle) * CAST(TWO_PI / 360.);
 
@@ -1453,10 +1453,10 @@ void show_images(image *ims, int n, char *window)
     image m = collapse_images_vert(ims, n);
     /*
        int w = 448;
-       int h = ((real)m.h/m.w) * 448;
+       int h = ((float)m.h/m.w) * 448;
        if(h > 896){
        h = 896;
-       w = ((real)m.w/m.h) * 896;
+       w = ((float)m.w/m.h) * 896;
        }
        image sized = resize_image(m, w, h);
      */

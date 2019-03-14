@@ -920,14 +920,14 @@ data load_data_region(int n, char **paths, int m, int w, int h, int size, int cl
         int swidth =  ow - pleft - pright;
         int sheight = oh - ptop - pbot;
 
-        real sx = (real)swidth  / CAST(ow);
-        real sy = (real)sheight / CAST(oh);
+        real sx = CAST((float)swidth  / ow);
+        real sy = CAST((float)sheight / oh);
 
         int flip = rand()%2;
         image cropped = crop_image(orig, pleft, ptop, swidth, sheight);
 
-        real dx = ((real)pleft/CAST(ow))/sx;
-        real dy = ((real)ptop /CAST(oh))/sy;
+        real dx = CAST(((float)pleft/ow)/sx);
+        real dy = CAST(((float)ptop /oh)/sy);
 
         image sized = resize_image(cropped, w, h);
         if(flip) flip_image(sized);
@@ -1055,14 +1055,14 @@ data load_data_swag(char **paths, int n, int classes, real jitter)
     int swidth =  w - pleft - pright;
     int sheight = h - ptop - pbot;
 
-    real sx = (real)swidth  / CAST(w);
-    real sy = (real)sheight / CAST(h);
+    real sx = CAST((float)swidth  / w);
+    real sy = CAST((float)sheight / h);
 
     int flip = rand()%2;
     image cropped = crop_image(orig, pleft, ptop, swidth, sheight);
 
-    real dx = ((real)pleft/CAST(w))/sx;
-    real dy = ((real)ptop /CAST(h))/sy;
+    real dx = CAST(((float)pleft/ w)/sx);
+    real dy = CAST(((float)ptop / h)/sy);
 
     image sized = resize_image(cropped, w, h);
     if(flip) flip_image(sized);

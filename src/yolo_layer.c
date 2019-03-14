@@ -250,7 +250,7 @@ void correct_yolo_boxes(detection *dets, int n, int w, int h, int netw, int neth
     int new_w=0;
     int new_h=0;
     if (letter) {
-        if (((real)netw/w) < ((real)neth/h)) {
+        if (((float)netw/w) < ((float)neth/h)) {
             new_w = netw;
             new_h = (h * netw)/w;
         } else {
@@ -263,10 +263,10 @@ void correct_yolo_boxes(detection *dets, int n, int w, int h, int netw, int neth
     }
     for (i = 0; i < n; ++i){
         box b = dets[i].bbox;
-        b.x =  (b.x - (netw - new_w)/2./netw) / ((real)new_w/netw); 
-        b.y =  (b.y - (neth - new_h)/2./neth) / ((real)new_h/neth); 
-        b.w *= (real)netw/new_w;
-        b.h *= (real)neth/new_h;
+        b.x =  (b.x - (netw - new_w)/2./netw) / ((float)new_w/netw); 
+        b.y =  (b.y - (neth - new_h)/2./neth) / ((float)new_h/neth); 
+        b.w *= (float)netw/new_w;
+        b.h *= (float)neth/new_h;
         if(!relative){
             b.x *= w;
             b.w *= w;

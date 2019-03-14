@@ -127,8 +127,8 @@ void speed(char *cfgfile, int tics)
     double t = what_time_is_it_now() - time;
     long ops = numops(net);
     printf("\n%d evals, %f Seconds\n", tics, t);
-    printf("Double Precision Operations: %.2f Bn\n", (real)ops/1000000000.);
-    printf("FLOPS: %.2f Bn\n", (real)ops/1000000000.*tics/t);
+    printf("Double Precision Operations: %.2f Bn\n", (float)ops/1000000000.);
+    printf("FLOPS: %.2f Bn\n", (float)ops/1000000000.*tics/t);
     printf("Speed: %f sec/eval\n", t/tics);
     printf("Speed: %f Hz\n", tics/t);
 }
@@ -139,7 +139,7 @@ void operations(char *cfgfile)
     network *net = parse_network_cfg(cfgfile);
     long ops = numops(net);
     printf("Double Precision Operations: %ld\n", ops);
-    printf("Double Precision Operations: %.2f Bn\n", (real)ops/1000000000.);
+    printf("Double Precision Operations: %.2f Bn\n", (float)ops/1000000000.);
 }
 
 void oneoff(char *cfgfile, char *weightfile, char *outfile)

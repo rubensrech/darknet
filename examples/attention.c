@@ -205,7 +205,7 @@ void train_attention(char *datacfg, char *cfgfile, char *weightfile, int *gpus, 
         avg_cls_loss = avg_cls_loss*.9 + closs*.1;
         avg_att_loss = avg_att_loss*.9 + aloss*.1;
 
-        printf("%ld, %.3f: Att: %lf, %f avg, Class: %f, %f avg, %f rate, %lf seconds, %ld images\n", get_current_batch(net), (real)(*net->seen)/N, aloss, avg_att_loss, closs, avg_cls_loss, get_current_rate(net), what_time_is_it_now()-time, *net->seen);
+        printf("%ld, %.3f: Att: %lf, %f avg, Class: %f, %f avg, %f rate, %lf seconds, %ld images\n", get_current_batch(net), (float)(*net->seen)/N, aloss, avg_att_loss, closs, avg_cls_loss, get_current_rate(net), what_time_is_it_now()-time, *net->seen);
         if(*net->seen/N > epoch){
             epoch = *net->seen/N;
             char buff[256];

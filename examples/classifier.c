@@ -883,7 +883,7 @@ void threat_classifier(char *datacfg, char *cfgfile, char *weightfile, int cam_i
 
         draw_box_width(out, x1, y1, x2, y2, border, 0,0,0);
         for(i = 0; i < threat * h ; ++i){
-            real ratio = (real) i / h;
+            real ratio = CAST((float)i / h);
             real r = (ratio < .5) ? (2*(ratio)) : 1;
             real g = (ratio < .5) ? 1 : 1 - 2*(ratio - .5);
             draw_box_width(out, x1 + border, y2 - border - i, x2 - border, y2 - border - i, 1, r, g, 0);

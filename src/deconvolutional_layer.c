@@ -70,7 +70,7 @@ layer make_deconvolutional_layer(int batch, int h, int w, int c, int n, int size
     l.outputs = l.out_w * l.out_h * l.out_c;
     l.inputs = l.w * l.h * l.c;
 
-    scal_cpu(l.nweights, CAST((real)l.out_w*l.out_h/(l.w*l.h)), l.weights, 1);
+    scal_cpu(l.nweights, CAST((float)l.out_w*l.out_h/(l.w*l.h)), l.weights, 1);
 
     l.output = (real*)calloc(l.batch*l.outputs, sizeof(real));
     l.delta  = (real*)calloc(l.batch*l.outputs, sizeof(real));

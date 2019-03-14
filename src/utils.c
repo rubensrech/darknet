@@ -231,7 +231,7 @@ void find_replace(char *str, char *orig, char *rep, char *output)
 
 real sec(clock_t clocks)
 {
-    return CAST((real)clocks/CLOCKS_PER_SEC);
+    return CAST((float)clocks/CLOCKS_PER_SEC);
 }
 
 void top_k(real *a, int n, int k, int *index)
@@ -678,7 +678,7 @@ real rand_normal()
    int n = 12;
    int i;
    real sum= 0;
-   for(i = 0; i < n; ++i) sum += (real)rand()/RAND_MAX;
+   for(i = 0; i < n; ++i) sum += (float)rand()/RAND_MAX;
    return sum-n/2.;
    }
  */
@@ -702,7 +702,7 @@ real rand_uniform(real min, real max)
         min = max;
         max = swap;
     }
-    return CAST(((real)rand()/RAND_MAX * (max - min)) + min);
+    return CAST(((float)rand()/RAND_MAX * (max - min)) + min);
 }
 
 real rand_scale(real s)

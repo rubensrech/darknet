@@ -14,7 +14,7 @@ static inline real distance_from_edge(int x, int max)
     if (dx < 0) dx = -dx;
     dx = (max/2) + 1 - dx;
     dx *= 2;
-    real dist = CAST((real)dx/max);
+    real dist = CAST((float)dx/max);
     if (dist > 1) dist = 1;
     return dist;
 }

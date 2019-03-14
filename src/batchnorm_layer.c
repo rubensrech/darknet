@@ -111,7 +111,7 @@ void  variance_delta_cpu(real *x, real *delta, real *mean, real *variance, int b
                 variance_delta[i] += delta[index]*(x[index] - mean[i]);
             }
         }
-        variance_delta[i] *= -.5 * pow(variance[i] + .00001f, (real)(-3./2.));
+        variance_delta[i] *= -.5 * pow(variance[i] + .00001f, (float)(-3./2.));
     }
 }
 void normalize_delta_cpu(real *x, real *mean, real *variance, real *mean_delta, real *variance_delta, int batch, int filters, int spatial, real *delta)

@@ -22,7 +22,7 @@ crop_layer make_crop_layer(int batch, int h, int w, int c, int crop_height, int 
     l.h = h;
     l.w = w;
     l.c = c;
-    l.scale = (real)crop_height / h;
+    l.scale = (float)crop_height / h;
     l.flip = flip;
     l.angle = angle;
     l.saturation = saturation;

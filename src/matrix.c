@@ -31,7 +31,7 @@ real matrix_topk_accuracy(matrix truth, matrix guess, int k)
         }
     }
     free(indexes);
-    return (real)correct/CAST(truth.rows);
+    return CAST((float)correct/truth.rows);
 }
 
 void scale_matrix(matrix m, real scale)

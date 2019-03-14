@@ -689,8 +689,8 @@ void parse_net_options(list *options, network *net)
     net->inputs = option_find_int_quiet(options, (char*)"inputs", net->h * net->w * net->c);
     net->max_crop = option_find_int_quiet(options, (char*)"max_crop",net->w*2);
     net->min_crop = option_find_int_quiet(options, (char*)"min_crop",net->w);
-    net->max_ratio = option_find_real_quiet(options, (char*)"max_ratio", (real)net->max_crop / CAST(net->w));
-    net->min_ratio = option_find_real_quiet(options, (char*)"min_ratio", (real)net->min_crop / CAST(net->w));
+    net->max_ratio = option_find_real_quiet(options, (char*)"max_ratio", CAST((float)net->max_crop / net->w));
+    net->min_ratio = option_find_real_quiet(options, (char*)"min_ratio", CAST((float)net->min_crop / net->w));
     net->center = option_find_int_quiet(options, (char*)"center",0);
     net->clip = option_find_real_quiet(options, (char*)"clip", CAST(0));
 
