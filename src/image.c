@@ -1209,27 +1209,27 @@ image resize_image(image im, int w, int h)
     image resized = make_image(w, h, im.c);   
     image part = make_image(w, im.h, im.c);
     int r, c, k;
-    real w_scale = CAST((real)(im.w - 1) / (w - 1));
-    real h_scale = CAST((real)(im.h - 1) / (h - 1));
+    float w_scale = (float)(im.w - 1) / (w - 1);
+    float h_scale = (float)(im.h - 1) / (h - 1);
     for(k = 0; k < im.c; ++k){
         for(r = 0; r < im.h; ++r){
             for(c = 0; c < w; ++c){
-                real val = CAST(0);
+                float val = 0;
                 if(c == w-1 || im.w == 1){
                     val = get_pixel(im, im.w-1, r, k);
                 } else {
-                    real sx = CAST(c)*w_scale;
+                    float sx = c*w_scale;
                     int ix = (int) sx;
-                    real dx = sx - CAST(ix);
+                    float dx = sx - ix;
                     val = (1 - dx) * get_pixel(im, ix, r, k) + dx * get_pixel(im, ix+1, r, k);
                 }
-                set_pixel(part, c, r, k, val);
+                set_pixel(part, c, r, k, CAST(val));
             }
         }
     }
     for(k = 0; k < im.c; ++k){
         for(r = 0; r < h; ++r){
-            real sy = CAST(r)*h_scale;
+            real sy = CAST(r*h_scale);
             int iy = (int) sy;
             real dy = sy - CAST(iy);
             for(c = 0; c < w; ++c){
@@ -1314,7 +1314,7 @@ image load_image_stb(char *filename, int channels)
             for(i = 0; i < w; ++i){
                 int dst_index = i + w*j + w*h*k;
                 int src_index = k + c*i + c*w*j;
-                im.data[dst_index] = (real)data[src_index]/255.;
+                im.data[dst_index] = (float)data[src_index]/255.;
             }
         }
     }
