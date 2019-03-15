@@ -117,9 +117,9 @@ void forward_detection_layer(const detection_layer l, network net)
                         out.h = out.h*out.h;
                     }
 
-                    real iou  = box_iou(out, truth);
+                    real iou  = CAST(box_iou(out, truth));  // ##
                     //iou = 0;
-                    real rmse = box_rmse(out, truth);
+                    real rmse = CAST(box_rmse(out, truth)); // ##
                     if(best_iou > 0 || iou > 0){
                         if(iou > best_iou){
                             best_iou = iou;
@@ -154,7 +154,7 @@ void forward_detection_layer(const detection_layer l, network net)
                     out.w = out.w*out.w;
                     out.h = out.h*out.h;
                 }
-                real iou  = box_iou(out, truth);
+                real iou  = CAST(box_iou(out, truth));  // ##
 
                 //printf("%d,", best_index);
                 int p_index = index + locations*l.classes + i*l.n + best_index;

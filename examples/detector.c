@@ -167,10 +167,10 @@ static void print_cocos(FILE *fp, char *image_path, detection *dets, int num_box
     int i, j;
     int image_id = get_coco_image_id(image_path);
     for(i = 0; i < num_boxes; ++i){
-        real xmin = dets[i].bbox.x - dets[i].bbox.w/CAST(2.);
-        real xmax = dets[i].bbox.x + dets[i].bbox.w/CAST(2.);
-        real ymin = dets[i].bbox.y - dets[i].bbox.h/CAST(2.);
-        real ymax = dets[i].bbox.y + dets[i].bbox.h/CAST(2.);
+        real xmin = CAST(dets[i].bbox.x - dets[i].bbox.w/CAST(2.)); // ##
+        real xmax = CAST(dets[i].bbox.x + dets[i].bbox.w/CAST(2.)); // ##
+        real ymin = CAST(dets[i].bbox.y - dets[i].bbox.h/CAST(2.)); // ##
+        real ymax = CAST(dets[i].bbox.y + dets[i].bbox.h/CAST(2.)); // ##
 
         if (xmin < 0) xmin = 0;
         if (ymin < 0) ymin = 0;
@@ -192,10 +192,10 @@ void print_detector_detections(FILE **fps, char *id, detection *dets, int total,
 {
     int i, j;
     for(i = 0; i < total; ++i){
-        real xmin = dets[i].bbox.x - dets[i].bbox.w/CAST(2.) + CAST(1);
-        real xmax = dets[i].bbox.x + dets[i].bbox.w/CAST(2.) + CAST(1);
-        real ymin = dets[i].bbox.y - dets[i].bbox.h/CAST(2.) + CAST(1);
-        real ymax = dets[i].bbox.y + dets[i].bbox.h/CAST(2.) + CAST(1);
+        real xmin = CAST(dets[i].bbox.x - dets[i].bbox.w/CAST(2.) + CAST(1)); // ##
+        real xmax = CAST(dets[i].bbox.x + dets[i].bbox.w/CAST(2.) + CAST(1)); // ##
+        real ymin = CAST(dets[i].bbox.y - dets[i].bbox.h/CAST(2.) + CAST(1)); // ##
+        real ymax = CAST(dets[i].bbox.y + dets[i].bbox.h/CAST(2.) + CAST(1)); // ##
 
         if (xmin < 1) xmin = 1;
         if (ymin < 1) ymin = 1;
@@ -213,10 +213,10 @@ void print_imagenet_detections(FILE *fp, int id, detection *dets, int total, int
 {
     int i, j;
     for(i = 0; i < total; ++i){
-        real xmin = dets[i].bbox.x - dets[i].bbox.w/CAST(2.);
-        real xmax = dets[i].bbox.x + dets[i].bbox.w/CAST(2.);
-        real ymin = dets[i].bbox.y - dets[i].bbox.h/CAST(2.);
-        real ymax = dets[i].bbox.y + dets[i].bbox.h/CAST(2.);
+        real xmin = CAST(dets[i].bbox.x - dets[i].bbox.w/CAST(2.)); // ##
+        real xmax = CAST(dets[i].bbox.x + dets[i].bbox.w/CAST(2.)); // ##
+        real ymin = CAST(dets[i].bbox.y - dets[i].bbox.h/CAST(2.)); // ##
+        real ymax = CAST(dets[i].bbox.y + dets[i].bbox.h/CAST(2.)); // ##
 
         if (xmin < 0) xmin = 0;
         if (ymin < 0) ymin = 0;
@@ -546,7 +546,7 @@ void validate_detector_recall(char *cfgfile, char *weightfile)
             box t = {truth[j].x, truth[j].y, truth[j].w, truth[j].h};
             real best_iou = CAST(0);
             for(k = 0; k < l.w*l.h*l.n; ++k){
-                real iou = box_iou(dets[k].bbox, t);
+                real iou = CAST(box_iou(dets[k].bbox, t)); // ##
                 if(dets[k].objectness > thresh && iou > best_iou){
                     best_iou = iou;
                 }
@@ -653,6 +653,8 @@ double validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, rea
     double detTime, tDetTime = 0;
     double totalTime = what_time_is_it_now();
 
+double tmpTime, tTmpTime = 0;
+
     for (i = nthreads; i < m + nthreads; i += nthreads) {
         fprintf(stderr, "\r%d ", i);
 
@@ -694,8 +696,10 @@ double validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, rea
                 dets = get_network_boxes(net, 1, 1, thresh, hier_thresh, 0, 0, &nboxes, letterbox);
             }
 
+tmpTime = what_time_is_it_now();
             // Lots of HALF arithmetich on CPU! (box_iou,...)
             if (nms) do_nms_sort(dets, nboxes, l.classes, nms);
+tTmpTime += what_time_is_it_now() - tmpTime;
 
             char labelpath[4096];
             replace_image_to_label(path, labelpath);
@@ -888,6 +892,7 @@ double validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, rea
         printf("\naverage precision (AP) = %f, or %2.2f %% for IoU threshold = %f \n", mean_average_precision, mean_average_precision * 100, (float)iou_thresh);
     }
 
+printf("tmp time: %f seconds\n", tTmpTime);
     printf("Load time: %f seconds\n", tLoadTime);
     printf("Detection time: %f seconds\n", tDetTime);
     printf("Total time: %f seconds\n", what_time_is_it_now() - totalTime);

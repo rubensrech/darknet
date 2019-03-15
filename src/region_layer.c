@@ -86,12 +86,12 @@ box get_region_box(real *x, real *biases, int n, int index, int i, int j, int w,
 real delta_region_box(box truth, real *x, real *biases, int n, int index, int i, int j, int w, int h, real *delta, real scale, int stride)
 {
     box pred = get_region_box(x, biases, n, index, i, j, w, h, stride);
-    real iou = box_iou(pred, truth);
+    real iou = CAST(box_iou(pred, truth)); // ##
 
     real tx = CAST(truth.x*w - i);
     real ty = CAST(truth.y*h - j);
-    real tw = log(truth.w*CAST(w) / biases[2*n]);
-    real th = log(truth.h*CAST(h) / biases[2*n + 1]);
+    real tw = CAST(log(truth.w*CAST(w) / biases[2*n])); // ##
+    real th = CAST(log(truth.h*CAST(h) / biases[2*n + 1])); // ##
 
     delta[index + 0*stride] = scale * (tx - x[index + 0*stride]);
     delta[index + 1*stride] = scale * (ty - x[index + 1*stride]);
@@ -238,7 +238,7 @@ void forward_region_layer(const layer l, network net)
                     for(t = 0; t < 30; ++t){
                         box truth = real_to_box(net.truth + t*(l.coords + 1) + b*l.truths, 1);
                         if(!truth.x) break;
-                        real iou = box_iou(pred, truth);
+                        real iou = CAST(box_iou(pred, truth)); // ##
                         if (iou > best_iou) {
                             best_iou = iou;
                         }
@@ -282,7 +282,7 @@ void forward_region_layer(const layer l, network net)
                 }
                 pred.x = 0;
                 pred.y = 0;
-                real iou = box_iou(pred, truth_shift);
+                real iou = CAST(box_iou(pred, truth_shift)); // ##
                 if (iou > best_iou){
                     best_iou = iou;
                     best_n = n;
@@ -290,7 +290,7 @@ void forward_region_layer(const layer l, network net)
             }
 
             int box_index = entry_index(l, b, best_n*l.w*l.h + j*l.w + i, 0);
-            real iou = delta_region_box(truth, l.output, l.biases, best_n, box_index, i, j, l.w, l.h, l.delta, l.coord_scale *  (CAST(2) - truth.w*truth.h), l.w*l.h);
+            real iou = delta_region_box(truth, l.output, l.biases, best_n, box_index, i, j, l.w, l.h, l.delta, CAST(l.coord_scale *  (2 - truth.w*truth.h)), l.w*l.h); // ##
             if(l.coords > 4){
                 int mask_index = entry_index(l, b, best_n*l.w*l.h + j*l.w + i, 4);
                 delta_region_mask(net.truth + t*(l.coords + 1) + b*l.truths + 5, l.output, l.coords - 4, mask_index, l.delta, l.w*l.h, l.mask_scale);

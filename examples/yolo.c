@@ -78,10 +78,10 @@ void print_yolo_detections(FILE **fps, char *id, int total, int classes, int w, 
 {
     int i, j;
     for(i = 0; i < total; ++i){
-        real xmin = dets[i].bbox.x - dets[i].bbox.w/CAST(2.);
-        real xmax = dets[i].bbox.x + dets[i].bbox.w/CAST(2.);
-        real ymin = dets[i].bbox.y - dets[i].bbox.h/CAST(2.);
-        real ymax = dets[i].bbox.y + dets[i].bbox.h/CAST(2.);
+        real xmin = CAST(dets[i].bbox.x - dets[i].bbox.w/CAST(2.)); // ##
+        real xmax = CAST(dets[i].bbox.x + dets[i].bbox.w/CAST(2.)); // ##
+        real ymin = CAST(dets[i].bbox.y - dets[i].bbox.h/CAST(2.)); // ##
+        real ymax = CAST(dets[i].bbox.y + dets[i].bbox.h/CAST(2.)); // ##
 
         if (xmin < 0) xmin = 0;
         if (ymin < 0) ymin = 0;
@@ -247,7 +247,7 @@ void validate_yolo_recall(char *cfg, char *weights)
             box t = {truth[j].x, truth[j].y, truth[j].w, truth[j].h};
             real best_iou = CAST(0);
             for(k = 0; k < side*side*l.n; ++k){
-                real iou = box_iou(dets[k].bbox, t);
+                real iou = CAST(box_iou(dets[k].bbox, t)); // ##
                 if(dets[k].objectness > thresh && iou > best_iou){
                     best_iou = iou;
                 }

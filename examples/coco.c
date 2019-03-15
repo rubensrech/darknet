@@ -98,23 +98,23 @@ static void print_cocos(FILE *fp, int image_id, detection *dets, int num_boxes, 
 {
     int i, j;
     for(i = 0; i < num_boxes; ++i){
-        real xmin = dets[i].bbox.x - dets[i].bbox.w/CAST(2.);
-        real xmax = dets[i].bbox.x + dets[i].bbox.w/CAST(2.);
-        real ymin = dets[i].bbox.y - dets[i].bbox.h/CAST(2.);
-        real ymax = dets[i].bbox.y + dets[i].bbox.h/CAST(2.);
+        float xmin = dets[i].bbox.x - dets[i].bbox.w/2.;
+        float xmax = dets[i].bbox.x + dets[i].bbox.w/2.;
+        float ymin = dets[i].bbox.y - dets[i].bbox.h/2.;
+        float ymax = dets[i].bbox.y + dets[i].bbox.h/2.;
 
         if (xmin < 0) xmin = 0;
         if (ymin < 0) ymin = 0;
         if (xmax > w) xmax = w;
         if (ymax > h) ymax = h;
 
-        real bx = xmin;
-        real by = ymin;
-        real bw = xmax - xmin;
-        real bh = ymax - ymin;
+        float bx = xmin;
+        float by = ymin;
+        float bw = xmax - xmin;
+        float bh = ymax - ymin;
 
         for(j = 0; j < classes; ++j){
-            if (dets[i].prob[j]) fprintf(fp, "{\"image_id\":%d, \"category_id\":%d, \"bbox\":[%f, %f, %f, %f], \"score\":%f},\n", image_id, coco_ids[j], (float)bx, (float)by, (float)bw, (float)bh, (float)(dets[i].prob[j]));
+            if (dets[i].prob[j]) fprintf(fp, "{\"image_id\":%d, \"category_id\":%d, \"bbox\":[%f, %f, %f, %f], \"score\":%f},\n", image_id, coco_ids[j], bx, by, bw, bh, dets[i].prob[j]);
         }
     }
 }
@@ -257,7 +257,7 @@ void validate_coco_recall(char *cfgfile, char *weightfile)
         // !!!
         int letterbox = 1;
         detection *dets = get_network_boxes(net, orig.w, orig.h, thresh, CAST(0), 0, 1, &nboxes, letterbox);
-        if (nms) do_nms_obj(dets, side*side*l.n, 1, CAST(nms));
+        if (nms) do_nms_obj(dets, side*side*l.n, 1, nms);
 
         char labelpath[4096];
         find_replace(path, (char*)"images", (char*)"labels", labelpath);
@@ -275,9 +275,9 @@ void validate_coco_recall(char *cfgfile, char *weightfile)
         for (j = 0; j < num_labels; ++j) {
             ++total;
             box t = {truth[j].x, truth[j].y, truth[j].w, truth[j].h};
-            real best_iou = CAST(0);
+            float best_iou = 0;
             for(k = 0; k < side*side*l.n; ++k){
-                real iou = box_iou(dets[k].bbox, t);
+                float iou = box_iou(dets[k].bbox, t);
                 if(dets[k].objectness > thresh && iou > best_iou){
                     best_iou = iou;
                 }
@@ -302,7 +302,7 @@ void test_coco(char *cfgfile, char *weightfile, char *filename, real thresh)
     layer l = net->layers[net->n-1];
     set_batch_network(net, 1);
     srand(2222222);
-    real nms = CAST(.4);
+    float nms = .4;
     clock_t time;
     char buff[256];
     char *input = buff;
