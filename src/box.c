@@ -7,7 +7,7 @@ int nms_comparator(const void *pa, const void *pb)
 {
     detection a = *(detection *)pa;
     detection b = *(detection *)pb;
-    float diff = 0; // Keep this change
+    float diff = 0;
     if(b.sort_class >= 0){
         diff = a.prob[b.sort_class] - b.prob[b.sort_class];
     } else {

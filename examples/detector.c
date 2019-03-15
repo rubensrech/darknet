@@ -167,23 +167,23 @@ static void print_cocos(FILE *fp, char *image_path, detection *dets, int num_box
     int i, j;
     int image_id = get_coco_image_id(image_path);
     for(i = 0; i < num_boxes; ++i){
-        real xmin = CAST(dets[i].bbox.x - dets[i].bbox.w/CAST(2.)); // ##
-        real xmax = CAST(dets[i].bbox.x + dets[i].bbox.w/CAST(2.)); // ##
-        real ymin = CAST(dets[i].bbox.y - dets[i].bbox.h/CAST(2.)); // ##
-        real ymax = CAST(dets[i].bbox.y + dets[i].bbox.h/CAST(2.)); // ##
+        float xmin = dets[i].bbox.x - dets[i].bbox.w/2.;
+        float xmax = dets[i].bbox.x + dets[i].bbox.w/2.;
+        float ymin = dets[i].bbox.y - dets[i].bbox.h/2.;
+        float ymax = dets[i].bbox.y + dets[i].bbox.h/2.;
 
         if (xmin < 0) xmin = 0;
         if (ymin < 0) ymin = 0;
         if (xmax > w) xmax = w;
         if (ymax > h) ymax = h;
 
-        real bx = xmin;
-        real by = ymin;
-        real bw = xmax - xmin;
-        real bh = ymax - ymin;
+        float bx = xmin;
+        float by = ymin;
+        float bw = xmax - xmin;
+        float bh = ymax - ymin;
 
         for(j = 0; j < classes; ++j){
-            if (dets[i].prob[j]) fprintf(fp, "{\"image_id\":%d, \"category_id\":%d, \"bbox\":[%f, %f, %f, %f], \"score\":%f},\n", image_id, coco_ids[j], (float)bx, (float)by, (float)bw, (float)bh, (float)(dets[i].prob[j]));
+            if (dets[i].prob[j]) fprintf(fp, "{\"image_id\":%d, \"category_id\":%d, \"bbox\":[%f, %f, %f, %f], \"score\":%f},\n", image_id, coco_ids[j], bx, by, bw, bh, dets[i].prob[j]);
         }
     }
 }
@@ -192,10 +192,10 @@ void print_detector_detections(FILE **fps, char *id, detection *dets, int total,
 {
     int i, j;
     for(i = 0; i < total; ++i){
-        real xmin = CAST(dets[i].bbox.x - dets[i].bbox.w/CAST(2.) + CAST(1)); // ##
-        real xmax = CAST(dets[i].bbox.x + dets[i].bbox.w/CAST(2.) + CAST(1)); // ##
-        real ymin = CAST(dets[i].bbox.y - dets[i].bbox.h/CAST(2.) + CAST(1)); // ##
-        real ymax = CAST(dets[i].bbox.y + dets[i].bbox.h/CAST(2.) + CAST(1)); // ##
+        float xmin = dets[i].bbox.x - dets[i].bbox.w/2. + 1;
+        float xmax = dets[i].bbox.x + dets[i].bbox.w/2. + 1;
+        float ymin = dets[i].bbox.y - dets[i].bbox.h/2. + 1;
+        float ymax = dets[i].bbox.y + dets[i].bbox.h/2. + 1;
 
         if (xmin < 1) xmin = 1;
         if (ymin < 1) ymin = 1;
@@ -203,8 +203,8 @@ void print_detector_detections(FILE **fps, char *id, detection *dets, int total,
         if (ymax > h) ymax = h;
 
         for(j = 0; j < classes; ++j){
-            if (dets[i].prob[j]) fprintf(fps[j], "%s %f %f %f %f %f\n", id, (float)(dets[i].prob[j]),
-                    (float)xmin, (float)ymin, (float)xmax, (float)ymax);
+            if (dets[i].prob[j]) fprintf(fps[j], "%s %f %f %f %f %f\n", id, dets[i].prob[j],
+                    xmin, ymin, xmax, ymax);
         }
     }
 }
@@ -213,10 +213,10 @@ void print_imagenet_detections(FILE *fp, int id, detection *dets, int total, int
 {
     int i, j;
     for(i = 0; i < total; ++i){
-        real xmin = CAST(dets[i].bbox.x - dets[i].bbox.w/CAST(2.)); // ##
-        real xmax = CAST(dets[i].bbox.x + dets[i].bbox.w/CAST(2.)); // ##
-        real ymin = CAST(dets[i].bbox.y - dets[i].bbox.h/CAST(2.)); // ##
-        real ymax = CAST(dets[i].bbox.y + dets[i].bbox.h/CAST(2.)); // ##
+        float xmin = dets[i].bbox.x - dets[i].bbox.w/2.;
+        float xmax = dets[i].bbox.x + dets[i].bbox.w/2.;
+        float ymin = dets[i].bbox.y - dets[i].bbox.h/2.;
+        float ymax = dets[i].bbox.y + dets[i].bbox.h/2.;
 
         if (xmin < 0) xmin = 0;
         if (ymin < 0) ymin = 0;
@@ -225,8 +225,8 @@ void print_imagenet_detections(FILE *fp, int id, detection *dets, int total, int
 
         for(j = 0; j < classes; ++j){
             int _class = j;
-            if (dets[i].prob[_class]) fprintf(fp, "%d %d %f %f %f %f %f\n", id, j+1, (float)(dets[i].prob[_class]),
-                    (float)xmin, (float)ymin, (float)xmax, (float)ymax);
+            if (dets[i].prob[_class]) fprintf(fp, "%d %d %f %f %f %f %f\n", id, j+1, dets[i].prob[_class],
+                    xmin, ymin, xmax, ymax);
         }
     }
 }
@@ -544,9 +544,9 @@ void validate_detector_recall(char *cfgfile, char *weightfile)
         for (j = 0; j < num_labels; ++j) {
             ++total;
             box t = {truth[j].x, truth[j].y, truth[j].w, truth[j].h};
-            real best_iou = CAST(0);
+            float best_iou = 0;
             for(k = 0; k < l.w*l.h*l.n; ++k){
-                real iou = CAST(box_iou(dets[k].bbox, t)); // ##
+                float iou = box_iou(dets[k].bbox, t);
                 if(dets[k].objectness > thresh && iou > best_iou){
                     best_iou = iou;
                 }
