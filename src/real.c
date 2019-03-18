@@ -34,12 +34,12 @@ real* cast_array_float2half(float *src, int n) {
     real *dst = (real*)malloc(n*sizeof(real));
 
     #ifdef GPU
-        float *src_gpu = cuda_make_array(src, n);
-        real *dst_gpu = cuda_make_float_array(dst, n);
-        half2float_array_gpu(src_gpu, dst_gpu, n);
+        float *src_gpu = cuda_make_float_array(src, n);
+        real *dst_gpu = cuda_make_array(dst, n);
+        float2half_array_gpu(src_gpu, dst_gpu, n);
         cuda_pull_array(dst_gpu, dst, n);
     #else
-        half2float_array(src, dst, n);
+        float2half_array(src, dst, n);
     #endif
 
     return dst;
