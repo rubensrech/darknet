@@ -83,7 +83,6 @@ box get_region_box(real *x, real *biases, int n, int index, int i, int j, int w,
     return b;
 }
 
-// TODO: remove half
 real delta_region_box(box truth, real *x, real *biases, int n, int index, int i, int j, int w, int h, real *delta, real scale, int stride)
 {
     box pred = get_region_box(x, biases, n, index, i, j, w, h, stride);

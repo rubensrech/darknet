@@ -1066,7 +1066,10 @@ void test(char *filename) {
 
 }
 
-/* // Rubens Test 1
+/*
+// Rubens Test 1
+// Purpose: Calculate time per layer
+// PS.: Uncomment lines on "forward_network_gpu()" (network.c:763)
 void test(char *filename) {
     char *datacfg = (char *)"cfg/coco.data";
     char *cfgfile = (char *)"cfg/yolov3-tiny.cfg";
