@@ -618,6 +618,7 @@ void axpy_cpu(int N, real ALPHA, real *X, int INCX, real *Y, int INCY);
 void copy_cpu(int N, real *X, int INCX, real *Y, int INCY);
 void scal_cpu(int N, real ALPHA, real *X, int INCX);
 void fill_cpu(int N, real ALPHA, real * X, int INCX);
+void fill_cpu_float(int N, float ALPHA, float *X, int INCX);
 void normalize_cpu(real *x, real *mean, real *variance, int batch, int filters, int spatial);
 void softmax(real *input, int n, real temp, int stride, real *output);
 
@@ -625,6 +626,7 @@ int best_3d_shift_r(image a, image b, int min, int max);
 #ifdef GPU
 void axpy_gpu(int N, real ALPHA, real * X, int INCX, real * Y, int INCY);
 void fill_gpu(int N, real ALPHA, real * X, int INCX);
+void fill_gpu_float(int N, float ALPHA, float *X, int INCX);
 void scal_gpu(int N, real ALPHA, real * X, int INCX);
 void copy_gpu(int N, real * X, int INCX, real * Y, int INCY);
 
@@ -633,6 +635,7 @@ void cuda_free(real *x_gpu);
 real *cuda_make_array(real *x, size_t n);
 float *cuda_make_float_array(float *x, size_t n);
 void cuda_pull_array(real *x_gpu, real *x, size_t n);
+void cuda_pull_float_array(float *x_gpu, float *x, size_t n);
 real cuda_mag_array(real *x_gpu, size_t n);
 void cuda_push_array(real *x_gpu, real *x, size_t n);
 

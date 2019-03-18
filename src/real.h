@@ -48,10 +48,10 @@
 	void float2half_array(float* src, real* dst, size_t n);
 	void half2float_array(real* src, float* dst, size_t n);
 
-	float* cast_array_half2float(real *src, int n);
-	real* cast_array_float2half(float *src, int n);
-
 #endif
+
+float* cast_array_real2float(real *src, int n);
+real* cast_array_float2real(float *src, int n);
 
 #ifdef __NVCC__
 

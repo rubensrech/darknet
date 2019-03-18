@@ -449,6 +449,12 @@ __global__ void fill_kernel(int N, real_device ALPHA, real_device *X, int INCX)
     if(i < N) X[i*INCX] = ALPHA;
 }
 
+__global__ void fill_float_kernel(int N, float ALPHA, float *X, int INCX)
+{
+    int i = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
+    if(i < N) X[i*INCX] = ALPHA;
+}
+
 __global__ void copy_kernel(int N,  real_device *X, int OFFX, int INCX, real_device *Y, int OFFY, int INCY)
 {
     int i = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
@@ -705,6 +711,12 @@ void supp_gpu(int N, real ALPHA, real *X, int INCX)
 extern "C" void fill_gpu(int N, real ALPHA, real *X, int INCX)
 {
     fill_kernel<<<cuda_gridsize(N), BLOCK>>>(N, (real_device)ALPHA, (real_device*)X, INCX);
+    check_error(cudaPeekAtLastError());
+}
+
+extern "C" void fill_gpu_float(int N, float ALPHA, float *X, int INCX)
+{
+    fill_float_kernel<<<cuda_gridsize(N), BLOCK>>>(N, ALPHA, X, INCX);
     check_error(cudaPeekAtLastError());
 }
 

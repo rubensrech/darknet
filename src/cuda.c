@@ -111,6 +111,23 @@ real *cuda_make_array(real *x, size_t n)
     return x_gpu;
 }
 
+float *cuda_make_float_array(float *x, size_t n)
+{
+    float *x_gpu;
+    size_t size = sizeof(float)*n;
+    cudaError_t status = cudaMalloc((void **)&x_gpu, size);
+    check_error(status);
+    if(x){
+        status = cudaMemcpy(x_gpu, x, size, cudaMemcpyHostToDevice);
+        check_error(status);
+    } else {
+        fill_gpu_float(n, 0, x_gpu, 1);
+    }
+    if(!x_gpu) error("Cuda malloc failed\n");
+    return x_gpu;
+}
+
+
 void cuda_random(real *x_gpu, size_t n)
 {
     static curandGenerator_t gen[16];
@@ -185,6 +202,14 @@ void cuda_pull_array(real *x_gpu, real *x, size_t n)
     cudaError_t status = cudaMemcpy(x, x_gpu, size, cudaMemcpyDeviceToHost);
     check_error(status);
 }
+
+void cuda_pull_float_array(float *x_gpu, float *x, size_t n)
+{
+    size_t size = sizeof(float)*n;
+    cudaError_t status = cudaMemcpy(x, x_gpu, size, cudaMemcpyDeviceToHost);
+    check_error(status);
+}
+
 
 real cuda_mag_array(real *x_gpu, size_t n)
 {

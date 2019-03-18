@@ -23,7 +23,7 @@ __global__ void half2float_array_kernel(__half* src, float* dst, size_t n) {
 }
 
 void half2float_array_gpu(real* src, float* dst, size_t n) {
-	half2float_array_kernel<<<cuda_gridsize(n), BLOCK>>>(src, (__half*)dst, n);
+	half2float_array_kernel<<<cuda_gridsize(n), BLOCK>>>((__half*)src, dst, n);
 	check_error(cudaPeekAtLastError());
 }
 
