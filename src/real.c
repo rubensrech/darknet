@@ -3,14 +3,14 @@
 
 #if REAL == HALF
 
-void float2half_array(float* src, real* dst, size_t n) {
+void float2real_array(float* src, real* dst, size_t n) {
     int i;
     for (i = 0; i < n; i++)
         dst[i] = src[i];
 }
 
 
-void half2float_array(real* src, float* dst, size_t n) {
+void real2float_array(real* src, float* dst, size_t n) {
     int i;
     for (i = 0; i < n; i++)
         dst[i] = src[i];
@@ -27,10 +27,10 @@ float* cast_array_real2float(real *src, int n) {
         #ifdef GPU
             real *src_gpu = cuda_make_array(src, n);
             float *dst_gpu = cuda_make_float_array(dst, n);
-            half2float_array_gpu(src_gpu, dst_gpu, n);
+            real2float_array_gpu(src_gpu, dst_gpu, n);
             cuda_pull_float_array(dst_gpu, dst, n);
         #else
-            half2float_array(src, dst, n);
+            real2float_array(src, dst, n);
         #endif
     #endif
 
@@ -46,10 +46,10 @@ real* cast_array_float2real(float *src, int n) {
         #ifdef GPU
             float *src_gpu = cuda_make_float_array(src, n);
             real *dst_gpu = cuda_make_array(dst, n);
-            float2half_array_gpu(src_gpu, dst_gpu, n);
+            float2real_array_gpu(src_gpu, dst_gpu, n);
             cuda_pull_array(dst_gpu, dst, n);
         #else
-            float2half_array(src, dst, n);
+            float2real_array(src, dst, n);
         #endif
     #endif
 

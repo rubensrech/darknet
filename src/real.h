@@ -41,12 +41,12 @@
 #if REAL == HALF
 
 	#ifdef GPU
-		void float2half_array_gpu(float* src, real* dst, size_t n);
-		void half2float_array_gpu(real* src, float* dst, size_t n);
+		void float2real_array_gpu(float* src, real* dst, size_t n);
+		void real2float_array_gpu(real* src, float* dst, size_t n);
 	#endif
 
-	void float2half_array(float* src, real* dst, size_t n);
-	void half2float_array(real* src, float* dst, size_t n);
+	void float2real_array(float* src, real* dst, size_t n);
+	void real2float_array(real* src, float* dst, size_t n);
 
 #endif
 

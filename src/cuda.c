@@ -148,7 +148,7 @@ void cuda_random(real *x_gpu, size_t n)
 	check_error(status);
 
     curandGenerateUniform(gen[i], tmp, n);
-    float2half_array(tmp, x_gpu, n);
+    float2real_array_gpu(tmp, x_gpu, n);
 
     // Doesn't matter the type
     cuda_free((real*)tmp);
