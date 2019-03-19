@@ -45,11 +45,11 @@ void optimize_picture(network *net, image orig, int max_layer, real scale, real 
 
     image delta = make_image(im.w, im.h, im.c);
 
-#ifdef GPU
     real *deltaDataReal = cast_array_float2real(delta.data, im.w*im.h*im.c);
+    real *imDataReal = cast_array_float2real(im.data, im.w*im.h*im.c);
+#ifdef GPU
     net->delta_gpu = cuda_make_array(deltaDataReal, im.w*im.h*im.c);
-    real *imgDataReal = cast_array_float2real(im.data, im.w*im.h*im.c);
-    copy_cpu(net->inputs, imgDataReal, 1, net->input, 1);
+    copy_cpu(net->inputs, imDataReal, 1, net->input, 1);
 
     forward_network_gpu(net);
     copy_gpu(last.outputs, last.output_gpu, 1, last.delta_gpu, 1);
@@ -61,18 +61,18 @@ void optimize_picture(network *net, image orig, int max_layer, real scale, real 
     backward_network_gpu(net);
 
     cuda_pull_array(net->delta_gpu, deltaDataReal, im.w*im.h*im.c); // cuda_pull_array(net->delta_gpu, delta.data, im.w*im.h*im.c);
-    delta.data = cast_array_real2float(deltaDataReal, im.w*im.h*im.c);
     cuda_free(net->delta_gpu);
     net->delta_gpu = 0;
 #else
     printf("\nnet: %d %d %d im: %d %d %d\n", net->w, net->h, net->inputs, im.w, im.h, im.c);
-    copy_cpu(net->inputs, im.data, 1, net->input, 1);
-    net->delta = delta.data;
+    copy_cpu(net->inputs, imDataReal, 1, net->input, 1);
+    net->delta = deltaDataReal;
     forward_network(net);
     copy_cpu(last.outputs, last.output, 1, last.delta, 1);
     calculate_loss(last.output, last.delta, last.outputs, thresh);
     backward_network(net);
 #endif
+    delta.data = cast_array_real2float(deltaDataReal, im.w*im.h*im.c);
 
     if(flip) flip_image(delta);
     //normalize_array(delta.data, delta.w*delta.h*delta.c);
@@ -137,36 +137,37 @@ void smooth(image recon, image update, real lambda, int num)
 
 void reconstruct_picture(network *net, float *features, image recon, image update, float rate, float momentum, float lambda, int smooth_size, int iters)
 {
+    layer l = get_network_output_layer(net);
+    real *reconDataReal = cast_array_float2real(recon.data, recon.w*recon.h*recon.c);
+    real *featuresReal = cast_array_float2real(features, l.outputs);
+
     int iter = 0;
     for (iter = 0; iter < iters; ++iter) {
         image delta = make_image(recon.w, recon.h, recon.c);
 
+        real *deltaDataReal = cast_array_float2real(delta.data, delta.w*delta.h*delta.c);
 #ifdef GPU
-        layer l = get_network_output_layer(net);
-        real *reconDataReal = cast_array_float2real(recon.data, recon.w*recon.h*recon.c);
         cuda_push_array(net->input_gpu, reconDataReal, recon.w*recon.h*recon.c);
         //cuda_push_array(net->truth_gpu, features, net->truths);
-        real *deltaDataReal = cast_array_float2real(delta.data, delta.w*delta.h*delta.c);
         net->delta_gpu = cuda_make_array(deltaDataReal, delta.w*delta.h*delta.c);
 
         forward_network_gpu(net);
-        real *featuresReal = cast_array_float2real(features, l.outputs);
         cuda_push_array(l.delta_gpu, featuresReal, l.outputs);
         axpy_gpu(l.outputs, CAST(-1), l.output_gpu, 1, l.delta_gpu, 1);
         backward_network_gpu(net);
 
         cuda_pull_array(net->delta_gpu, deltaDataReal, delta.w*delta.h*delta.c); // cuda_pull_array(net->delta_gpu, delta.data, delta.w*delta.h*delta.c);
-        delta.data = cast_array_real2float(deltaDataReal, delta.w*delta.h*delta.c);
 
         cuda_free(net->delta_gpu);
 #else
-        net->input = recon.data;
-        net->delta = delta.data;
-        net->truth = features;
+        net->input = reconDataReal;
+        net->delta = deltaDataReal;
+        net->truth = featuresReal;
 
         forward_network(net);
         backward_network(net);
 #endif
+        delta.data = cast_array_real2float(deltaDataReal, delta.w*delta.h*delta.c);
 
         //normalize_array(delta.data, delta.w*delta.h*delta.c);
         axpy_float_cpu(recon.w*recon.h*recon.c, 1, delta.data, 1, update.data, 1);
