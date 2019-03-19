@@ -43,7 +43,7 @@ int constrain_int(int a, int min, int max);
 real rand_scale(real s);
 int rand_int(int min, int max);
 void mean_arrays(real **a, int n, int els, real *avg);
-real dist_array(real *a, real *b, int n, int sub);
+float dist_array(float *a, float *b, int n, int sub);
 real **one_hot_encode(real *a, int n, int k);
 real sec(clock_t clocks);
 void print_statistics(real *a, int n);

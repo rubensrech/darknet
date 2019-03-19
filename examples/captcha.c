@@ -111,8 +111,8 @@ void test_captcha(char *cfgfile, char *weightfile, char *filename)
             strtok(input, "\n");
         }
         image im = load_image_color(input, net->w, net->h);
-        real *X = im.data;
-        real *predictions = network_predict(net, X);
+        float *X = im.data;
+        real *predictions = network_predict_float(net, X);
         top_predictions(net, 26, indexes);
         //printf("%s: Predicted in %f seconds.\n", input, sec(clock()-time));
         for(i = 0; i < 26; ++i){
@@ -142,8 +142,8 @@ void valid_captcha(char *cfgfile, char *weightfile, char *filename)
     for(i = 0; i < N; ++i){
         if (i%100 == 0) fprintf(stderr, "%d\n", i);
         image im = load_image_color(paths[i], net->w, net->h);
-        real *X = im.data;
-        real *predictions = network_predict(net, X);
+        float *X = im.data;
+        real *predictions = network_predict_float(net, X);
         //printf("%s: Predicted in %f seconds.\n", input, sec(clock()-time));
         int truth = -1;
         for(j = 0; j < 13; ++j){

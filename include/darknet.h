@@ -508,7 +508,7 @@ typedef struct {
     int w;
     int h;
     int c;
-    real *data;
+    float *data;
 } image;
 
 typedef struct{
@@ -614,12 +614,17 @@ void update_network(network *net);
 
 
 real dot_cpu(int N, real *X, int INCX, real *Y, int INCY);
+float dot_float_cpu(int N, float *X, int INCX, float *Y, int INCY);
 void axpy_cpu(int N, real ALPHA, real *X, int INCX, real *Y, int INCY);
+void axpy_float_cpu(int N, float ALPHA, float *X, int INCX, float *Y, int INCY);
 void copy_cpu(int N, real *X, int INCX, real *Y, int INCY);
+void copy_float_cpu(int N, float *X, int INCX, float *Y, int INCY);
 void scal_cpu(int N, real ALPHA, real *X, int INCX);
+void scal_float_cpu(int N, float ALPHA, float *X, int INCX);
 void fill_cpu(int N, real ALPHA, real * X, int INCX);
-void fill_cpu_float(int N, float ALPHA, float *X, int INCX);
+void fill_float_cpu(int N, float ALPHA, float *X, int INCX);
 void normalize_cpu(real *x, real *mean, real *variance, int batch, int filters, int spatial);
+void normalize_float_cpu(float *x, float *mean, float *variance, int batch, int filters, int spatial);
 void softmax(real *input, int n, real temp, int stride, real *output);
 
 int best_3d_shift_r(image a, image b, int min, int max);
@@ -727,6 +732,7 @@ layer get_network_output_layer(network *net);
 void top_predictions(network *net, int n, int *index);
 void flip_image(image a);
 image real_to_image(int w, int h, int c, real *data);
+image float_to_image(int w, int h, int c, float *data);
 void ghost_image(image source, image dest, int dx, int dy);
 real network_accuracy(network *net, data d);
 void random_distort_image(image im, real hue, real saturation, real exposure);
@@ -746,6 +752,7 @@ matrix network_predict_data(network *net, data test);
 image **load_alphabet();
 image get_network_image(network *net);
 real *network_predict(network *net, real *input);
+real *network_predict_float(network *net, float *input);
 
 int network_width(network *net);
 int network_height(network *net);
@@ -797,11 +804,17 @@ int *random_index_order(int min, int max);
 void free_list(list *l);
 real mse_array(real *a, int n);
 real variance_array(real *a, int n);
+float variance_float_array(float *a, int n);
 real mag_array(real *a, int n);
+float mag_float_array(float *a, int n);
 void scale_array(real *a, int n, real s);
+void scale_float_array(float *a, int n, float s);
 real mean_array(real *a, int n);
+float mean_float_array(float *a, int n);
 real sum_array(real *a, int n);
+float sum_float_array(float *a, int n);
 void normalize_array(real *a, int n);
+void normalize_float_array(float *a, int n);
 int *read_intlist(char *s, int *n, int d);
 size_t rand_size_t();
 real rand_normal();

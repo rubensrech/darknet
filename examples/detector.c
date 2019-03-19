@@ -326,11 +326,11 @@ void validate_detector_flip(char *datacfg, char *cfgfile, char *weightfile, char
         for(t = 0; t < nthreads && i+t-nthreads < m; ++t){
             char *path = paths[i+t-nthreads];
             char *id = basecfg(path);
-            copy_cpu(net->w*net->h*net->c, val_resized[t].data, 1, input.data, 1);
+            copy_float_cpu(net->w*net->h*net->c, val_resized[t].data, 1, input.data, 1);
             flip_image(val_resized[t]);
-            copy_cpu(net->w*net->h*net->c, val_resized[t].data, 1, input.data + net->w*net->h*net->c, 1);
+            copy_float_cpu(net->w*net->h*net->c, val_resized[t].data, 1, input.data + net->w*net->h*net->c, 1);
 
-            network_predict(net, input.data);
+            network_predict_float(net, input.data);
             int w = val[t].w;
             int h = val[t].h;
             int num = 0;
@@ -457,8 +457,8 @@ void validate_detector(char *datacfg, char *cfgfile, char *weightfile, char *out
         for(t = 0; t < nthreads && i+t-nthreads < m; ++t){
             char *path = paths[i+t-nthreads];
             char *id = basecfg(path);
-            real *X = val_resized[t].data;
-            network_predict(net, X);
+            float *X = val_resized[t].data;
+            network_predict_float(net, X);
             int w = val[t].w;
             int h = val[t].h;
             int nboxes = 0;
@@ -521,7 +521,7 @@ void validate_detector_recall(char *cfgfile, char *weightfile)
         image orig = load_image_color(path, 0, 0);
         image sized = resize_image(orig, net->w, net->h);
         char *id = basecfg(path);
-        network_predict(net, sized.data);
+        network_predict_float(net, sized.data);
         int nboxes = 0;
         // !!!
         int letterbox = 1;
@@ -682,8 +682,8 @@ double tmpTime, tTmpTime = 0;
             const int image_index = i + t - nthreads;
             char *path = paths[image_index];
             char *id = basecfg(path);
-            real *X = val_resized[t].data;
-            network_predict(net, X);
+            float *X = val_resized[t].data;
+            network_predict_float(net, X);
 
             int nboxes = 0;
             real hier_thresh = CAST(0);
@@ -959,11 +959,11 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
         layer l = net->layers[net->n-1];
 
 
-        real *X = sized.data;
+        float *X = sized.data;
         time = what_time_is_it_now();
 
         // Run predictor
-        network_predict(net, X);
+        network_predict_float(net, X);
 
         // Generate outputs
         printf("%s: Predicted in %f seconds.\n", input, what_time_is_it_now()-time);

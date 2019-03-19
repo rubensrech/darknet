@@ -484,9 +484,22 @@ real sum_array(real *a, int n)
     return sum;
 }
 
+float sum_float_array(float *a, int n)
+{
+    int i;
+    float sum = 0;
+    for(i = 0; i < n; ++i) sum += a[i];
+    return sum;
+}
+
 real mean_array(real *a, int n)
 {
     return sum_array(a,n)/CAST(n);
+}
+
+float mean_float_array(float *a, int n)
+{
+    return sum_float_array(a,n)/n;
 }
 
 void mean_arrays(real **a, int n, int els, real *avg)
@@ -521,6 +534,16 @@ real variance_array(real *a, int n)
     return variance;
 }
 
+float variance_float_array(float *a, int n)
+{
+    int i;
+    float sum = 0;
+    float mean = mean_float_array(a, n);
+    for(i = 0; i < n; ++i) sum += (a[i] - mean)*(a[i]-mean);
+    float variance = sum/n;
+    return variance;
+}
+
 int constrain_int(int a, int min, int max)
 {
     if (a < min) return min;
@@ -535,10 +558,10 @@ real constrain(real min, real max, real a)
     return a;
 }
 
-real dist_array(real *a, real *b, int n, int sub)
+float dist_array(float *a, float *b, int n, int sub)
 {
     int i;
-    real sum = CAST(0);
+    float sum = 0;
     for(i = 0; i < n; i += sub) sum += pow(a[i]-b[i], 2);
     return sqrt(sum);
 }
@@ -563,6 +586,18 @@ void normalize_array(real *a, int n)
     sigma = sqrt(variance_array(a,n));
 }
 
+void normalize_float_array(float *a, int n)
+{
+    int i;
+    float mu = mean_float_array(a,n);
+    float sigma = sqrt(variance_float_array(a,n));
+    for(i = 0; i < n; ++i){
+        a[i] = (a[i] - mu)/sigma;
+    }
+    mu = mean_float_array(a,n);
+    sigma = sqrt(variance_float_array(a,n));
+}
+
 void translate_array(real *a, int n, real s)
 {
     int i;
@@ -581,6 +616,16 @@ real mag_array(real *a, int n)
     return sqrt(sum);
 }
 
+float mag_float_array(float *a, int n)
+{
+    int i;
+    float sum = 0;
+    for(i = 0; i < n; ++i){
+        sum += a[i]*a[i];   
+    }
+    return sqrt(sum);
+}
+
 void scale_array(real *a, int n, real s)
 {
     int i;
@@ -588,6 +633,15 @@ void scale_array(real *a, int n, real s)
         a[i] *= s;
     }
 }
+
+void scale_float_array(float *a, int n, float s)
+{
+    int i;
+    for(i = 0; i < n; ++i){
+        a[i] *= s;
+    }
+}
+
 
 int sample_array(real *a, int n)
 {

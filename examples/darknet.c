@@ -122,7 +122,7 @@ void speed(char *cfgfile, int tics)
     double time=what_time_is_it_now();
     image im = make_image(net->w, net->h, net->c*net->batch);
     for(i = 0; i < tics; ++i){
-        network_predict(net, im.data);
+        network_predict_float(net, im.data);
     }
     double t = what_time_is_it_now() - time;
     long ops = numops(net);

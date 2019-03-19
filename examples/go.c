@@ -393,7 +393,7 @@ void free_mcts(mcts_tree *root)
 real *network_predict_rotations(network *net, real *next)
 {
     int n = net->batch;
-    real *in = (real*)calloc(19*19*3*n, sizeof(real));
+    float *in = (float*)calloc(19*19*3*n, sizeof(float));
     image im = real_to_image(19, 19, 3, next);
     int i,j;
     int *inds = random_index_order(0, 8);
@@ -401,18 +401,19 @@ real *network_predict_rotations(network *net, real *next)
         i = inds[j];
         rotate_image_cw(im, i);
         if(i >= 4) flip_image(im);
-        memcpy(in + 19*19*3*j, im.data, 19*19*3*sizeof(real));
+        memcpy(in + 19*19*3*j, im.data, 19*19*3*sizeof(float));
         if(i >= 4) flip_image(im);
         rotate_image_cw(im, -i);
     }
-    real *pred = network_predict(net, in);
+    real *pred = network_predict_float(net, in);
+    float *predFloat = cast_array_real2float(pred, net->outputs);
     for(j = 0; j < n; ++j){
         i = inds[j];
         image im = real_to_image(19, 19, 1, pred + j*(19*19 + 2));
         if(i >= 4) flip_image(im);
         rotate_image_cw(im, -i);
         if(j > 0){
-            axpy_cpu(19*19+2, CAST(1), im.data, 1, pred, 1);
+            axpy_float_cpu(19*19+2, 1, im.data, 1, predFloat, 1);
         }
     }
     free(in);

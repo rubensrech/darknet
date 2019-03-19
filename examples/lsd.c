@@ -384,16 +384,16 @@ void train_pix2pix(char *cfg, char *weight, char *acfg, char *aweight, int clear
 }
 */
 
-void slerp(real *start, real *end, real s, int n, real *out)
+void slerp(float *start, float *end, float s, int n, float *out)
 {
-    real omega = acos(dot_cpu(n, start, 1, end, 1));
-    real so = sin(omega);
-    fill_cpu(n, CAST(0), out, 1);
-    axpy_cpu(n, sin((CAST(1)-s)*omega)/so, start, 1, out, 1);
-    axpy_cpu(n, sin(s*omega)/so, end, 1, out, 1);
+    float omega = acos(dot_float_cpu(n, start, 1, end, 1));
+    float so = sin(omega);
+    fill_float_cpu(n, 0, out, 1);
+    axpy_float_cpu(n, sin((1-s)*omega)/so, start, 1, out, 1);
+    axpy_float_cpu(n, sin(s*omega)/so, end, 1, out, 1);
 
-    real mag = mag_array(out, n);
-    scale_array(out, n, CAST(1.)/mag);
+    float mag = mag_float_array(out, n);
+    scale_float_array(out, n, 1./mag);
 }
 
 image random_unit_vector_image(int w, int h, int c)
@@ -403,8 +403,8 @@ image random_unit_vector_image(int w, int h, int c)
     for(i = 0; i < im.w*im.h*im.c; ++i){
         im.data[i] = rand_normal();
     }
-    real mag = mag_array(im.data, im.w*im.h*im.c);
-    scale_array(im.data, im.w*im.h*im.c, CAST(1.)/mag);
+    float mag = mag_float_array(im.data, im.w*im.h*im.c);
+    scale_float_array(im.data, im.w*im.h*im.c, 1./mag);
     return im;
 }
 
@@ -449,11 +449,11 @@ void inter_dcgan(char *cfgfile, char *weightfile)
         }
         ++count;
 
-        slerp(start.data, end.data, CAST((real)count / max_count), im.w*im.h*im.c, im.data);
+        slerp(start.data, end.data, (float)count / max_count, im.w*im.h*im.c, im.data);
 
-        real *X = im.data;
+        float *X = im.data;
         time=clock();
-        network_predict(net, X);
+        network_predict_float(net, X);
         image out = get_network_image_layer(net, imlayer);
         //yuv_to_rgb(out);
         normalize_image(out);
@@ -488,9 +488,9 @@ void test_dcgan(char *cfgfile, char *weightfile)
         //real mag = mag_array(im.data, im.w*im.h*im.c);
         //scale_array(im.data, im.w*im.h*im.c, 1./mag);
 
-        real *X = im.data;
+        float *X = im.data;
         time=clock();
-        network_predict(net, X);
+        network_predict_float(net, X);
         image out = get_network_image_layer(net, imlayer);
         //yuv_to_rgb(out);
         normalize_image(out);
@@ -1325,9 +1325,9 @@ void test_lsd(char *cfg, char *weights, char *filename, int gray)
         image crop = crop_image(resized, (resized.w - net->w)/2, (resized.h - net->h)/2, net->w, net->h);
         if(gray) grayscale_image_3c(crop);
 
-        real *X = crop.data;
+        float *X = crop.data;
         time=clock();
-        network_predict(net, X);
+        network_predict_float(net, X);
         image out = get_network_image_layer(net, imlayer);
         //yuv_to_rgb(out);
         constrain_image(out);

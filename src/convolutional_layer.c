@@ -582,7 +582,7 @@ void rescale_weights(convolutional_layer l, real scale, real trans)
         image im = get_convolutional_weight(l, i);
         if (im.c == 3) {
             scale_image(im, scale);
-            real sum = sum_array(im.data, im.w*im.h*im.c);
+            float sum = sum_float_array(im.data, im.w*im.h*im.c);
             l.biases[i] += sum*trans;
         }
     }

@@ -507,6 +507,19 @@ real *network_predict(network *net, real *input)
     return out;
 }
 
+real *network_predict_float(network *net, float *input)
+{
+    network orig = *net;
+    net->input = cast_array_float2real(input, net->layers[0].inputs);
+    net->truth = 0;
+    net->train = 0;
+    net->delta = 0;
+    forward_network(net);
+    real *out = net->output;
+    *net = orig;
+    return out;
+}
+
 int num_detections(network *net, real thresh)
 {
     int i;
@@ -581,7 +594,7 @@ real *network_predict_image(network *net, image im)
 {
     image imr = letterbox_image(im, net->w, net->h);
     set_batch_network(net, 1);
-    real *p = network_predict(net, imr.data);
+    real *p = network_predict_float(net, imr.data);
     free_image(imr);
     return p;
 }
