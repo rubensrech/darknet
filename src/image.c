@@ -521,7 +521,7 @@ void normalize_image2(image p)
 
 void copy_image_into(image src, image dest)
 {
-    memcpy(dest.data, src.data, src.h*src.w*src.c*sizeof(real));
+    memcpy(dest.data, src.data, src.h*src.w*src.c*sizeof(float));
 }
 
 image copy_image(image p)

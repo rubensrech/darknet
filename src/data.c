@@ -961,8 +961,10 @@ data load_data_compare(int n, char **paths, int m, int classes, int w, int h)
         image im2 = load_image_color(paths[i*2+1], w, h);
 
         d.X.vals[i] = (real*)calloc(d.X.cols, sizeof(real));
-        memcpy(d.X.vals[i],         im1.data, h*w*3*sizeof(real));
-        memcpy(d.X.vals[i] + h*w*3, im2.data, h*w*3*sizeof(real));
+        real *im1DataReal = cast_array_float2real(im1.data, h*w*3);
+        real *im2DataReal = cast_array_float2real(im2.data, h*w*3);
+        memcpy(d.X.vals[i],         im1DataReal, h*w*3*sizeof(real));
+        memcpy(d.X.vals[i] + h*w*3, im2DataReal, h*w*3*sizeof(real));
 
         int id;
         real iou;

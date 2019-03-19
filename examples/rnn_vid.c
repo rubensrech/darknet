@@ -22,7 +22,7 @@ real_pair get_rnn_vid_data(network net, char **files, int n, int batch, int step
     real *feats = calloc(net.batch*batch*output_size, sizeof(real));
     for(b = 0; b < batch; ++b){
         int input_size = net.w*net.h*net.c;
-        real *input = calloc(input_size*net.batch, sizeof(real));
+        float *input = calloc(input_size*net.batch, sizeof(float));
         char *filename = files[rand()%n];
         CvCapture *cap = cvCaptureFromFile(filename);
         int frames = cvGetCaptureProperty(cap, CV_CAP_PROP_FRAME_COUNT);
@@ -44,11 +44,11 @@ real_pair get_rnn_vid_data(network net, char **files, int n, int batch, int step
             image re = resize_image(im, net.w, net.h);
             //show_image(re, "loaded");
             //cvWaitKey(10);
-            memcpy(input + i*input_size, re.data, input_size*sizeof(real));
+            memcpy(input + i*input_size, re.data, input_size*sizeof(float));
             free_image(im);
             free_image(re);
         }
-        real *output = network_predict(net, input);
+        real *output = network_predict_float(net, input);
 
         free(input);
 

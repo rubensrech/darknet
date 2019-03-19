@@ -176,10 +176,10 @@ int bbox_comparator(const void *a, const void *b)
 
     image im1 = load_image_color(box1.filename, net.w, net.h);
     image im2 = load_image_color(box2.filename, net.w, net.h);
-    real *X  = calloc(net.w*net.h*net.c, sizeof(real));
-    memcpy(X,                   im1.data, im1.w*im1.h*im1.c*sizeof(real));
-    memcpy(X+im1.w*im1.h*im1.c, im2.data, im2.w*im2.h*im2.c*sizeof(real));
-    real *predictions = network_predict(net, X);
+    float *X  = calloc(net.w*net.h*net.c, sizeof(float));
+    memcpy(X,                   im1.data, im1.w*im1.h*im1.c*sizeof(float));
+    memcpy(X+im1.w*im1.h*im1.c, im2.data, im2.w*im2.h*im2.c*sizeof(float));
+    real *predictions = network_predict_float(net, X);
     
     free_image(im1);
     free_image(im2);
@@ -205,10 +205,10 @@ void bbox_fight(network net, sortable_bbox *a, sortable_bbox *b, int classes, in
 {
     image im1 = load_image_color(a->filename, net.w, net.h);
     image im2 = load_image_color(b->filename, net.w, net.h);
-    real *X  = calloc(net.w*net.h*net.c, sizeof(real));
-    memcpy(X,                   im1.data, im1.w*im1.h*im1.c*sizeof(real));
-    memcpy(X+im1.w*im1.h*im1.c, im2.data, im2.w*im2.h*im2.c*sizeof(real));
-    real *predictions = network_predict(net, X);
+    float *X  = calloc(net.w*net.h*net.c, sizeof(float));
+    memcpy(X,                   im1.data, im1.w*im1.h*im1.c*sizeof(float));
+    memcpy(X+im1.w*im1.h*im1.c, im2.data, im2.w*im2.h*im2.c*sizeof(float));
+    real *predictions = network_predict_float(net, X);
     ++total_compares;
 
     int i;
