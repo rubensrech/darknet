@@ -23,8 +23,8 @@ static image buff_letter[3];
 static int buff_index = 0;
 static void * cap;
 static real fps = 0;
-static real demo_thresh = 0;
-static real demo_hier = .5;
+static float demo_thresh = 0;
+static float demo_hier = .5;
 static int running = 0;
 
 static int demo_frame = 3;
@@ -80,7 +80,7 @@ detection *avg_predictions(network *net, int *nboxes)
     }
     // !!!
     int letterbox = 1;
-    detection *dets = get_network_boxes(net, buff[0].w, buff[0].h, demo_thresh, demo_hier, 0, 1, nboxes, letterbox);
+    detection *dets = get_network_boxes(net, buff[0].w, buff[0].h, CAST(demo_thresh), CAST(demo_hier), 0, 1, nboxes, letterbox);
     return dets;
 }
 
@@ -186,7 +186,7 @@ void *detect_loop(void *ptr)
     }
 }
 
-void demo(char *cfgfile, char *weightfile, real thresh, int cam_index, const char *filename, char **names, int classes, int delay, char *prefix, int avg_frames, real hier, int w, int h, int frames, int fullscreen)
+void demo(char *cfgfile, char *weightfile, float thresh, int cam_index, const char *filename, char **names, int classes, int delay, char *prefix, int avg_frames, float hier, int w, int h, int frames, int fullscreen)
 {
     //demo_frame = avg_frames;
     image **alphabet = load_alphabet();
@@ -343,7 +343,7 @@ pthread_join(detect_thread, 0);
 }
 */
 #else
-void demo(char *cfgfile, char *weightfile, real thresh, int cam_index, const char *filename, char **names, int classes, int delay, char *prefix, int avg, real hier, int w, int h, int frames, int fullscreen)
+void demo(char *cfgfile, char *weightfile, float thresh, int cam_index, const char *filename, char **names, int classes, int delay, char *prefix, int avg, float hier, int w, int h, int frames, int fullscreen)
 {
     fprintf(stderr, "Demo needs OpenCV for webcam images.\n");
 }

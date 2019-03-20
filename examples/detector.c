@@ -583,7 +583,7 @@ int detections_comparator(const void *pa, const void *pb)
     return 0;
 }
 
-double validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, real thresh_calc_avg_iou, const real iou_thresh, network *existing_net) {
+double validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, float thresh_calc_avg_iou, const float iou_thresh, network *existing_net) {
     list *options = read_data_cfg(datacfg);
     char *valid_images = option_find_str(options, (char*)"valid", (char*)"data/train.txt");
     char *difficult_valid_images = option_find_str(options, (char*)"difficult", NULL);
@@ -1143,8 +1143,8 @@ void run_detector(int argc, char **argv)
 {
     char *prefix = find_char_arg(argc, argv, (char*)"-prefix", 0);
     float thresh = find_float_arg(argc, argv, (char*)"-thresh", .5);
-    real iou_thresh = find_real_arg(argc, argv, (char*)"-iou_thresh", CAST(.5));    // 0.5 for mAP
-    real hier_thresh = find_real_arg(argc, argv, (char*)"-hier", CAST(.5));
+    float iou_thresh = find_float_arg(argc, argv, (char*)"-iou_thresh", .5);    // 0.5 for mAP
+    float hier_thresh = find_float_arg(argc, argv, (char*)"-hier", .5);
     int cam_index = find_int_arg(argc, argv, (char*)"-c", 0);
     int frame_skip = find_int_arg(argc, argv, (char*)"-s", 0);
     int avg = find_int_arg(argc, argv, (char*)"-avg", 3);
@@ -1192,7 +1192,7 @@ void run_detector(int argc, char **argv)
     else if(0==strcmp(argv[2], "valid")) validate_detector(datacfg, cfg, weights, outfile);
     else if(0==strcmp(argv[2], "valid2")) validate_detector_flip(datacfg, cfg, weights, outfile);
     else if(0==strcmp(argv[2], "recall")) validate_detector_recall(cfg, weights);
-    else if(0==strcmp(argv[2], "map")) validate_detector_map(datacfg, cfg, weights, CAST(thresh), iou_thresh, NULL);
+    else if(0==strcmp(argv[2], "map")) validate_detector_map(datacfg, cfg, weights, thresh, iou_thresh, NULL);
     else if(0 == strcmp(argv[2], "rubens")) {
         // ./darknet detector rubens <filename>
         filename = datacfg;
@@ -1202,7 +1202,7 @@ void run_detector(int argc, char **argv)
         int classes = option_find_int(options, (char*)"classes", 20);
         char *name_list = option_find_str(options, (char*)"names", (char*)"data/names.list");
         char **names = get_labels(name_list);
-        demo(cfg, weights, CAST(thresh), cam_index, filename, names, classes, frame_skip, prefix, avg, hier_thresh, width, height, fps, fullscreen);
+        demo(cfg, weights, thresh, cam_index, filename, names, classes, frame_skip, prefix, avg, hier_thresh, width, height, fps, fullscreen);
     }
     //else if(0==strcmp(argv[2], "extract")) extract_detector(datacfg, cfg, weights, cam_index, filename, class, thresh, frame_skip);
     //else if(0==strcmp(argv[2], "censor")) censor_detector(datacfg, cfg, weights, cam_index, filename, class, thresh, frame_skip);
