@@ -295,7 +295,7 @@ void validate_coco_recall(char *cfgfile, char *weightfile)
     }
 }
 
-void test_coco(char *cfgfile, char *weightfile, char *filename, real thresh)
+void test_coco(char *cfgfile, char *weightfile, char *filename, float thresh)
 {
     image **alphabet = load_alphabet();
     network *net = load_network(cfgfile, weightfile, 0);
@@ -326,7 +326,7 @@ void test_coco(char *cfgfile, char *weightfile, char *filename, real thresh)
         int nboxes = 0;
         // !!!
         int letterbox = 1;
-        detection *dets = get_network_boxes(net, 1, 1, thresh, CAST(0), 0, 0, &nboxes, letterbox);
+        detection *dets = get_network_boxes(net, 1, 1, CAST(thresh), CAST(0), 0, 0, &nboxes, letterbox);
         if (nms) do_nms_sort(dets, l.side*l.side*l.n, l.classes, nms);
 
         draw_detections(im, dets, l.side*l.side*l.n, thresh, coco_classes, alphabet, 80);
@@ -342,7 +342,7 @@ void test_coco(char *cfgfile, char *weightfile, char *filename, real thresh)
 void run_coco(int argc, char **argv)
 {
     char *prefix = find_char_arg(argc, argv, (char*)"-prefix", 0);
-    real thresh = find_real_arg(argc, argv, (char*)"-thresh", CAST(.2));
+    float thresh = find_float_arg(argc, argv, (char*)"-thresh", .2);
     int cam_index = find_int_arg(argc, argv, (char*)"-c", 0);
     int frame_skip = find_int_arg(argc, argv, (char*)"-s", 0);
 
@@ -359,5 +359,5 @@ void run_coco(int argc, char **argv)
     else if(0==strcmp(argv[2], "train")) train_coco(cfg, weights);
     else if(0==strcmp(argv[2], "valid")) validate_coco(cfg, weights);
     else if(0==strcmp(argv[2], "recall")) validate_coco_recall(cfg, weights);
-    else if(0==strcmp(argv[2], "demo")) demo(cfg, weights, thresh, cam_index, filename, coco_classes, 80, frame_skip, prefix, avg, CAST(.5), 0,0,0,0);
+    else if(0==strcmp(argv[2], "demo")) demo(cfg, weights, CAST(thresh), cam_index, filename, coco_classes, 80, frame_skip, prefix, avg, CAST(.5), 0,0,0,0);
 }

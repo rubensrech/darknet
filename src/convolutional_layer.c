@@ -575,7 +575,7 @@ void rgbgr_weights(convolutional_layer l)
     }
 }
 
-void rescale_weights(convolutional_layer l, real scale, real trans)
+void rescale_weights(convolutional_layer l, float scale, float trans)
 {
     int i;
     for(i = 0; i < l.n; ++i){

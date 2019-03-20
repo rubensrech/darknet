@@ -676,7 +676,7 @@ image make_random_image(int w, int h, int c);
 void denormalize_connected_layer(layer l);
 void denormalize_convolutional_layer(layer l);
 void statistics_connected_layer(layer l);
-void rescale_weights(layer l, real scale, real trans);
+void rescale_weights(layer l, float scale, float trans);
 void rgbgr_weights(layer l);
 image *get_weights(layer l);
 
@@ -784,6 +784,7 @@ void hierarchy_predictions(real *predictions, int n, tree *hier, int only_leaves
 void change_leaves(tree *t, char *leaf_list);
 
 int find_int_arg(int argc, char **argv, char *arg, int def);
+float find_float_arg(int argc, char **argv, char *arg, float def);
 real find_real_arg(int argc, char **argv, char *arg, real def);
 int find_arg(int argc, char* argv[], char *arg);
 char *find_char_arg(int argc, char **argv, char *arg, char *def);

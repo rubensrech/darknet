@@ -266,7 +266,7 @@ void validate_yolo_recall(char *cfg, char *weights)
     }
 }
 
-void test_yolo(char *cfgfile, char *weightfile, char *filename, real thresh)
+void test_yolo(char *cfgfile, char *weightfile, char *filename, float thresh)
 {
     image **alphabet = load_alphabet();
     network *net = load_network(cfgfile, weightfile, 0);
@@ -297,7 +297,7 @@ void test_yolo(char *cfgfile, char *weightfile, char *filename, real thresh)
         int nboxes = 0;
         // !!!
         int letter_box = 1;
-        detection *dets = get_network_boxes(net, 1, 1, thresh, CAST(0), 0, 0, &nboxes, letter_box);
+        detection *dets = get_network_boxes(net, 1, 1, CAST(thresh), CAST(0), 0, 0, &nboxes, letter_box);
         if (nms) do_nms_sort(dets, l.side*l.side*l.n, l.classes, nms);
 
         draw_detections(im, dets, l.side*l.side*l.n, thresh, voc_names, alphabet, 20);
@@ -313,7 +313,7 @@ void test_yolo(char *cfgfile, char *weightfile, char *filename, real thresh)
 void run_yolo(int argc, char **argv)
 {
     char *prefix = find_char_arg(argc, argv, (char*)"-prefix", 0);
-    real thresh = find_real_arg(argc, argv, (char*)"-thresh", CAST(.2));
+    float thresh = find_float_arg(argc, argv, (char*)"-thresh", .2);
     int cam_index = find_int_arg(argc, argv, (char*)"-c", 0);
     int frame_skip = find_int_arg(argc, argv, (char*)"-s", 0);
     if(argc < 4){
@@ -329,5 +329,5 @@ void run_yolo(int argc, char **argv)
     else if(0==strcmp(argv[2], "train")) train_yolo(cfg, weights);
     else if(0==strcmp(argv[2], "valid")) validate_yolo(cfg, weights);
     else if(0==strcmp(argv[2], "recall")) validate_yolo_recall(cfg, weights);
-    else if(0==strcmp(argv[2], "demo")) demo(cfg, weights, thresh, cam_index, filename, voc_names, 20, frame_skip, prefix, avg, CAST(.5), 0,0,0,0);
+    else if(0==strcmp(argv[2], "demo")) demo(cfg, weights, CAST(thresh), cam_index, filename, voc_names, 20, frame_skip, prefix, avg, CAST(.5), 0,0,0,0);
 }

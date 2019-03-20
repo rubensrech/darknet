@@ -314,7 +314,7 @@ void run_nightmare(int argc, char **argv)
     real zoom = find_real_arg(argc, argv, (char*)"-zoom", CAST(1.));
     real rate = find_real_arg(argc, argv, (char*)"-rate", CAST(.04));
     real thresh = find_real_arg(argc, argv, (char*)"-thresh", CAST(1.));
-    real rotate = find_real_arg(argc, argv, (char*)"-rotate", CAST(0));
+    float rotate = find_float_arg(argc, argv, (char*)"-rotate", 0);
     real momentum = find_real_arg(argc, argv, (char*)"-momentum", CAST(.9));
     real lambda = find_real_arg(argc, argv, (char*)"-lambda", CAST(.01));
     char *prefix = find_char_arg(argc, argv, (char*)"-prefix", 0);
