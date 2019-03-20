@@ -653,7 +653,7 @@ void sync_nets(network **nets, int n, int interval);
 void harmless_update_network_gpu(network *net);
 #endif
 image get_label(image **characters, char *string, int size);
-void draw_label(image a, int r, int c, image label, const real *rgb);
+void draw_label(image a, int r, int c, image label, const float *rgb);
 void save_image(image im, const char *name);
 void save_image_options(image im, const char *name, IMTYPE f, int quality);
 void get_next_batch(data d, int n, int offset, real *X, real *y);
@@ -714,14 +714,14 @@ image crop_image(image im, int dx, int dy, int w, int h);
 image center_crop_image(image im, int w, int h);
 image resize_min(image im, int min);
 image resize_max(image im, int max);
-image threshold_image(image im, real thresh);
+image threshold_image(image im, float thresh);
 image mask_to_rgb(image mask);
 int resize_network(network *net, int w, int h);
 void free_matrix(matrix m);
 void test_resize(char *filename);
 int show_image(image p, const char *name, int ms);
 image copy_image(image p);
-void draw_box_width(image a, int x1, int y1, int x2, int y2, int w, real r, real g, real b);
+void draw_box_width(image a, int x1, int y1, int x2, int y2, int w, float r, float g, float b);
 real get_current_rate(network *net);
 void composite_3d(char *f1, char *f2, char *out, int delta);
 data load_data_old(char **paths, int n, int m, char **labels, int k, int w, int h);
@@ -735,18 +735,18 @@ image real_to_image(int w, int h, int c, real *data);
 image float_to_image(int w, int h, int c, float *data);
 void ghost_image(image source, image dest, int dx, int dy);
 real network_accuracy(network *net, data d);
-void random_distort_image(image im, real hue, real saturation, real exposure);
-void fill_image(image m, real s);
+void random_distort_image(image im, float hue, float saturation, float exposure);
+void fill_image(image m, float s);
 image grayscale_image(image im);
 void rotate_image_cw(image im, int times);
 double what_time_is_it_now();
-image rotate_image(image m, real rad);
+image rotate_image(image m, float rad);
 void visualize_network(network *net);
 float box_iou(box a, box b);
 data load_all_cifar10();
 box_label *read_boxes(char *filename, int *n);
 box real_to_box(real *f, int stride);
-void draw_detections(image im, detection *dets, int num, real thresh, char **names, image **alphabet, int classes);
+void draw_detections(image im, detection *dets, int num, float thresh, char **names, image **alphabet, int classes);
 
 matrix network_predict_data(network *net, data test);
 image **load_alphabet();
@@ -819,6 +819,7 @@ int *read_intlist(char *s, int *n, int d);
 size_t rand_size_t();
 real rand_normal();
 real rand_uniform(real min, real max);
+float rand_uniform_float(float min, float max);
 
 #ifdef __cplusplus
 }

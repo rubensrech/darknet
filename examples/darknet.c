@@ -373,12 +373,12 @@ void mkimg(char *cfgfile, char *weightfile, int h, int w, int num, char *prefix)
     int z;
     for(z = 0; z < num; ++z){
         image im = make_image(h, w, 3);
-        fill_image(im, CAST(.5));
+        fill_image(im, .5);
         int i;
         for(i = 0; i < 100; ++i){
             image r = copy_image(ims[rand()%n]);
             rotate_image_cw(r, rand()%4);
-            random_distort_image(r, CAST(1), CAST(1.5), CAST(1.5));
+            random_distort_image(r, 1, 1.5, 1.5);
             int dx = rand()%(w-r.w);
             int dy = rand()%(h-r.h);
             ghost_image(r, im, dx, dy);

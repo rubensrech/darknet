@@ -1093,7 +1093,7 @@ data load_data_detection(int n, char **paths, int m, int w, int h, int boxes, in
     for(i = 0; i < n; ++i){
         image orig = load_image_color(random_paths[i], 0, 0);
         image sized = make_image(w, h, orig.c);
-        fill_image(sized, CAST(.5));
+        fill_image(sized, .5);
 
         real dw = jitter * CAST(orig.w);
         real dh = jitter * CAST(orig.h);

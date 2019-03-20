@@ -87,7 +87,7 @@ void optimize_picture(network *net, image orig, int max_layer, real scale, real 
 
     //rate = rate / abs_mean(out.data, out.w*out.h*out.c);
     image gray = make_image(out.w, out.h, out.c);
-    fill_image(gray, CAST(.5));
+    fill_image(gray, .5);
     axpy_float_cpu(orig.w*orig.h*orig.c, -1, orig.data, 1, gray.data, 1);
     axpy_float_cpu(orig.w*orig.h*orig.c, .1, gray.data, 1, out.data, 1);
 

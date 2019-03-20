@@ -759,11 +759,21 @@ real rand_uniform(real min, real max)
     return CAST(((float)rand()/RAND_MAX * (max - min)) + min);
 }
 
-real rand_scale(real s)
+float rand_uniform_float(float min, float max)
 {
-    real scale = rand_uniform(CAST(1.0), s);
+    if(max < min){
+        float swap = min;
+        min = max;
+        max = swap;
+    }
+    return ((float)rand()/RAND_MAX * (max - min)) + min;
+}
+
+float rand_scale(float s)
+{
+    float scale = rand_uniform(CAST(1.0), CAST(s));
     if(rand()%2) return scale;
-    return CAST(1.0)/scale;
+    return 1.0/scale;
 }
 
 real **one_hot_encode(real *a, int n, int k)

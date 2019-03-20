@@ -40,7 +40,7 @@ real *parse_fields(char *line, int n);
 void translate_array(real *a, int n, real s);
 real constrain(real min, real max, real a);
 int constrain_int(int a, int min, int max);
-real rand_scale(real s);
+float rand_scale(float s);
 int rand_int(int min, int max);
 void mean_arrays(real **a, int n, int els, real *avg);
 float dist_array(float *a, float *b, int n, int sub);
