@@ -64,9 +64,9 @@ void train_cifar_distill(char *cfgfile, char *weightfile)
     data train = load_all_cifar10();
     matrix soft = csv_to_matrix((char*)"results/ensemble.csv");
 
-    real weight = CAST(.9);
+    float weight = .9;
     scale_matrix(soft, weight);
-    scale_matrix(train.y, CAST(1.) - weight);
+    scale_matrix(train.y, 1. - weight);
     matrix_add_matrix(soft, train.y);
 
     while(get_current_batch(net) < net->max_batches || net->max_batches == 0){
@@ -109,7 +109,7 @@ void test_cifar_multi(char *filename, char *weightfile)
 
     int i;
     for(i = 0; i < test.X.rows; ++i){
-        image im = real_to_image(32, 32, 3, test.X.vals[i]);
+        image im = float_to_image(32, 32, 3, test.X.vals[i]);
 
         real pred[10] = {CAST(0)};
 
@@ -120,7 +120,7 @@ void test_cifar_multi(char *filename, char *weightfile)
         axpy_cpu(10, CAST(1), p, 1, pred, 1);
 
         int index = max_index(pred, 10);
-        int _class = max_index(test.y.vals[i], 10);
+        int _class = max_float_index(test.y.vals[i], 10);
         if(index == _class) avg_acc += 1;
         free_image(im);
         printf("%4d: %.2f%%\n", i, 100.*avg_acc/(i+1));
@@ -153,15 +153,15 @@ char *labels[] = {(char*)"airplane",(char*)"automobile",(char*)"bird",(char*)"ca
     data train = load_all_cifar10();
     data test = load_cifar10_data((char*)"data/cifar/cifar-10-batches-bin/test_batch.bin");
     for(i = 0; i < train.X.rows; ++i){
-        image im = real_to_image(32, 32, 3, train.X.vals[i]);
-        int _class = max_index(train.y.vals[i], 10);
+        image im = float_to_image(32, 32, 3, train.X.vals[i]);
+        int _class = max_float_index(train.y.vals[i], 10);
         char buff[256];
         sprintf(buff, (char*)"data/cifar/train/%d_%s",i,labels[_class]);
         save_image_options(im, buff, PNG, 0);
     }
     for(i = 0; i < test.X.rows; ++i){
-        image im = real_to_image(32, 32, 3, test.X.vals[i]);
-        int _class = max_index(test.y.vals[i], 10);
+        image im = float_to_image(32, 32, 3, test.X.vals[i]);
+        int _class = max_float_index(test.y.vals[i], 10);
         char buff[256];
         sprintf(buff, "data/cifar/test/%d_%s",i,labels[_class]);
         save_image_options(im, buff, PNG, 0);
@@ -179,12 +179,12 @@ void test_cifar_csv(char *filename, char *weightfile)
 
     int i;
     for(i = 0; i < test.X.rows; ++i){
-        image im = real_to_image(32, 32, 3, test.X.vals[i]);
+        image im = float_to_image(32, 32, 3, test.X.vals[i]);
         flip_image(im);
     }
     matrix pred2 = network_predict_data(net, test);
-    scale_matrix(pred, CAST(.5));
-    scale_matrix(pred2, CAST(.5));
+    scale_matrix(pred, .5);
+    scale_matrix(pred2, .5);
     matrix_add_matrix(pred2, pred);
 
     matrix_to_csv(pred);
@@ -203,12 +203,12 @@ void test_cifar_csvtrain(char *cfg, char *weights)
 
     int i;
     for(i = 0; i < test.X.rows; ++i){
-        image im = real_to_image(32, 32, 3, test.X.vals[i]);
+        image im = float_to_image(32, 32, 3, test.X.vals[i]);
         flip_image(im);
     }
     matrix pred2 = network_predict_data(net, test);
-    scale_matrix(pred, CAST(.5));
-    scale_matrix(pred2, CAST(.5));
+    scale_matrix(pred, .5);
+    scale_matrix(pred2, .5);
     matrix_add_matrix(pred2, pred);
 
     matrix_to_csv(pred);

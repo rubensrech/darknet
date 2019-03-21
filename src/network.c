@@ -607,14 +607,14 @@ matrix network_predict_data_multi(network *net, data test, int n)
     int i,j,b,m;
     int k = net->outputs;
     matrix pred = make_matrix(test.X.rows, k);
-    real *X = (real*)calloc(net->batch*test.X.rows, sizeof(real));
+    float *X = (float*)calloc(net->batch*test.X.rows, sizeof(float));
     for(i = 0; i < test.X.rows; i += net->batch){
         for(b = 0; b < net->batch; ++b){
             if(i+b == test.X.rows) break;
-            memcpy(X+b*test.X.cols, test.X.vals[i+b], test.X.cols*sizeof(real));
+            memcpy(X+b*test.X.cols, test.X.vals[i+b], test.X.cols*sizeof(float));
         }
         for(m = 0; m < n; ++m){
-            real *out = network_predict(net, X);
+            real *out = network_predict_float(net, X);
             for(b = 0; b < net->batch; ++b){
                 if(i+b == test.X.rows) break;
                 for(j = 0; j < k; ++j){
@@ -632,13 +632,13 @@ matrix network_predict_data(network *net, data test)
     int i,j,b;
     int k = net->outputs;
     matrix pred = make_matrix(test.X.rows, k);
-    real *X = (real*)calloc(net->batch*test.X.cols, sizeof(real));
+    float *X = (float*)calloc(net->batch*test.X.cols, sizeof(float));
     for(i = 0; i < test.X.rows; i += net->batch){
         for(b = 0; b < net->batch; ++b){
             if(i+b == test.X.rows) break;
-            memcpy(X+b*test.X.cols, test.X.vals[i+b], test.X.cols*sizeof(real));
+            memcpy(X+b*test.X.cols, test.X.vals[i+b], test.X.cols*sizeof(float));
         }
-        real *out = network_predict(net, X);
+        real *out = network_predict_float(net, X);
         for(b = 0; b < net->batch; ++b){
             if(i+b == test.X.rows) break;
             for(j = 0; j < k; ++j){
@@ -675,9 +675,9 @@ void compare_networks(network *n1, network *n2, data test)
     int a,b,c,d;
     a = b = c = d = 0;
     for(i = 0; i < g1.rows; ++i){
-        int truth = max_index(test.y.vals[i], test.y.cols);
-        int p1 = max_index(g1.vals[i], g1.cols);
-        int p2 = max_index(g2.vals[i], g2.cols);
+        int truth = max_float_index(test.y.vals[i], test.y.cols);
+        int p1 = max_float_index(g1.vals[i], g1.cols);
+        int p2 = max_float_index(g2.vals[i], g2.cols);
         if(p1 == truth){
             if(p2 == truth) ++d;
             else ++c;
@@ -692,10 +692,10 @@ void compare_networks(network *n1, network *n2, data test)
     printf("%f\n", (float)(num/den)); 
 }
 
-real network_accuracy(network *net, data d)
+float network_accuracy(network *net, data d)
 {
     matrix guess = network_predict_data(net, d);
-    real acc = matrix_topk_accuracy(d.y, guess,1);
+    float acc = matrix_topk_accuracy(d.y, guess,1);
     free_matrix(guess);
     return acc;
 }
@@ -719,10 +719,10 @@ layer get_network_output_layer(network *net)
     return net->layers[i];
 }
 
-real network_accuracy_multi(network *net, data d, int n)
+float network_accuracy_multi(network *net, data d, int n)
 {
     matrix guess = network_predict_data_multi(net, d, n);
-    real acc = matrix_topk_accuracy(d.y, guess,1);
+    float acc = matrix_topk_accuracy(d.y, guess,1);
     free_matrix(guess);
     return acc;
 }

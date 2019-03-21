@@ -98,8 +98,8 @@ void train_isegmenter(char *datacfg, char *cfgfile, char *weightfile, int *gpus,
         loss = train_network(net, train);
 #endif
         if(display){
-            image tr = real_to_image(net->w/div, net->h/div, 80, train.y.vals[net->batch*(net->subdivisions-1)]);
-            image im = real_to_image(net->w, net->h, net->c, train.X.vals[net->batch*(net->subdivisions-1)]);
+            image tr = float_to_image(net->w/div, net->h/div, 80, train.y.vals[net->batch*(net->subdivisions-1)]);
+            image im = float_to_image(net->w, net->h, net->c, train.X.vals[net->batch*(net->subdivisions-1)]);
             pred.c = 80;
             image mask = mask_to_rgb(tr);
             image prmask = mask_to_rgb(pred);

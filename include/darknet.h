@@ -526,7 +526,7 @@ typedef struct detection{
 
 typedef struct matrix{
     int rows, cols;
-    real **vals;
+    float **vals;
 } matrix;
 
 
@@ -563,12 +563,12 @@ typedef struct load_args{
     int scale;
     int center;
     int coords;
-    real jitter;
-    real angle;
-    real aspect;
-    real saturation;
-    real exposure;
-    real hue;
+    float jitter;
+    float angle;
+    float aspect;
+    float saturation;
+    float exposure;
+    float hue;
     data *d;
     image *im;
     image *resized;
@@ -665,9 +665,9 @@ void rgbgr_image(image im);
 data copy_data(data d);
 data concat_data(data d1, data d2);
 data load_cifar10_data(char *filename);
-real matrix_topk_accuracy(matrix truth, matrix guess, int k);
+float matrix_topk_accuracy(matrix truth, matrix guess, int k);
 void matrix_add_matrix(matrix from, matrix to);
-void scale_matrix(matrix m, real scale);
+void scale_matrix(matrix m, float scale);
 matrix csv_to_matrix(char *filename);
 real *network_accuracies(network *net, data d, int n);
 real train_network_datum(network *net);
@@ -734,7 +734,7 @@ void flip_image(image a);
 image real_to_image(int w, int h, int c, real *data);
 image float_to_image(int w, int h, int c, float *data);
 void ghost_image(image source, image dest, int dx, int dy);
-real network_accuracy(network *net, data d);
+float network_accuracy(network *net, data d);
 void random_distort_image(image im, float hue, float saturation, float exposure);
 void fill_image(image m, float s);
 image grayscale_image(image im);
@@ -796,11 +796,14 @@ void strip(char *s);
 real sec(clock_t clocks);
 void **list_to_array(list *l);
 void top_k(real *a, int n, int k, int *index);
+void top_k_float(float *a, int n, int k, int *index);
 int *read_map(char *filename);
 void error(const char *s);
 int max_index(real *a, int n);
+int max_float_index(float *a, int n);
 int max_int_index(int *a, int n);
 int sample_array(real *a, int n);
+int sample_float_array(float *a, int n);
 int *random_index_order(int min, int max);
 void free_list(list *l);
 real mse_array(real *a, int n);

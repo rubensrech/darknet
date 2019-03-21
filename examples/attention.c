@@ -7,7 +7,7 @@ void extend_data_truth(data *d, int n, real val)
 {
     int i, j;
     for(i = 0; i < d->y.rows; ++i){
-        d->y.vals[i] = (real*)realloc(d->y.vals[i], (d->y.cols+n)*sizeof(real));
+        d->y.vals[i] = (float*)realloc(d->y.vals[i], (d->y.cols+n)*sizeof(float));
         for(j = 0; j < n; ++j){
             d->y.vals[i][d->y.cols + j] = val;
         }
@@ -20,18 +20,19 @@ matrix network_loss_data(network *net, data test)
     int i,b;
     int k = 1;
     matrix pred = make_matrix(test.X.rows, k);
-    real *X = (real*)calloc(net->batch*test.X.cols, sizeof(real));
-    real *y = (real*)calloc(net->batch*test.y.cols, sizeof(real));
+    float *X = (real*)calloc(net->batch*test.X.cols, sizeof(float));
+    float *y = (real*)calloc(net->batch*test.y.cols, sizeof(float));
     for(i = 0; i < test.X.rows; i += net->batch){
         for(b = 0; b < net->batch; ++b){
             if(i+b == test.X.rows) break;
-            memcpy(X+b*test.X.cols, test.X.vals[i+b], test.X.cols*sizeof(real));
-            memcpy(y+b*test.y.cols, test.y.vals[i+b], test.y.cols*sizeof(real));
+            memcpy(X+b*test.X.cols, test.X.vals[i+b], test.X.cols*sizeof(float));
+            memcpy(y+b*test.y.cols, test.y.vals[i+b], test.y.cols*sizeof(float));
         }
 
         network orig = *net;
-        net->input = X;
-        net->truth = y;
+        // # CAST INTERFACE #
+        net->input = cast_array_float2real(X, net->batch*test.X.cols);
+        net->truth = cast_array_float2real(y, net->batch*test.y.cols);
         net->train = 0;
         net->delta = 0;
         forward_network(net);

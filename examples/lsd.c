@@ -620,7 +620,9 @@ void train_prog(char *cfg, char *weight, char *acfg, char *aweight, int clear, i
 
             for(k = 0; k < gnet->batch; ++k){
                 int index = j*gnet->batch + k;
-                copy_cpu(gnet->outputs, gnet->output + k*gnet->outputs, 1, gen.X.vals[index], 1);
+                // # CAST INTERFACE #
+                float *outFloat = cast_array_real2float(gnet->output + k*gnet->outputs, gnet->outputs);
+                copy_float_cpu(gnet->outputs, outFloat, 1, gen.X.vals[index], 1);
             }
         }
         harmless_update_network_gpu(anet);
@@ -801,7 +803,9 @@ void train_dcgan(char *cfg, char *weight, char *acfg, char *aweight, int clear, 
 
             for(k = 0; k < gnet->batch; ++k){
                 int index = j*gnet->batch + k;
-                copy_cpu(gnet->outputs, gnet->output + k*gnet->outputs, 1, gen.X.vals[index], 1);
+                // # CAST INTERFACE #
+                float *outFloat = cast_array_real2float(gnet->output + k*gnet->outputs, gnet->outputs);
+                copy_float_cpu(gnet->outputs, outFloat, 1, gen.X.vals[index], 1);
             }
         }
         harmless_update_network_gpu(anet);
@@ -940,7 +944,7 @@ void train_colorizer(char *cfg, char *weight, char *acfg, char *aweight, int cle
 
         data gray = copy_data(train);
         for(j = 0; j < imgs; ++j){
-            image gim = real_to_image(net->w, net->h, net->c, gray.X.vals[j]);
+            image gim = float_to_image(net->w, net->h, net->c, gray.X.vals[j]);
             grayscale_image_3c(gim);
             train.y.vals[j][0] = .95;
             gray.y.vals[j][0] = .05;
@@ -986,7 +990,9 @@ void train_colorizer(char *cfg, char *weight, char *acfg, char *aweight, int cle
 
             for(k = 0; k < net->batch; ++k){
                 int index = j*net->batch + k;
-                copy_cpu(imlayer.outputs, imlayer.output + k*imlayer.outputs, 1, gray.X.vals[index], 1);
+                // # CAST INTERFACE #
+                float *outFloat = cast_array_real2float(imlayer.output + k*imlayer.outputs, imlayer.outputs);
+                copy_float_cpu(imlayer.outputs, outFloat, 1, gray.X.vals[index], 1);
             }
         }
         harmless_update_network_gpu(anet);

@@ -70,7 +70,7 @@ matrix load_image_paths_gray(char **paths, int n, int w, int h)
     int i;
     matrix X;
     X.rows = n;
-    X.vals = (real**)calloc(X.rows, sizeof(real*));
+    X.vals = (float**)calloc(X.rows, sizeof(float*));
     X.cols = 0;
 
     for(i = 0; i < n; ++i){
@@ -80,7 +80,7 @@ matrix load_image_paths_gray(char **paths, int n, int w, int h)
         free_image(im);
         im = gray;
 
-        X.vals[i] = cast_array_float2real(im.data, im.h*im.w*im.c);
+        X.vals[i] = im.data;
         X.cols = im.h*im.w*im.c;
     }
     return X;
@@ -91,12 +91,12 @@ matrix load_image_paths(char **paths, int n, int w, int h)
     int i;
     matrix X;
     X.rows = n;
-    X.vals = (real**)calloc(X.rows, sizeof(real*));
+    X.vals = (float**)calloc(X.rows, sizeof(float*));
     X.cols = 0;
 
     for(i = 0; i < n; ++i){
         image im = load_image_color(paths[i], w, h);
-        X.vals[i] = cast_array_float2real(im.data, im.h*im.w*im.c);
+        X.vals[i] = im.data;
         X.cols = im.h*im.w*im.c;
     }
     return X;
@@ -107,7 +107,7 @@ matrix load_image_augment_paths(char **paths, int n, int min, int max, int size,
     int i;
     matrix X;
     X.rows = n;
-    X.vals = (real**)calloc(X.rows, sizeof(real*));
+    X.vals = (float**)calloc(X.rows, sizeof(float*));
     X.cols = 0;
 
     for(i = 0; i < n; ++i){
@@ -129,7 +129,7 @@ matrix load_image_augment_paths(char **paths, int n, int min, int max, int size,
         */
         //grayscale_image_3c(crop);
         free_image(im);
-        X.vals[i] = cast_array_float2real(crop.data, crop.h*crop.w*crop.c);
+        X.vals[i] = crop.data;
         X.cols = crop.h*crop.w*crop.c;
     }
     return X;
@@ -221,7 +221,7 @@ void correct_boxes(box_label *boxes, int n, float dx, float dy, float sx, float 
     }
 }
 
-void fill_truth_swag(char *path, real *truth, int classes, int flip, float dx, float dy, float sx, float sy)
+void fill_truth_swag(char *path, float *truth, int classes, int flip, float dx, float dy, float sx, float sy)
 {
     char labelpath[4096];
     find_replace(path, (char*)"images", (char*)"labels", labelpath);
@@ -259,7 +259,7 @@ void fill_truth_swag(char *path, real *truth, int classes, int flip, float dx, f
     free(boxes);
 }
 
-void fill_truth_region(char *path, real *truth, int classes, int num_boxes, int flip, float dx, float dy, float sx, float sy)
+void fill_truth_region(char *path, float *truth, int classes, int num_boxes, int flip, float dx, float dy, float sx, float sy)
 {
     char labelpath[4096];
     find_replace(path, (char*)"images", (char*)"labels", labelpath);
@@ -368,7 +368,7 @@ box bound_image(image im)
     return b;
 }
 
-void fill_truth_iseg(char *path, int num_boxes, real *truth, int classes, int w, int h, augment_args aug, int flip, int mw, int mh)
+void fill_truth_iseg(char *path, int num_boxes, float *truth, int classes, int w, int h, augment_args aug, int flip, int mw, int mh)
 {
     char labelpath[4096];
     find_replace(path, (char*)"images", (char*)"mask", labelpath);
@@ -406,7 +406,7 @@ void fill_truth_iseg(char *path, int num_boxes, real *truth, int classes, int w,
     free_image(part);
 }
 
-void fill_truth_mask(char *path, int num_boxes, real *truth, int classes, int w, int h, augment_args aug, int flip, int mw, int mh)
+void fill_truth_mask(char *path, int num_boxes, float *truth, int classes, int w, int h, augment_args aug, int flip, int mw, int mh)
 {
     char labelpath[4096];
     find_replace(path, (char*)"images", (char*)"mask", labelpath);
@@ -451,7 +451,7 @@ void fill_truth_mask(char *path, int num_boxes, real *truth, int classes, int w,
 }
 
 
-void fill_truth_detection(char *path, int num_boxes, real *truth, int classes, int flip, float dx, float dy, float sx, float sy)
+void fill_truth_detection(char *path, int num_boxes, float *truth, int classes, int flip, float dx, float dy, float sx, float sy)
 {
     char labelpath[4096];
     find_replace(path, (char*)"images", (char*)"labels", labelpath);
@@ -505,7 +505,7 @@ void print_letters(real *pred, int n)
     printf("\n");
 }
 
-void fill_truth_captcha(char *path, int n, real *truth)
+void fill_truth_captcha(char *path, int n, float *truth)
 {
     char *begin = strrchr(path, '/');
     ++begin;
@@ -547,10 +547,10 @@ data load_data_captcha_encode(char **paths, int n, int m, int w, int h)
     return d;
 }
 
-void fill_truth(char *path, char **labels, int k, real *truth)
+void fill_truth(char *path, char **labels, int k, float *truth)
 {
     int i;
-    memset(truth, 0, k*sizeof(real));
+    memset(truth, 0, k*sizeof(float));
     int count = 0;
     for(i = 0; i < k; ++i){
         if(strstr(path, labels[i])){
@@ -562,7 +562,7 @@ void fill_truth(char *path, char **labels, int k, real *truth)
     if(count != 1 && (k != 1 || count != 0)) printf("Too many or too few labels: %d, %s\n", count, path);
 }
 
-void fill_hierarchy(real *truth, int k, tree *hierarchy)
+void fill_hierarchy(float *truth, int k, tree *hierarchy)
 {
     int j;
     for(j = 0; j < k; ++j){
@@ -758,13 +758,13 @@ data load_data_seg(int n, char **paths, int m, int w, int h, int classes, int mi
     d.shallow = 0;
 
     d.X.rows = n;
-    d.X.vals = (real**)calloc(d.X.rows, sizeof(real*));
+    d.X.vals = (float**)calloc(d.X.rows, sizeof(float*));
     d.X.cols = h*w*3;
 
 
     d.y.rows = n;
     d.y.cols = h*w*classes/div/div;
-    d.y.vals = (real**)calloc(d.X.rows, sizeof(real*));
+    d.y.vals = (float**)calloc(d.X.rows, sizeof(float*));
 
     for(i = 0; i < n; ++i){
         image orig = load_image_color(random_paths[i], 0, 0);
@@ -774,14 +774,14 @@ data load_data_seg(int n, char **paths, int m, int w, int h, int classes, int mi
         int flip = rand()%2;
         if(flip) flip_image(sized);
         random_distort_image(sized, hue, saturation, exposure);
-        d.X.vals[i] = cast_array_float2real(sized.data, sized.w*sized.h*sized.c);
+        d.X.vals[i] = sized.data;
 
         image mask = get_segmentation_image(random_paths[i], orig.w, orig.h, classes);
         //image mask = make_image(orig.w, orig.h, classes+1);
         image sized_m = rotate_crop_image(mask, a.rad, a.scale/div, a.w/div, a.h/div, a.dx/div, a.dy/div, a.aspect);
 
         if(flip) flip_image(sized_m);
-        d.y.vals[i] = cast_array_float2real(sized_m.data, sized_m.w*sized_m.h*sized_m.c);
+        d.y.vals[i] = sized_m.data;
 
         free_image(orig);
         free_image(mask);
@@ -806,7 +806,7 @@ data load_data_iseg(int n, char **paths, int m, int w, int h, int classes, int b
     d.shallow = 0;
 
     d.X.rows = n;
-    d.X.vals = (real**)calloc(d.X.rows, sizeof(real*));
+    d.X.vals = (float**)calloc(d.X.rows, sizeof(float*));
     d.X.cols = h*w*3;
 
     d.y = make_matrix(n, (((w/div)*(h/div))+1)*boxes);
@@ -819,7 +819,7 @@ data load_data_iseg(int n, char **paths, int m, int w, int h, int classes, int b
         int flip = rand()%2;
         if(flip) flip_image(sized);
         random_distort_image(sized, hue, saturation, exposure);
-        d.X.vals[i] = cast_array_float2real(sized.data, sized.w*sized.h*sized.c);
+        d.X.vals[i] = sized.data;
         //show_image(sized, "image");
 
         fill_truth_iseg(random_paths[i], boxes, d.y.vals[i], classes, orig.w, orig.h, a, flip, w/div, h/div);
@@ -846,7 +846,7 @@ data load_data_mask(int n, char **paths, int m, int w, int h, int classes, int b
     d.shallow = 0;
 
     d.X.rows = n;
-    d.X.vals = (real**)calloc(d.X.rows, sizeof(real*));
+    d.X.vals = (float**)calloc(d.X.rows, sizeof(float*));
     d.X.cols = h*w*3;
 
     d.y = make_matrix(n, (coords+1)*boxes);
@@ -859,7 +859,7 @@ data load_data_mask(int n, char **paths, int m, int w, int h, int classes, int b
         int flip = rand()%2;
         if(flip) flip_image(sized);
         random_distort_image(sized, hue, saturation, exposure);
-        d.X.vals[i] = cast_array_float2real(sized.data, sized.w*sized.h*sized.c);
+        d.X.vals[i] = sized.data;
         //show_image(sized, "image");
 
         fill_truth_mask(random_paths[i], boxes, d.y.vals[i], classes, orig.w, orig.h, a, flip, 14, 14);
@@ -886,7 +886,7 @@ data load_data_region(int n, char **paths, int m, int w, int h, int size, int cl
     d.shallow = 0;
 
     d.X.rows = n;
-    d.X.vals = (real**)calloc(d.X.rows, sizeof(real*));
+    d.X.vals = (float**)calloc(d.X.rows, sizeof(float*));
     d.X.cols = h*w*3;
 
 
@@ -921,7 +921,7 @@ data load_data_region(int n, char **paths, int m, int w, int h, int size, int cl
         image sized = resize_image(cropped, w, h);
         if(flip) flip_image(sized);
         random_distort_image(sized, hue, saturation, exposure);
-        d.X.vals[i] = cast_array_float2real(sized.data, sized.w*sized.h*sized.c);
+        d.X.vals[i] = sized.data;
 
         fill_truth_region(random_paths[i], d.y.vals[i], classes, size, flip, dx, dy, 1./sx, 1./sy);
 
@@ -940,7 +940,7 @@ data load_data_compare(int n, char **paths, int m, int classes, int w, int h)
     d.shallow = 0;
 
     d.X.rows = n;
-    d.X.vals = (real**)calloc(d.X.rows, sizeof(real*));
+    d.X.vals = (float**)calloc(d.X.rows, sizeof(float*));
     d.X.cols = h*w*6;
 
     int k = 2*(classes);
@@ -949,11 +949,9 @@ data load_data_compare(int n, char **paths, int m, int classes, int w, int h)
         image im1 = load_image_color(paths[i*2],   w, h);
         image im2 = load_image_color(paths[i*2+1], w, h);
 
-        d.X.vals[i] = (real*)calloc(d.X.cols, sizeof(real));
-        real *im1DataReal = cast_array_float2real(im1.data, h*w*3);
-        real *im2DataReal = cast_array_float2real(im2.data, h*w*3);
-        memcpy(d.X.vals[i],         im1DataReal, h*w*3*sizeof(real));
-        memcpy(d.X.vals[i] + h*w*3, im2DataReal, h*w*3*sizeof(real));
+        d.X.vals[i] = (float*)calloc(d.X.cols, sizeof(float));
+        memcpy(d.X.vals[i],         im1.data, h*w*3*sizeof(float));
+        memcpy(d.X.vals[i] + h*w*3, im2.data, h*w*3*sizeof(float));
 
         int id;
         float iou;
@@ -1013,7 +1011,7 @@ data load_data_swag(char **paths, int n, int classes, float jitter)
     d.h = h;
 
     d.X.rows = 1;
-    d.X.vals = (real**)calloc(d.X.rows, sizeof(real*));
+    d.X.vals = (float**)calloc(d.X.rows, sizeof(float*));
     d.X.cols = h*w*3;
 
     int k = (4+classes)*90;
@@ -1041,7 +1039,7 @@ data load_data_swag(char **paths, int n, int classes, float jitter)
 
     image sized = resize_image(cropped, w, h);
     if(flip) flip_image(sized);
-    d.X.vals[0] = cast_array_float2real(sized.data, sized.w*sized.h*sized.c);
+    d.X.vals[0] = sized.data;
 
     fill_truth_swag(random_path, d.y.vals[0], classes, flip, dx, dy, 1./sx, 1./sy);
 
@@ -1059,7 +1057,7 @@ data load_data_detection(int n, char **paths, int m, int w, int h, int boxes, in
     d.shallow = 0;
 
     d.X.rows = n;
-    d.X.vals = (real**)calloc(d.X.rows, sizeof(real*));
+    d.X.vals = (float**)calloc(d.X.rows, sizeof(float*));
     d.X.cols = h*w*3;
 
     d.y = make_matrix(n, 5*boxes);
@@ -1072,7 +1070,7 @@ data load_data_detection(int n, char **paths, int m, int w, int h, int boxes, in
         float dh = jitter * orig.h;
 
         float new_ar = (orig.w + rand_uniform_float(-dw, dw)) / (orig.h + rand_uniform_float(-dh, dh));
-        //real scale = rand_uniform(.25, 2);
+        //float scale = rand_uniform_float(.25, 2);
         float scale = 1;
 
         float nw, nh;
@@ -1094,7 +1092,7 @@ data load_data_detection(int n, char **paths, int m, int w, int h, int boxes, in
 
         int flip = rand()%2;
         if(flip) flip_image(sized);
-        d.X.vals[i] = cast_array_float2real(sized.data, sized.w*sized.h*sized.c);
+        d.X.vals[i] = sized.data;
 
 
         fill_truth_detection(random_paths[i], boxes, d.y.vals[i], classes, flip, -dx/w, -dy/h, nw/w, nh/h);
@@ -1252,11 +1250,11 @@ data load_data_super(char **paths, int n, int m, int w, int h, int scale)
 
     int i;
     d.X.rows = n;
-    d.X.vals = (real**)calloc(n, sizeof(real*));
+    d.X.vals = (float**)calloc(n, sizeof(float*));
     d.X.cols = w*h*3;
 
     d.y.rows = n;
-    d.y.vals = (real**)calloc(n, sizeof(real*));
+    d.y.vals = (float**)calloc(n, sizeof(float*));
     d.y.cols = w*scale * h*scale * 3;
 
     for(i = 0; i < n; ++i){
@@ -1265,8 +1263,8 @@ data load_data_super(char **paths, int n, int m, int w, int h, int scale)
         int flip = rand()%2;
         if (flip) flip_image(crop);
         image resize = resize_image(crop, w, h);
-        d.X.vals[i] = cast_array_float2real(resize.data, resize.w*resize.h*resize.c);
-        d.y.vals[i] = cast_array_float2real(crop.data, crop.w*crop.h*crop.c);
+        d.X.vals[i] = resize.data;
+        d.y.vals[i] = crop.data;
         free_image(im);
     }
 
@@ -1298,8 +1296,8 @@ data select_data(data *orig, int *inds)
     d.X.cols = orig[0].X.cols;
     d.y.cols = orig[0].y.cols;
 
-    d.X.vals = (real**)calloc(orig[0].X.rows, sizeof(real *));
-    d.y.vals = (real**)calloc(orig[0].y.rows, sizeof(real *));
+    d.X.vals = (float**)calloc(orig[0].X.rows, sizeof(float *));
+    d.y.vals = (float**)calloc(orig[0].y.rows, sizeof(float *));
     int i;
     for(i = 0; i < d.X.rows; ++i){
         d.X.vals[i] = orig[inds[i]].X.vals[i];
@@ -1320,16 +1318,16 @@ data *tile_data(data orig, int divs, int size)
         d.h = orig.h/divs * size;
         d.X.rows = orig.X.rows;
         d.X.cols = d.w*d.h*3;
-        d.X.vals = (real**)calloc(d.X.rows, sizeof(real*));
+        d.X.vals = (float**)calloc(d.X.rows, sizeof(float*));
 
         d.y = copy_matrix(orig.y);
 #pragma omp parallel for
         for(j = 0; j < orig.X.rows; ++j){
             int x = (i%divs) * orig.w / divs - (d.w - orig.w/divs)/2;
             int y = (i/divs) * orig.h / divs - (d.h - orig.h/divs)/2;
-            image im = real_to_image(orig.w, orig.h, 3, orig.X.vals[j]);
+            image im = float_to_image(orig.w, orig.h, 3, orig.X.vals[j]);
             image crop = crop_image(im, x, y, d.w, d.h);
-            d.X.vals[j] = cast_array_float2real(crop.data, crop.w*crop.h*crop.c);
+            d.X.vals[j] = crop.data;
         }
         ds[i] = d;
     }
@@ -1345,14 +1343,14 @@ data resize_data(data orig, int w, int h)
     int i;
     d.X.rows = orig.X.rows;
     d.X.cols = w*h*3;
-    d.X.vals = (real**)calloc(d.X.rows, sizeof(real*));
+    d.X.vals = (float**)calloc(d.X.rows, sizeof(float*));
 
     d.y = copy_matrix(orig.y);
 #pragma omp parallel for
     for(i = 0; i < orig.X.rows; ++i){
-        image im = real_to_image(orig.w, orig.h, 3, orig.X.vals[i]);
+        image im = float_to_image(orig.w, orig.h, 3, orig.X.vals[i]);
         image resize = resize_image(im, w, h);
-        d.X.vals[i] = cast_array_float2real(resize.data, resize.w*resize.h*resize.c);
+        d.X.vals[i] = resize.data;
     }
     return d;
 }
@@ -1389,7 +1387,7 @@ matrix concat_matrix(matrix m1, matrix m2)
     matrix m;
     m.cols = m1.cols;
     m.rows = m1.rows+m2.rows;
-    m.vals = (real**)calloc(m1.rows + m2.rows, sizeof(real*));
+    m.vals = (float**)calloc(m1.rows + m2.rows, sizeof(float*));
     for(i = 0; i < m1.rows; ++i){
         m.vals[count++] = m1.vals[i];
     }
@@ -1427,8 +1425,8 @@ data load_categorical_data_csv(char *filename, int target, int k)
     data d = {0};
     d.shallow = 0;
     matrix X = csv_to_matrix(filename);
-    real *truth_1d = pop_column(&X, target);
-    real **truth = one_hot_encode(truth_1d, X.rows, k);
+    float *truth_1d = pop_column(&X, target);
+    float **truth = one_hot_encode(truth_1d, X.rows, k);
     matrix y;
     y.rows = X.rows;
     y.cols = k;
@@ -1460,7 +1458,7 @@ data load_cifar10_data(char *filename)
             X.vals[i][j] = (double)bytes[j+1];
         }
     }
-    scale_data_rows(d, CAST(1./255));
+    scale_data_rows(d, 1./255);
     //normalize_data_rows(d);
     fclose(fp);
     return d;
@@ -1471,8 +1469,11 @@ void get_random_batch(data d, int n, real *X, real *y)
     int j;
     for(j = 0; j < n; ++j){
         int index = rand()%d.X.rows;
-        memcpy(X+j*d.X.cols, d.X.vals[index], d.X.cols*sizeof(real));
-        memcpy(y+j*d.y.cols, d.y.vals[index], d.y.cols*sizeof(real));
+        // # CAST INTERFACE #
+        real *data_x_real = cast_array_float2real(d.X.vals[index], d.X.cols);
+        real *data_y_real = cast_array_float2real(d.y.vals[index], d.y.cols);
+        memcpy(X+j*d.X.cols, data_x_real, d.X.cols*sizeof(real));
+        memcpy(y+j*d.y.cols, data_y_real, d.y.cols*sizeof(real));
     }
 }
 
@@ -1481,8 +1482,13 @@ void get_next_batch(data d, int n, int offset, real *X, real *y)
     int j;
     for(j = 0; j < n; ++j){
         int index = offset + j;
-        memcpy(X+j*d.X.cols, d.X.vals[index], d.X.cols*sizeof(real));
-        if(y) memcpy(y+j*d.y.cols, d.y.vals[index], d.y.cols*sizeof(real));
+        // # CAST INTERFACE #
+        real *data_x_real = cast_array_float2real(d.X.vals[index], d.X.cols);
+        memcpy(X+j*d.X.cols, data_x_real, d.X.cols*sizeof(real));
+        if(y) {
+            real *data_y_real = cast_array_float2real(d.y.vals[index], d.y.cols);
+            memcpy(y+j*d.y.cols, data_y_real, d.y.cols*sizeof(real));
+        }   
     }
 }
 
@@ -1526,7 +1532,7 @@ data load_all_cifar10()
         fclose(fp);
     }
     //normalize_data_rows(d);
-    scale_data_rows(d, CAST(1./255));
+    scale_data_rows(d, 1./255);
     smooth_data(d);
     return d;
 }
@@ -1583,7 +1589,7 @@ void randomize_data(data d)
     int i;
     for(i = d.X.rows-1; i > 0; --i){
         int index = rand()%i;
-        real *swap = d.X.vals[index];
+        float *swap = d.X.vals[index];
         d.X.vals[index] = d.X.vals[i];
         d.X.vals[i] = swap;
 
@@ -1593,15 +1599,15 @@ void randomize_data(data d)
     }
 }
 
-void scale_data_rows(data d, real s)
+void scale_data_rows(data d, float s)
 {
     int i;
     for(i = 0; i < d.X.rows; ++i){
-        scale_array(d.X.vals[i], d.X.cols, s);
+        scale_float_array(d.X.vals[i], d.X.cols, s);
     }
 }
 
-void translate_data_rows(data d, real s)
+void translate_data_rows(data d, float s)
 {
     int i;
     for(i = 0; i < d.X.rows; ++i){
@@ -1626,7 +1632,7 @@ void normalize_data_rows(data d)
 {
     int i;
     for(i = 0; i < d.X.rows; ++i){
-        normalize_array(d.X.vals[i], d.X.cols);
+        normalize_float_array(d.X.vals[i], d.X.cols);
     }
 }
 
@@ -1654,8 +1660,8 @@ data get_random_data(data d, int num)
     r.X.cols = d.X.cols;
     r.y.cols = d.y.cols;
 
-    r.X.vals = (real**)calloc(num, sizeof(real *));
-    r.y.vals = (real**)calloc(num, sizeof(real *));
+    r.X.vals = (float**)calloc(num, sizeof(float *));
+    r.y.vals = (float**)calloc(num, sizeof(float *));
 
     int i;
     for(i = 0; i < num; ++i){
@@ -1681,10 +1687,10 @@ data *split_data(data d, int part, int total)
     train.X.cols = test.X.cols = d.X.cols;
     train.y.cols = test.y.cols = d.y.cols;
 
-    train.X.vals = (real**)calloc(train.X.rows, sizeof(real*));
-    test.X.vals = (real**)calloc(test.X.rows, sizeof(real*));
-    train.y.vals = (real**)calloc(train.y.rows, sizeof(real*));
-    test.y.vals = (real**)calloc(test.y.rows, sizeof(real*));
+    train.X.vals = (float**)calloc(train.X.rows, sizeof(float*));
+    test.X.vals = (float**)calloc(test.X.rows, sizeof(float*));
+    train.y.vals = (float**)calloc(train.y.rows, sizeof(float*));
+    test.y.vals = (float**)calloc(test.y.rows, sizeof(float*));
 
     for(i = 0; i < start; ++i){
         train.X.vals[i] = d.X.vals[i];

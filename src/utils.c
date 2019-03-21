@@ -265,6 +265,22 @@ void top_k(real *a, int n, int k, int *index)
     }
 }
 
+void top_k_float(float *a, int n, int k, int *index)
+{
+    int i,j;
+    for(j = 0; j < k; ++j) index[j] = -1;
+    for(i = 0; i < n; ++i){
+        int curr = i;
+        for(j = 0; j < k; ++j){
+            if((index[j] < 0) || a[curr] > a[index[j]]){
+                int swap = curr;
+                curr = index[j];
+                index[j] = swap;
+            }
+        }
+    }
+}
+
 void error(const char *s)
 {
     perror(s);
@@ -471,9 +487,9 @@ int count_fields(char *line)
     return count;
 }
 
-real *parse_fields(char *line, int n)
+float *parse_fields(char *line, int n)
 {
-    real *field = (real*)calloc(n, sizeof(real));
+    float *field = (float*)calloc(n, sizeof(float));
     char *c, *p, *end;
     int count = 0;
     int done = 0;
@@ -613,7 +629,7 @@ void normalize_float_array(float *a, int n)
     sigma = sqrt(variance_float_array(a,n));
 }
 
-void translate_array(real *a, int n, real s)
+void translate_array(float *a, int n, float s)
 {
     int i;
     for(i = 0; i < n; ++i){
@@ -671,6 +687,19 @@ int sample_array(real *a, int n)
     return n-1;
 }
 
+int sample_float_array(float *a, int n)
+{
+    float sum = sum_float_array(a, n);
+    scale_float_array(a, n, 1.0/sum);
+    float r = rand_uniform_float(0.0, 1.0);
+    int i;
+    for(i = 0; i < n; ++i){
+        r = r - a[i];
+        if (r <= 0) return i;
+    }
+    return n-1;
+}
+
 int max_int_index(int *a, int n)
 {
     if(n <= 0) return -1;
@@ -690,6 +719,20 @@ int max_index(real *a, int n)
     if(n <= 0) return -1;
     int i, max_i = 0;
     real max = a[0];
+    for(i = 1; i < n; ++i){
+        if(a[i] > max){
+            max = a[i];
+            max_i = i;
+        }
+    }
+    return max_i;
+}
+
+int max_float_index(float *a, int n)
+{
+    if(n <= 0) return -1;
+    int i, max_i = 0;
+    float max = a[0];
     for(i = 1; i < n; ++i){
         if(a[i] > max){
             max = a[i];
@@ -791,12 +834,12 @@ float rand_scale(float s)
     return 1.0/scale;
 }
 
-real **one_hot_encode(real *a, int n, int k)
+float **one_hot_encode(float *a, int n, int k)
 {
     int i;
-    real **t = (real**)calloc(n, sizeof(real*));
+    float **t = (float**)calloc(n, sizeof(float*));
     for(i = 0; i < n; ++i){
-        t[i] = (real*)calloc(k, sizeof(real));
+        t[i] = (float*)calloc(k, sizeof(float));
         int index = (int)a[i];
         t[i][index] = 1;
     }
