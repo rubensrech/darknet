@@ -63,14 +63,6 @@ void train_coco(char *cfgfile, char *weightfile)
 
         printf("Loaded: %f seconds\n", (float)sec(clock()-time));
 
-        /*
-           image im = real_to_image(net->w, net->h, 3, train.X.vals[113]);
-           image copy = copy_image(im);
-           draw_coco(copy, train.y.vals[113], 7, "truth");
-           cvWaitKey(0);
-           free_image(copy);
-         */
-
         time=clock();
         real loss = train_network(net, train);
         if (avg_loss < 0) avg_loss = loss;

@@ -85,30 +85,6 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
         train = buffer;
         load_thread = load_data(args);
 
-        /*
-           int k;
-           for(k = 0; k < l.max_boxes; ++k){
-           box b = real_to_box(train.y.vals[10] + 1 + k*5);
-           if(!b.x) break;
-           printf("loaded: %f %f %f %f\n", b.x, b.y, b.w, b.h);
-           }
-         */
-        /*
-           int zz;
-           for(zz = 0; zz < train.X.cols; ++zz){
-           image im = real_to_image(net->w, net->h, 3, train.X.vals[zz]);
-           int k;
-           for(k = 0; k < l.max_boxes; ++k){
-           box b = real_to_box(train.y.vals[zz] + k*5, 1);
-           printf("%f %f %f %f\n", b.x, b.y, b.w, b.h);
-           draw_bbox(im, b, 1, 1,0,0);
-           }
-           show_image(im, "truth11");
-           cvWaitKey(0);
-           save_image(im, "truth11");
-           }
-         */
-
         printf("Loaded: %lf seconds\n", what_time_is_it_now()-time);
 
         time=what_time_is_it_now();
