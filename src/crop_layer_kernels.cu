@@ -215,4 +215,4 @@ void forward_crop_layer_gpu(crop_layer layer, network net)
 
     forward_crop_layer_kernel<<<cuda_gridsize(size), BLOCK>>>((real_device*)net.input_gpu, (real_device*)layer.rand_gpu, size, layer.c, layer.h, layer.w, layer.out_h, layer.out_w, net.train, layer.flip, (real_device)radians, (real_device*)layer.output_gpu);
     check_error(cudaPeekAtLastError());
-
+}
