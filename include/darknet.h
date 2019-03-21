@@ -497,11 +497,11 @@ typedef struct network{
 typedef struct {
     int w;
     int h;
-    real scale;
-    real rad;
-    real dx;
-    real dy;
-    real aspect;
+    float scale;
+    float rad;
+    float dx;
+    float dy;
+    float aspect;
 } augment_args;
 
 typedef struct {
@@ -578,8 +578,8 @@ typedef struct load_args{
 
 typedef struct{
     int id;
-    real x,y,w,h;
-    real left, right, top, bottom;
+    float x,y,w,h;
+    float left, right, top, bottom;
 } box_label;
 
 

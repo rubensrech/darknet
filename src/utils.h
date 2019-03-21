@@ -38,7 +38,7 @@ char *copy_string(char *s);
 int count_fields(char *line);
 real *parse_fields(char *line, int n);
 void translate_array(real *a, int n, real s);
-real constrain(real min, real max, real a);
+float constrain(float min, float max, float a);
 int constrain_int(int a, int min, int max);
 float rand_scale(float s);
 int rand_int(int min, int max);

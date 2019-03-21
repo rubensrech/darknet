@@ -566,7 +566,7 @@ int constrain_int(int a, int min, int max)
     return a;
 }
 
-real constrain(real min, real max, real a)
+float constrain(float min, float max, float a)
 {
     if (a < min) return min;
     if (a > max) return max;
