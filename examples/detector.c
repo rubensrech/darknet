@@ -12,7 +12,7 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
     srand(time(0));
     char *base = basecfg(cfgfile);
     printf("%s\n", base);
-    real avg_loss = CAST(-1);
+    float avg_loss = -1;
     network **nets = (network**)calloc(ngpus, sizeof(network));
 
     srand(time(0));
@@ -36,7 +36,7 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
     layer l = net->layers[net->n - 1];
 
     int classes = l.classes;
-    real jitter = l.jitter;
+    float jitter = l.jitter;
 
     list *plist = get_paths(train_images);
     //int N = plist->size;
@@ -88,7 +88,7 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
         printf("Loaded: %lf seconds\n", what_time_is_it_now()-time);
 
         time=what_time_is_it_now();
-        real loss = CAST(0);
+        float loss = 0;
 #ifdef GPU
         if(ngpus == 1){
             loss = train_network(net, train);
@@ -261,8 +261,8 @@ void validate_detector_flip(char *datacfg, char *cfgfile, char *weightfile, char
     int i=0;
     int t;
 
-    real thresh = CAST(.005);
-    real nms = CAST(.45);
+    float thresh = .005;
+    float nms = .45;
 
     int nthreads = 4;
     image *val = (image*)calloc(nthreads, sizeof(image));
@@ -312,7 +312,7 @@ void validate_detector_flip(char *datacfg, char *cfgfile, char *weightfile, char
             int num = 0;
             // !!!
             int letterbox = 1;
-            detection *dets = get_network_boxes(net, w, h, thresh, CAST(.5), map, 0, &num, letterbox);
+            detection *dets = get_network_boxes(net, w, h, CAST(thresh), CAST(.5), map, 0, &num, letterbox);
             if (nms) do_nms_sort(dets, num, classes, nms);
             if (coco){
                 print_cocos(fp, path, dets, num, classes, w, h);
@@ -394,8 +394,8 @@ void validate_detector(char *datacfg, char *cfgfile, char *weightfile, char *out
     int i=0;
     int t;
 
-    real thresh = CAST(.005);
-    real nms = CAST(.45);
+    float thresh = .005;
+    float nms = .45;
 
     int nthreads = 4;
     image *val = (image*)calloc(nthreads, sizeof(image));
@@ -440,7 +440,7 @@ void validate_detector(char *datacfg, char *cfgfile, char *weightfile, char *out
             int nboxes = 0;
             // !!!
             int letterbox = (args.type == LETTERBOX_DATA);
-            detection *dets = get_network_boxes(net, w, h, thresh, CAST(.5), map, 0, &nboxes, letterbox);
+            detection *dets = get_network_boxes(net, w, h, CAST(thresh), CAST(.5), map, 0, &nboxes, letterbox);
             if (nms) do_nms_sort(dets, nboxes, classes, nms);
             if (coco){
                 print_cocos(fp, path, dets, nboxes, classes, w, h);
@@ -483,14 +483,14 @@ void validate_detector_recall(char *cfgfile, char *weightfile)
     int m = plist->size;
     int i=0;
 
-    real thresh = CAST(.001);
-    real iou_thresh = CAST(.5);
-    real nms = CAST(.4);
+    float thresh = .001;
+    float iou_thresh = .5;
+    float nms = .4;
 
     int total = 0;
     int correct = 0;
     int proposals = 0;
-    real avg_iou = CAST(0);
+    float avg_iou = 0;
 
     for(i = 0; i < m; ++i){
         char *path = paths[i];
@@ -501,7 +501,7 @@ void validate_detector_recall(char *cfgfile, char *weightfile)
         int nboxes = 0;
         // !!!
         int letterbox = 1;
-        detection *dets = get_network_boxes(net, sized.w, sized.h, thresh, CAST(.5), 0, 1, &nboxes, letterbox);
+        detection *dets = get_network_boxes(net, sized.w, sized.h, CAST(thresh), CAST(.5), 0, 1, &nboxes, letterbox);
         if (nms) do_nms_obj(dets, nboxes, 1, nms);
 
         char labelpath[4096];
@@ -592,8 +592,8 @@ double validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, flo
     int i = 0;
     int t;
 
-    const real thresh = CAST(.005);
-    const real nms = CAST(.45);
+    const float thresh = .005;
+    const float nms = .45;
 
     int nthreads = 4;
     if (m < 4) nthreads = m;
@@ -662,14 +662,14 @@ double tmpTime, tTmpTime = 0;
             network_predict_float(net, X);
 
             int nboxes = 0;
-            real hier_thresh = CAST(0);
+            float hier_thresh = 0;
             detection *dets;
             if (args.type == LETTERBOX_DATA) {
                 int letterbox = 1;
-                dets = get_network_boxes(net, val[t].w, val[t].h, thresh, hier_thresh, 0, 1, &nboxes, letterbox);
+                dets = get_network_boxes(net, val[t].w, val[t].h, CAST(thresh), CAST(hier_thresh), 0, 1, &nboxes, letterbox);
             } else {
                 int letterbox = 0;
-                dets = get_network_boxes(net, 1, 1, thresh, hier_thresh, 0, 0, &nboxes, letterbox);
+                dets = get_network_boxes(net, 1, 1, CAST(thresh), CAST(hier_thresh), 0, 0, &nboxes, letterbox);
             }
 
 tmpTime = what_time_is_it_now();
@@ -915,7 +915,7 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
     double time;
     char buff[256];
     char *input = buff;
-    real nms = CAST(.45);
+    float nms = .45;
     while(1) {
         if (filename) {
             strncpy(input, filename, 256);
@@ -1050,8 +1050,8 @@ void test(char *filename) {
     char *datacfg = (char *)"cfg/coco.data";
     char *cfgfile = (char *)"cfg/yolov3-tiny.cfg";
     char *weightfile = (char *)"../yolov3-tiny2.weights";
-    real thresh = CAST(0.3);
-    real hier_thresh = CAST(0.5);
+    float thresh = CAST(0.3);
+    float hier_thresh = CAST(0.5);
 
     // Load config (classes names file)
     list *options = read_data_cfg(datacfg);
@@ -1070,7 +1070,7 @@ void test(char *filename) {
 
     char buff[256];
     char *input = buff;
-    real nms = CAST(.45);
+    float nms = CAST(.45);
 
     strncpy(input, filename, 256);
 
@@ -1080,7 +1080,7 @@ void test(char *filename) {
 
     layer l = net->layers[net->n - 1];
 
-    real *X = sized.data;
+    float *X = sized.data;
 
     int nboxes = 0;
     detection *dets;
