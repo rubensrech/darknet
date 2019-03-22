@@ -1288,8 +1288,8 @@ void load_convolutional_weights(layer l, FILE *fp)
             printf("\n");
         }
         if(0){
-            fill_cpu(l.n, CAST(0), l.rolling_mean, 1);
-            fill_cpu(l.n, CAST(0), l.rolling_variance, 1);
+            fill_cpu(l.n, 0, l.rolling_mean, 1);
+            fill_cpu(l.n, 0, l.rolling_variance, 1);
         }
         if(0){
             int i;

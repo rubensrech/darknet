@@ -897,14 +897,14 @@ augment_args random_augment_args(image im, float angle, float aspect, int low, i
     int min = (im.h < im.w*aspect) ? im.h : im.w*aspect;
     float scale = (float)r / min;
 
-    float rad = rand_uniform_float(-angle, angle) * (TWO_PI / 360.);
+    float rad = rand_uniform(-angle, angle) * (TWO_PI / 360.);
 
     float dx = (im.w*scale/aspect - w) / 2.;
     float dy = (im.h*scale - w) / 2.;
     //if(dx < 0) dx = 0;
     //if(dy < 0) dy = 0;
-    dx = rand_uniform_float(-dx, dx);
-    dy = rand_uniform_float(-dy, dy);
+    dx = rand_uniform(-dx, dx);
+    dy = rand_uniform(-dy, dy);
 
     a.rad = rad;
     a.scale = scale;
@@ -1200,7 +1200,7 @@ void distort_image(image im, float hue, float sat, float val)
 
 void random_distort_image(image im, float hue, float saturation, float exposure)
 {
-    float dhue = rand_uniform_float(-hue, hue);
+    float dhue = rand_uniform(-hue, hue);
     float dsat = rand_scale(saturation);
     float dexp = rand_scale(exposure);
     distort_image(im, dhue, dsat, dexp);
@@ -1298,7 +1298,7 @@ void test_resize(char *filename)
 
         float dexp = rand_scale(exposure);
         float dsat = rand_scale(saturation);
-        float dhue = rand_uniform_float(-hue, hue);
+        float dhue = rand_uniform(-hue, hue);
 
         distort_image(c, dhue, dsat, dexp);
         show_image(c, "rand", 1);

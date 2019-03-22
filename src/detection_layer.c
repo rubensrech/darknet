@@ -59,7 +59,7 @@ void forward_detection_layer(const detection_layer l, network net)
             int index = b*l.inputs;
             for (i = 0; i < locations; ++i) {
                 int offset = i*l.classes;
-                softmax(l.output + index + offset, l.classes, CAST(1), 1,
+                softmax(l.output + index + offset, l.classes, 1, 1,
                         l.output + index + offset);
             }
         }
@@ -222,7 +222,7 @@ void backward_detection_layer(const detection_layer l, network net)
     axpy_cpu(l.batch*l.inputs, 1, l.delta, 1, net.delta, 1);
 }
 
-void get_detection_detections(layer l, int w, int h, real thresh, detection *dets)
+void get_detection_detections(layer l, int w, int h, float thresh, detection *dets)
 {
     int i,j,n;
     real *predictions = l.output;

@@ -312,7 +312,7 @@ void validate_detector_flip(char *datacfg, char *cfgfile, char *weightfile, char
             int num = 0;
             // !!!
             int letterbox = 1;
-            detection *dets = get_network_boxes(net, w, h, CAST(thresh), CAST(.5), map, 0, &num, letterbox);
+            detection *dets = get_network_boxes(net, w, h, thresh, .5, map, 0, &num, letterbox);
             if (nms) do_nms_sort(dets, num, classes, nms);
             if (coco){
                 print_cocos(fp, path, dets, num, classes, w, h);
@@ -440,7 +440,7 @@ void validate_detector(char *datacfg, char *cfgfile, char *weightfile, char *out
             int nboxes = 0;
             // !!!
             int letterbox = (args.type == LETTERBOX_DATA);
-            detection *dets = get_network_boxes(net, w, h, CAST(thresh), CAST(.5), map, 0, &nboxes, letterbox);
+            detection *dets = get_network_boxes(net, w, h, thresh, .5, map, 0, &nboxes, letterbox);
             if (nms) do_nms_sort(dets, nboxes, classes, nms);
             if (coco){
                 print_cocos(fp, path, dets, nboxes, classes, w, h);
@@ -501,7 +501,7 @@ void validate_detector_recall(char *cfgfile, char *weightfile)
         int nboxes = 0;
         // !!!
         int letterbox = 1;
-        detection *dets = get_network_boxes(net, sized.w, sized.h, CAST(thresh), CAST(.5), 0, 1, &nboxes, letterbox);
+        detection *dets = get_network_boxes(net, sized.w, sized.h, thresh, .5, 0, 1, &nboxes, letterbox);
         if (nms) do_nms_obj(dets, nboxes, 1, nms);
 
         char labelpath[4096];
@@ -666,10 +666,10 @@ double tmpTime, tTmpTime = 0;
             detection *dets;
             if (args.type == LETTERBOX_DATA) {
                 int letterbox = 1;
-                dets = get_network_boxes(net, val[t].w, val[t].h, CAST(thresh), CAST(hier_thresh), 0, 1, &nboxes, letterbox);
+                dets = get_network_boxes(net, val[t].w, val[t].h, thresh, hier_thresh, 0, 1, &nboxes, letterbox);
             } else {
                 int letterbox = 0;
-                dets = get_network_boxes(net, 1, 1, CAST(thresh), CAST(hier_thresh), 0, 0, &nboxes, letterbox);
+                dets = get_network_boxes(net, 1, 1, thresh, hier_thresh, 0, 0, &nboxes, letterbox);
             }
 
 tmpTime = what_time_is_it_now();
@@ -946,7 +946,7 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
         int nboxes = 0;
         // !!!
         int letterbox = 1;
-        detection *dets = get_network_boxes(net, im.w, im.h, CAST(thresh), CAST(hier_thresh), 0, 1, &nboxes, letterbox);
+        detection *dets = get_network_boxes(net, im.w, im.h, thresh, hier_thresh, 0, 1, &nboxes, letterbox);
         printf("Detections: %d\n", nboxes);
         //printf("%d\n", nboxes);
         //if (nms) do_nms_obj(boxes, probs, l.w*l.h*l.n, l.classes, nms);

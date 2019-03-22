@@ -101,7 +101,7 @@ void train_vid_rnn(char *cfgfile, char *weightfile)
 
         copy_cpu(net.inputs*net.batch, p.x, 1, net.input, 1);
         copy_cpu(net.truths*net.batch, p.y, 1, net.truth, 1);
-        real loss = train_network_datum(net) / (net.batch);
+        float loss = train_network_datum(net) / (net.batch);
 
 
         free(p.x);

@@ -111,7 +111,7 @@ void forward_iseg_layer(const layer l, network net)
 
         memset(l.counts, 0, 90*sizeof(int));
         for(i = 0; i < 90; ++i){
-            fill_cpu(ids, CAST(0), l.sums[i], 1);
+            fill_cpu(ids, 0, l.sums[i], 1);
             
             int c = net.truth[b*l.truths + i*(l.w*l.h+1)];
             if(c < 0) break;

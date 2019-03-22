@@ -553,12 +553,6 @@ move pick_move(mcts_tree *tree, float temp, int player)
     float probs[19*19+1] = {0};
     move m = {0};
     double sum = 0;
-    /*
-    for(i = 0; i < 19*19+1; ++i){
-        probs[i] = tree->visit_count[i];
-    }
-    */
-    //softmax(probs, 19*19+1, temp, 1, probs);
     for(i = 0; i < 19*19+1; ++i){
         sum += pow(tree->visit_count[i], 1./temp);
     }

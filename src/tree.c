@@ -50,18 +50,18 @@ void hierarchy_predictions(real *predictions, int n, tree *hier, int only_leaves
     }
 }
 
-int hierarchy_top_prediction(real *predictions, tree *hier, real thresh, int stride)
+int hierarchy_top_prediction(real *predictions, tree *hier, float thresh, int stride)
 {
-    real p = CAST(1);
+    float p = 1;
     int group = 0;
     int i;
     while(1){
-        real max = CAST(0);
+        float max = 0;
         int max_i = 0;
 
         for(i = 0; i < hier->group_size[group]; ++i){
             int index = i + hier->group_offset[group];
-            real val = predictions[(i + hier->group_offset[group])*stride];
+            float val = predictions[(i + hier->group_offset[group])*stride];
             if(val > max){
                 max_i = index;
                 max = val;

@@ -105,7 +105,7 @@ real *cuda_make_array(real *x, size_t n)
         status = cudaMemcpy(x_gpu, x, size, cudaMemcpyHostToDevice);
         check_error(status);
     } else {
-        fill_gpu(n, CAST(0), x_gpu, 1);
+        fill_gpu(n, 0, x_gpu, 1);
     }
     if(!x_gpu) error("Cuda malloc failed\n");
     return x_gpu;
@@ -156,14 +156,14 @@ void cuda_random(real *x_gpu, size_t n)
     check_error(cudaPeekAtLastError());
 }
 
-real cuda_compare(real *x_gpu, real *x, size_t n, char *s)
+float cuda_compare(real *x_gpu, real *x, size_t n, char *s)
 {
     real *tmp = (real*)calloc(n, sizeof(real));
     cuda_pull_array(x_gpu, tmp, n);
     //int i;
     //for(i = 0; i < n; ++i) printf("%f %f\n", tmp[i], x[i]);
     axpy_cpu(n, -1, x, 1, tmp, 1);
-    real err = dot_cpu(n, tmp, 1, tmp, 1);
+    float err = dot_cpu(n, tmp, 1, tmp, 1);
     printf("Error %s: %f\n", s, sqrt(err/n));
     free(tmp);
     return err;
@@ -211,11 +211,11 @@ void cuda_pull_float_array(float *x_gpu, float *x, size_t n)
 }
 
 
-real cuda_mag_array(real *x_gpu, size_t n)
+float cuda_mag_array(real *x_gpu, size_t n)
 {
     real *temp = (real*)calloc(n, sizeof(real));
     cuda_pull_array(x_gpu, temp, n);
-    real m = mag_array(temp, n);
+    float m = mag_array(temp, n);
     free(temp);
     return m;
 }

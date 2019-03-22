@@ -19,13 +19,6 @@ void forward_dropout_layer_gpu(dropout_layer layer, network net)
     if (!net.train) return;
     int size = layer.inputs*layer.batch;
     cuda_random(layer.rand_gpu, size);
-    /*
-    int i;
-    for(i = 0; i < size; ++i){
-        layer.rand[i] = rand_uniform();
-    }
-    cuda_push_array(layer.rand_gpu, layer.rand, size);
-    */
 
     yoloswag420blazeit360noscope<<<cuda_gridsize(size), BLOCK>>>((real_device*)net.input_gpu, size, (real_device*)layer.rand_gpu, (real_device)layer.probability, (real_device)layer.scale);
     check_error(cudaPeekAtLastError());

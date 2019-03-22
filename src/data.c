@@ -901,10 +901,10 @@ data load_data_region(int n, char **paths, int m, int w, int h, int size, int cl
         int dw = (ow*jitter);
         int dh = (oh*jitter);
 
-        int pleft  = rand_uniform_float(-dw, dw);
-        int pright = rand_uniform_float(-dw, dw);
-        int ptop   = rand_uniform_float(-dh, dh);
-        int pbot   = rand_uniform_float(-dh, dh);
+        int pleft  = rand_uniform(-dw, dw);
+        int pright = rand_uniform(-dw, dw);
+        int ptop   = rand_uniform(-dh, dh);
+        int pbot   = rand_uniform(-dh, dh);
 
         int swidth =  ow - pleft - pright;
         int sheight = oh - ptop - pbot;
@@ -1020,10 +1020,10 @@ data load_data_swag(char **paths, int n, int classes, float jitter)
     int dw = w*jitter;
     int dh = h*jitter;
 
-    int pleft  = rand_uniform_float(-dw, dw);
-    int pright = rand_uniform_float(-dw, dw);
-    int ptop   = rand_uniform_float(-dh, dh);
-    int pbot   = rand_uniform_float(-dh, dh);
+    int pleft  = rand_uniform(-dw, dw);
+    int pright = rand_uniform(-dw, dw);
+    int ptop   = rand_uniform(-dh, dh);
+    int pbot   = rand_uniform(-dh, dh);
 
     int swidth =  w - pleft - pright;
     int sheight = h - ptop - pbot;
@@ -1069,8 +1069,8 @@ data load_data_detection(int n, char **paths, int m, int w, int h, int boxes, in
         float dw = jitter * orig.w;
         float dh = jitter * orig.h;
 
-        float new_ar = (orig.w + rand_uniform_float(-dw, dw)) / (orig.h + rand_uniform_float(-dh, dh));
-        //float scale = rand_uniform_float(.25, 2);
+        float new_ar = (orig.w + rand_uniform(-dw, dw)) / (orig.h + rand_uniform(-dh, dh));
+        //float scale = rand_uniform(.25, 2);
         float scale = 1;
 
         float nw, nh;
@@ -1083,8 +1083,8 @@ data load_data_detection(int n, char **paths, int m, int w, int h, int boxes, in
             nh = nw / new_ar;
         }
 
-        float dx = rand_uniform_float(0, w - nw);
-        float dy = rand_uniform_float(0, h - nh);
+        float dx = rand_uniform(0, w - nw);
+        float dy = rand_uniform(0, h - nh);
 
         place_image(orig, nw, nh, dx, dy, sized);
 

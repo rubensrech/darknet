@@ -72,7 +72,7 @@ void train_captcha(char *cfgfile, char *weightfile)
         load_thread = load_data_in_thread(args);
         printf("Loaded: %f seconds\n", (float)sec(clock()-time));
         time=clock();
-        real loss = train_network(net, train);
+        float loss = train_network(net, train);
         if(avg_loss == -1) avg_loss = loss;
         avg_loss = avg_loss*.9 + loss*.1;
         printf("%d: %f, %f avg, %f seconds, %ld images\n", i, (float)loss, (float)avg_loss, (float)sec(clock()-time), *net->seen);

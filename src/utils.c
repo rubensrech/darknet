@@ -244,9 +244,9 @@ void find_replace(char *str, char *orig, char *rep, char *output)
     sprintf(output, "%s%s%s", buffer, rep, p+strlen(orig));
 }
 
-real sec(clock_t clocks)
+float sec(clock_t clocks)
 {
-    return CAST((float)clocks/CLOCKS_PER_SEC);
+    return (float)clocks/CLOCKS_PER_SEC;
 }
 
 void top_k(real *a, int n, int k, int *index)
@@ -507,10 +507,10 @@ float *parse_fields(char *line, int n)
     return field;
 }
 
-real sum_array(real *a, int n)
+float sum_array(real *a, int n)
 {
     int i;
-    real sum = CAST(0);
+    float sum = 0;
     for(i = 0; i < n; ++i) sum += a[i];
     return sum;
 }
@@ -523,9 +523,9 @@ float sum_float_array(float *a, int n)
     return sum;
 }
 
-real mean_array(real *a, int n)
+float mean_array(real *a, int n)
 {
-    return sum_array(a,n)/CAST(n);
+    return sum_array(a,n)/n;
 }
 
 float mean_float_array(float *a, int n)
@@ -550,18 +550,18 @@ void mean_arrays(real **a, int n, int els, real *avg)
 
 void print_statistics(real *a, int n)
 {
-    real m = mean_array(a, n);
-    real v = variance_array(a, n);
+    float m = mean_array(a, n);
+    float v = variance_array(a, n);
     printf("MSE: %.6f, Mean: %.6f, Variance: %.6f\n", (float)mse_array(a, n), (float)m, (float)v);
 }
 
-real variance_array(real *a, int n)
+float variance_array(real *a, int n)
 {
     int i;
-    real sum = CAST(0);
-    real mean = mean_array(a, n);
+    float sum = 0;
+    float mean = mean_array(a, n);
     for(i = 0; i < n; ++i) sum += (a[i] - mean)*(a[i]-mean);
-    real variance = sum/CAST(n);
+    float variance = sum/n;
     return variance;
 }
 
@@ -597,19 +597,19 @@ float dist_array(float *a, float *b, int n, int sub)
     return sqrt(sum);
 }
 
-real mse_array(real *a, int n)
+float mse_array(real *a, int n)
 {
     int i;
-    real sum = CAST(0);
+    float sum = 0;
     for(i = 0; i < n; ++i) sum += a[i]*a[i];
-    return CAST(sqrt(sum/n));
+    return sqrt(sum/n);
 }
 
 void normalize_array(real *a, int n)
 {
     int i;
-    real mu = mean_array(a,n);
-    real sigma = sqrt(variance_array(a,n));
+    float mu = mean_array(a,n);
+    float sigma = sqrt(variance_array(a,n));
     for(i = 0; i < n; ++i){
         a[i] = (a[i] - mu)/sigma;
     }
@@ -637,10 +637,10 @@ void translate_array(float *a, int n, float s)
     }
 }
 
-real mag_array(real *a, int n)
+float mag_array(real *a, int n)
 {
     int i;
-    real sum = CAST(0);
+    float sum = 0;
     for(i = 0; i < n; ++i){
         sum += a[i]*a[i];   
     }
@@ -657,7 +657,7 @@ float mag_float_array(float *a, int n)
     return sqrt(sum);
 }
 
-void scale_array(real *a, int n, real s)
+void scale_array(real *a, int n, float s)
 {
     int i;
     for(i = 0; i < n; ++i){
@@ -676,9 +676,9 @@ void scale_float_array(float *a, int n, float s)
 
 int sample_array(real *a, int n)
 {
-    real sum = sum_array(a, n);
-    scale_array(a, n, CAST(1.0)/sum);
-    real r = rand_uniform(CAST(0.0), CAST(1.0));
+    float sum = sum_array(a, n);
+    scale_array(a, n, 1.0/sum);
+    float r = rand_uniform(0.0, 1.0);
     int i;
     for(i = 0; i < n; ++i){
         r = r - a[i];
@@ -691,7 +691,7 @@ int sample_float_array(float *a, int n)
 {
     float sum = sum_float_array(a, n);
     scale_float_array(a, n, 1.0/sum);
-    float r = rand_uniform_float(0.0, 1.0);
+    float r = rand_uniform(0.0, 1.0);
     int i;
     for(i = 0; i < n; ++i){
         r = r - a[i];
@@ -718,7 +718,7 @@ int max_index(real *a, int n)
 {
     if(n <= 0) return -1;
     int i, max_i = 0;
-    real max = a[0];
+    float max = a[0];
     for(i = 1; i < n; ++i){
         if(a[i] > max){
             max = a[i];
@@ -763,7 +763,7 @@ int rand_int(int min, int max)
 }
 
 // From http://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform
-real rand_normal()
+float rand_normal()
 {
     static int haveSpare = 0;
     static double rand1, rand2;
@@ -771,7 +771,7 @@ real rand_normal()
     if(haveSpare)
     {
         haveSpare = 0;
-        return CAST(sqrt(rand1) * sin(rand2));
+        return sqrt(rand1) * sin(rand2);
     }
 
     haveSpare = 1;
@@ -781,19 +781,8 @@ real rand_normal()
     rand1 = -2 * log(rand1);
     rand2 = (rand() / ((double) RAND_MAX)) * TWO_PI;
 
-    return CAST(sqrt(rand1) * cos(rand2));
+    return sqrt(rand1) * cos(rand2);
 }
-
-/*
-   real rand_normal()
-   {
-   int n = 12;
-   int i;
-   real sum= 0;
-   for(i = 0; i < n; ++i) sum += (float)rand()/RAND_MAX;
-   return sum-n/2.;
-   }
- */
 
 size_t rand_size_t()
 {
@@ -807,17 +796,7 @@ size_t rand_size_t()
         ((size_t)(rand()&0xff) << 0);
 }
 
-real rand_uniform(real min, real max)
-{
-    if(max < min){
-        real swap = min;
-        min = max;
-        max = swap;
-    }
-    return CAST(((float)rand()/RAND_MAX * (max - min)) + min);
-}
-
-float rand_uniform_float(float min, float max)
+float rand_uniform(float min, float max)
 {
     if(max < min){
         float swap = min;
@@ -829,7 +808,7 @@ float rand_uniform_float(float min, float max)
 
 float rand_scale(float s)
 {
-    float scale = rand_uniform(CAST(1.0), CAST(s));
+    float scale = rand_uniform(1.0, s);
     if(rand()%2) return scale;
     return 1.0/scale;
 }

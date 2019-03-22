@@ -80,7 +80,7 @@ detection *avg_predictions(network *net, int *nboxes)
     }
     // !!!
     int letterbox = 1;
-    detection *dets = get_network_boxes(net, buff[0].w, buff[0].h, CAST(demo_thresh), CAST(demo_hier), 0, 1, nboxes, letterbox);
+    detection *dets = get_network_boxes(net, buff[0].w, buff[0].h, demo_thresh, demo_hier, 0, 1, nboxes, letterbox);
     return dets;
 }
 

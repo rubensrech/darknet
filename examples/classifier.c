@@ -19,7 +19,7 @@ void train_classifier(char *datacfg, char *cfgfile, char *weightfile, int *gpus,
 {
     int i;
 
-    real avg_loss = CAST(-1);
+    float avg_loss = -1;
     char *base = basecfg(cfgfile);
     printf("%s\n", base);
     printf("%d\n", ngpus);
@@ -129,7 +129,7 @@ void train_classifier(char *datacfg, char *cfgfile, char *weightfile, int *gpus,
         printf("Loaded: %lf seconds\n", what_time_is_it_now()-time);
         time = what_time_is_it_now();
 
-        real loss = CAST(0);
+        float loss = 0;
 #ifdef GPU
         if(ngpus == 1){
             loss = train_network(net, train);

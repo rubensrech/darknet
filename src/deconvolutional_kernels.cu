@@ -22,7 +22,7 @@ void forward_deconvolutional_layer_gpu(layer l, network net)
     int n = l.h*l.w;
     int k = l.c;
 
-    fill_gpu(l.outputs*l.batch, CAST(0), l.output_gpu, 1);
+    fill_gpu(l.outputs*l.batch, 0, l.output_gpu, 1);
 
     for(i = 0; i < l.batch; ++i){
         real *a = l.weights_gpu;

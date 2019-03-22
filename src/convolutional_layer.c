@@ -201,11 +201,7 @@ convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int
     l.nweights = c/groups*n*size*size;
     l.nbiases = n;
 
-    // real scale = 1./sqrt(size*size*c);
-    real scale = CAST(sqrt(2./(size*size*c/l.groups)));
-    //printf("convscale %f\n", scale);
-    //scale = .02;
-    //for(i = 0; i < c*n*size*size; ++i) l.weights[i] = scale*rand_uniform(-1, 1);
+    float scale = sqrt(2./(size*size*c/l.groups));
     for(i = 0; i < l.nweights; ++i) l.weights[i] = scale*rand_normal();
     int out_w = convolutional_out_width(l);
     int out_h = convolutional_out_height(l);
@@ -446,7 +442,7 @@ void forward_convolutional_layer(convolutional_layer l, network net)
 {
     int i, j;
 
-    fill_cpu(l.outputs*l.batch, CAST(0), l.output, 1);
+    fill_cpu(l.outputs*l.batch, 0, l.output, 1);
 
     if(l.xnor){
         binarize_weights(l.weights, l.n, l.c/l.groups*l.size*l.size, l.binary_weights);

@@ -67,7 +67,7 @@ void resize_upsample_layer(layer *l, int w, int h)
 
 void forward_upsample_layer(const layer l, network net)
 {
-    fill_cpu(l.outputs*l.batch, CAST(0), l.output, 1);
+    fill_cpu(l.outputs*l.batch, 0, l.output, 1);
     if(l.reverse){
         upsample_cpu(l.output, l.out_w, l.out_h, l.c, l.batch, l.stride, 0, l.scale, net.input);
     }else{
@@ -87,7 +87,7 @@ void backward_upsample_layer(const layer l, network net)
 #ifdef GPU
 void forward_upsample_layer_gpu(const layer l, network net)
 {
-    fill_gpu(l.outputs*l.batch, CAST(0), l.output_gpu, 1);
+    fill_gpu(l.outputs*l.batch, 0, l.output_gpu, 1);
     if(l.reverse){
         upsample_gpu(l.output_gpu, l.out_w, l.out_h, l.c, l.batch, l.stride, 0, l.scale, net.input_gpu);
     }else{

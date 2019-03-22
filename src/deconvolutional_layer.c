@@ -227,7 +227,7 @@ void forward_deconvolutional_layer(const layer l, network net)
     int n = l.h*l.w;
     int k = l.c;
 
-    fill_cpu(l.outputs*l.batch, CAST(0), l.output, 1);
+    fill_cpu(l.outputs*l.batch, 0, l.output, 1);
 
     for(i = 0; i < l.batch; ++i){
         real *a = l.weights;

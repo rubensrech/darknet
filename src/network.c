@@ -73,10 +73,10 @@ void reset_network_state(network *net, int b)
         #ifdef GPU
         layer l = net->layers[i];
         if(l.state_gpu){
-            fill_gpu(l.outputs, CAST(0), l.state_gpu + l.outputs*b, 1);
+            fill_gpu(l.outputs, 0, l.state_gpu + l.outputs*b, 1);
         }
         if(l.h_gpu){
-            fill_gpu(l.outputs, CAST(0), l.h_gpu + l.outputs*b, 1);
+            fill_gpu(l.outputs, 0, l.h_gpu + l.outputs*b, 1);
         }
         #endif
     }
@@ -87,17 +87,17 @@ void reset_rnn(network *net)
     reset_network_state(net, 0);
 }
 
-real get_current_rate(network *net)
+float get_current_rate(network *net)
 {
     size_t batch_num = get_current_batch(net);
     int i;
-    real rate;
-    if (batch_num < net->burn_in) return net->learning_rate * pow(CAST((float)batch_num / net->burn_in), net->power);
+    float rate;
+    if (batch_num < net->burn_in) return net->learning_rate * pow((float)batch_num / net->burn_in, net->power);
     switch (net->policy) {
         case CONSTANT:
             return net->learning_rate;
         case STEP:
-            return net->learning_rate * pow(net->scale, CAST(batch_num/net->step));
+            return net->learning_rate * pow(net->scale, batch_num/net->step);
         case STEPS:
             rate = net->learning_rate;
             for(i = 0; i < net->num_steps; ++i){
@@ -106,13 +106,13 @@ real get_current_rate(network *net)
             }
             return rate;
         case EXP:
-            return net->learning_rate * pow(net->gamma, CAST(batch_num));
+            return net->learning_rate * pow(net->gamma, batch_num);
         case POLY:
-            return net->learning_rate * pow(CAST(1 - (float)batch_num / net->max_batches), net->power);
+            return net->learning_rate * pow(1 - (float)batch_num / net->max_batches, net->power);
         case RANDOM:
-            return net->learning_rate * pow(rand_uniform(CAST(0),CAST(1)), net->power);
+            return net->learning_rate * pow(rand_uniform(0,1), net->power);
         case SIG:
-            return net->learning_rate * CAST(1./(1.+exp(net->gamma*(batch_num - net->step))));
+            return net->learning_rate * 1./(1.+exp(net->gamma*(batch_num - net->step)));
         default:
             fprintf(stderr, "Policy is weird!\n");
             return net->learning_rate;
@@ -199,7 +199,7 @@ void forward_network(network *netp)
         net.index = i;
         layer l = net.layers[i];
         if(l.delta){
-            fill_cpu(l.outputs * l.batch, CAST(0), l.delta, 1);
+            fill_cpu(l.outputs * l.batch, 0, l.delta, 1);
         }
         l.forward(l, net);
         net.input = l.output;
@@ -286,48 +286,48 @@ void backward_network(network *netp)
     }
 }
 
-real train_network_datum(network *net)
+float train_network_datum(network *net)
 {
     *net->seen += net->batch;
     net->train = 1;
     forward_network(net);
     backward_network(net);
-    real error = *net->cost;
+    float error = *net->cost;
     if(((*net->seen)/net->batch)%net->subdivisions == 0) update_network(net);
     return error;
 }
 
-real train_network_sgd(network *net, data d, int n)
+float train_network_sgd(network *net, data d, int n)
 {
     int batch = net->batch;
 
     int i;
-    real sum = CAST(0);
+    float sum = 0;
     for(i = 0; i < n; ++i){
         get_random_batch(d, batch, net->input, net->truth);
-        real err = train_network_datum(net);
+        float err = train_network_datum(net);
         sum += err;
     }
-    return CAST((float)sum/(n*batch));
+    return (float)sum/(n*batch);
 }
 
-real train_network(network *net, data d)
+float train_network(network *net, data d)
 {
     assert(d.X.rows % net->batch == 0);
     int batch = net->batch;
     int n = d.X.rows / batch;
 
     int i;
-    real sum = CAST(0);
+    float sum = 0;
     for(i = 0; i < n; ++i){
         get_next_batch(d, batch, i*batch, net->input, net->truth);
-        real err = train_network_datum(net);
+        float err = train_network_datum(net);
         sum += err;
     }
-    return CAST((float)sum/(n*batch));
+    return (float)sum/(n*batch);
 }
 
-void set_temp_network(network *net, real t)
+void set_temp_network(network *net, float t)
 {
     int i;
     for(i = 0; i < net->n; ++i){
@@ -520,7 +520,7 @@ real *network_predict_float(network *net, float *input)
     return out;
 }
 
-int num_detections(network *net, real thresh)
+int num_detections(network *net, float thresh)
 {
     int i;
     int s = 0;
@@ -536,7 +536,7 @@ int num_detections(network *net, real thresh)
     return s;
 }
 
-detection *make_network_boxes(network *net, real thresh, int *num)
+detection *make_network_boxes(network *net, float thresh, int *num)
 {
     layer l = net->layers[net->n - 1];
     int i;
@@ -552,7 +552,7 @@ detection *make_network_boxes(network *net, real thresh, int *num)
     return dets;
 }
 
-void fill_network_boxes(network *net, int w, int h, real thresh, real hier, int *map, int relative, detection *dets, int letter)
+void fill_network_boxes(network *net, int w, int h, float thresh, float hier, int *map, int relative, detection *dets, int letter)
 {
     int j;
     for(j = 0; j < net->n; ++j){
@@ -573,7 +573,7 @@ void fill_network_boxes(network *net, int w, int h, real thresh, real hier, int 
     }
 }
 
-detection *get_network_boxes(network *net, int w, int h, real thresh, real hier, int *map, int relative, int *num, int letter)
+detection *get_network_boxes(network *net, int w, int h, float thresh, float hier, int *map, int relative, int *num, int letter)
 {
     detection *dets = make_network_boxes(net, thresh, num);
     fill_network_boxes(net, w, h, thresh, hier, map, relative, dets, letter);
@@ -657,8 +657,8 @@ void print_network(network *net)
         layer l = net->layers[i];
         real *output = l.output;
         int n = l.outputs;
-        real mean = mean_array(output, n);
-        real vari = variance_array(output, n);
+        float mean = mean_array(output, n);
+        float vari = variance_array(output, n);
         fprintf(stderr, "Layer %d - Mean: %f, Variance: %f\n", i, (float)mean, (float)vari);
         if(n > 100) n = 100;
         for(j = 0; j < n; ++j) fprintf(stderr, "%f, ", (float)(output[j]));
@@ -793,7 +793,7 @@ void forward_network_gpu(network *netp)
 // time = what_time_is_it_now();
 
         if(l.delta_gpu){
-            fill_gpu(l.outputs * l.batch, CAST(0), l.delta_gpu, 1);
+            fill_gpu(l.outputs * l.batch, 0, l.delta_gpu, 1);
         }
         l.forward_gpu(l, net);
 
@@ -867,9 +867,9 @@ void harmless_update_network_gpu(network *netp)
     int i;
     for(i = 0; i < net.n; ++i){
         layer l = net.layers[i];
-        if(l.weight_updates_gpu) fill_gpu(l.nweights, CAST(0), l.weight_updates_gpu, 1);
-        if(l.bias_updates_gpu) fill_gpu(l.nbiases, CAST(0), l.bias_updates_gpu, 1);
-        if(l.scale_updates_gpu) fill_gpu(l.nbiases, CAST(0), l.scale_updates_gpu, 1);
+        if(l.weight_updates_gpu) fill_gpu(l.nweights, 0, l.weight_updates_gpu, 1);
+        if(l.bias_updates_gpu) fill_gpu(l.nbiases, 0, l.bias_updates_gpu, 1);
+        if(l.scale_updates_gpu) fill_gpu(l.nbiases, 0, l.scale_updates_gpu, 1);
     }
 }
 
@@ -1113,7 +1113,7 @@ void sync_nets(network **nets, int n, int interval)
     free(threads);
 }
 
-real train_networks(network **nets, int n, data d, int interval)
+float train_networks(network **nets, int n, data d, int interval)
 {
     int i;
     int batch = nets[0]->batch;
@@ -1122,7 +1122,7 @@ real train_networks(network **nets, int n, data d, int interval)
     pthread_t *threads = (pthread_t *) calloc(n, sizeof(pthread_t));
     real *errors = (real *) calloc(n, sizeof(real));
 
-    real sum = CAST(0);
+    float sum = 0;
     for(i = 0; i < n; ++i){
         data p = get_data_part(d, i, n);
         threads[i] = train_network_in_thread(nets[i], p, errors + i);
@@ -1142,7 +1142,7 @@ real train_networks(network **nets, int n, data d, int interval)
     //cudaDeviceSynchronize();
     free(threads);
     free(errors);
-    return CAST((float)sum/(n));
+    return (float)sum/(n);
 }
 
 void pull_network_output(network *net)

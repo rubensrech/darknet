@@ -64,7 +64,7 @@ void train_coco(char *cfgfile, char *weightfile)
         printf("Loaded: %f seconds\n", (float)sec(clock()-time));
 
         time=clock();
-        real loss = train_network(net, train);
+        float loss = train_network(net, train);
         if (avg_loss < 0) avg_loss = loss;
         avg_loss = avg_loss*.9 + loss*.1;
 
@@ -142,9 +142,9 @@ void validate_coco(char *cfg, char *weights)
     int i=0;
     int t;
 
-    real thresh = CAST(.01);
+    float thresh = .01;
     int nms = 1;
-    real iou_thresh = CAST(.5);
+    float iou_thresh = .5;
 
     int nthreads = 8;
     image *val = (image*)calloc(nthreads, sizeof(image));
@@ -188,7 +188,7 @@ void validate_coco(char *cfg, char *weights)
             int nboxes = 0;
             // !!!
             int letterbox = (args.type == LETTERBOX_DATA);
-            detection *dets = get_network_boxes(net, w, h, thresh, CAST(0), 0, 0, &nboxes, letterbox);
+            detection *dets = get_network_boxes(net, w, h, thresh, 0, 0, 0, &nboxes, letterbox);
             if (nms) do_nms_sort(dets, l.side*l.side*l.n, classes, iou_thresh);
             print_cocos(fp, image_id, dets, l.side*l.side*l.n, classes, w, h);
             free_detections(dets, nboxes);
@@ -229,14 +229,14 @@ void validate_coco_recall(char *cfgfile, char *weightfile)
     int m = plist->size;
     int i=0;
 
-    real thresh = CAST(.001);
+    float thresh = .001;
     int nms = 0;
-    real iou_thresh = CAST(.5);
+    float iou_thresh = .5;
 
     int total = 0;
     int correct = 0;
     int proposals = 0;
-    real avg_iou = CAST(0);
+    float avg_iou = 0;
 
     for(i = 0; i < m; ++i){
         char *path = paths[i];
@@ -248,7 +248,7 @@ void validate_coco_recall(char *cfgfile, char *weightfile)
         int nboxes = 0;
         // !!!
         int letterbox = 1;
-        detection *dets = get_network_boxes(net, orig.w, orig.h, thresh, CAST(0), 0, 1, &nboxes, letterbox);
+        detection *dets = get_network_boxes(net, orig.w, orig.h, thresh, 0, 0, 1, &nboxes, letterbox);
         if (nms) do_nms_obj(dets, side*side*l.n, 1, nms);
 
         char labelpath[4096];
@@ -318,7 +318,7 @@ void test_coco(char *cfgfile, char *weightfile, char *filename, float thresh)
         int nboxes = 0;
         // !!!
         int letterbox = 1;
-        detection *dets = get_network_boxes(net, 1, 1, CAST(thresh), CAST(0), 0, 0, &nboxes, letterbox);
+        detection *dets = get_network_boxes(net, 1, 1, thresh, 0, 0, 0, &nboxes, letterbox);
         if (nms) do_nms_sort(dets, l.side*l.side*l.n, l.classes, nms);
 
         draw_detections(im, dets, l.side*l.side*l.n, thresh, coco_classes, alphabet, 80);

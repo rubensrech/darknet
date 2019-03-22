@@ -42,10 +42,9 @@ layer make_connected_layer(int batch, int inputs, int outputs, ACTIVATION activa
     l.backward = backward_connected_layer;
     l.update = update_connected_layer;
 
-    //real scale = 1./sqrt(inputs);
-    real scale = sqrt(CAST(2./inputs));
+    float scale = sqrt(2./inputs);
     for(i = 0; i < outputs*inputs; ++i){
-        l.weights[i] = scale*rand_uniform(CAST(-1), CAST(1));
+        l.weights[i] = scale*rand_uniform(-1, 1);
     }
 
     for(i = 0; i < outputs; ++i){
@@ -150,7 +149,7 @@ void update_connected_layer(layer l, update_args a)
 
 void forward_connected_layer(layer l, network net)
 {
-    fill_cpu(l.outputs*l.batch, CAST(0), l.output, 1);
+    fill_cpu(l.outputs*l.batch, 0, l.output, 1);
     int m = l.batch;
     int k = l.inputs;
     int n = l.outputs;
@@ -287,7 +286,7 @@ void update_connected_layer_gpu(layer l, update_args a)
 
 void forward_connected_layer_gpu(layer l, network net)
 {
-    fill_gpu(l.outputs*l.batch, CAST(0), l.output_gpu, 1);
+    fill_gpu(l.outputs*l.batch, 0, l.output_gpu, 1);
 
     int m = l.batch;
     int k = l.inputs;

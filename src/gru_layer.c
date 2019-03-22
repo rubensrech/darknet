@@ -138,15 +138,15 @@ void forward_gru_layer(layer l, network net)
     layer wr = *(l.wr);
     layer wh = *(l.wh);
 
-    fill_cpu(l.outputs * l.batch * l.steps, CAST(0), uz.delta, 1);
-    fill_cpu(l.outputs * l.batch * l.steps, CAST(0), ur.delta, 1);
-    fill_cpu(l.outputs * l.batch * l.steps, CAST(0), uh.delta, 1);
+    fill_cpu(l.outputs * l.batch * l.steps, 0, uz.delta, 1);
+    fill_cpu(l.outputs * l.batch * l.steps, 0, ur.delta, 1);
+    fill_cpu(l.outputs * l.batch * l.steps, 0, uh.delta, 1);
 
-    fill_cpu(l.outputs * l.batch * l.steps, CAST(0), wz.delta, 1);
-    fill_cpu(l.outputs * l.batch * l.steps, CAST(0), wr.delta, 1);
-    fill_cpu(l.outputs * l.batch * l.steps, CAST(0), wh.delta, 1);
+    fill_cpu(l.outputs * l.batch * l.steps, 0, wz.delta, 1);
+    fill_cpu(l.outputs * l.batch * l.steps, 0, wr.delta, 1);
+    fill_cpu(l.outputs * l.batch * l.steps, 0, wh.delta, 1);
     if(net.train) {
-        fill_cpu(l.outputs * l.batch * l.steps, CAST(0), l.delta, 1);
+        fill_cpu(l.outputs * l.batch * l.steps, 0, l.delta, 1);
         copy_cpu(l.outputs*l.batch, l.state, 1, l.prev_state, 1);
     }
 
@@ -238,15 +238,15 @@ void forward_gru_layer_gpu(layer l, network net)
     layer wr = *(l.wr);
     layer wh = *(l.wh);
 
-    fill_gpu(l.outputs * l.batch * l.steps, CAST(0), uz.delta_gpu, 1);
-    fill_gpu(l.outputs * l.batch * l.steps, CAST(0), ur.delta_gpu, 1);
-    fill_gpu(l.outputs * l.batch * l.steps, CAST(0), uh.delta_gpu, 1);
+    fill_gpu(l.outputs * l.batch * l.steps, 0, uz.delta_gpu, 1);
+    fill_gpu(l.outputs * l.batch * l.steps, 0, ur.delta_gpu, 1);
+    fill_gpu(l.outputs * l.batch * l.steps, 0, uh.delta_gpu, 1);
 
-    fill_gpu(l.outputs * l.batch * l.steps, CAST(0), wz.delta_gpu, 1);
-    fill_gpu(l.outputs * l.batch * l.steps, CAST(0), wr.delta_gpu, 1);
-    fill_gpu(l.outputs * l.batch * l.steps, CAST(0), wh.delta_gpu, 1);
+    fill_gpu(l.outputs * l.batch * l.steps, 0, wz.delta_gpu, 1);
+    fill_gpu(l.outputs * l.batch * l.steps, 0, wr.delta_gpu, 1);
+    fill_gpu(l.outputs * l.batch * l.steps, 0, wh.delta_gpu, 1);
     if(net.train) {
-        fill_gpu(l.outputs * l.batch * l.steps, CAST(0), l.delta_gpu, 1);
+        fill_gpu(l.outputs * l.batch * l.steps, 0, l.delta_gpu, 1);
         copy_gpu(l.outputs*l.batch, l.state_gpu, 1, l.prev_state_gpu, 1);
     }
 
@@ -360,7 +360,7 @@ void backward_gru_layer_gpu(layer l, network net)
 
         copy_gpu(l.outputs*l.batch, l.state_gpu, 1, l.forgot_state_gpu, 1);
         mul_gpu(l.outputs*l.batch, l.r_gpu, 1, l.forgot_state_gpu, 1);
-        fill_gpu(l.outputs*l.batch, CAST(0), l.forgot_delta_gpu, 1);
+        fill_gpu(l.outputs*l.batch, 0, l.forgot_delta_gpu, 1);
 
         s.input_gpu = l.forgot_state_gpu;
         s.delta_gpu = l.forgot_delta_gpu;

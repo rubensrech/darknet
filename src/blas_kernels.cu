@@ -188,7 +188,7 @@ void adam_update_gpu(real *w, real *d, real *m, real *v, float B1, float B2, flo
     axpy_gpu(n, 1-B2, d, 1, v, 1);
 
     adam_gpu(n, w, m, v, B1, B2, rate, eps, t);
-    fill_gpu(n, CAST(0), d, 1);
+    fill_gpu(n, 0, d, 1);
 }
 
 __global__ void normalize_kernel(int N, real_device *x, real_device *mean, real_device *variance, int batch, int filters, int spatial)
@@ -708,7 +708,7 @@ void supp_gpu(int N, real ALPHA, real *X, int INCX)
     check_error(cudaPeekAtLastError());
 }
 
-extern "C" void fill_gpu(int N, real ALPHA, real *X, int INCX)
+extern "C" void fill_gpu(int N, float ALPHA, real *X, int INCX)
 {
     fill_kernel<<<cuda_gridsize(N), BLOCK>>>(N, (real_device)ALPHA, (real_device*)X, INCX);
     check_error(cudaPeekAtLastError());

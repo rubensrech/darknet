@@ -613,7 +613,7 @@ void backward_network(network *net);
 void update_network(network *net);
 
 
-real dot_cpu(int N, real *X, int INCX, real *Y, int INCY);
+float dot_cpu(int N, real *X, int INCX, real *Y, int INCY);
 float dot_float_cpu(int N, float *X, int INCX, float *Y, int INCY);
 void axpy_cpu(int N, float ALPHA, real *X, int INCX, real *Y, int INCY);
 void axpy_float_cpu(int N, float ALPHA, float *X, int INCX, float *Y, int INCY);
@@ -621,16 +621,16 @@ void copy_cpu(int N, real *X, int INCX, real *Y, int INCY);
 void copy_float_cpu(int N, float *X, int INCX, float *Y, int INCY);
 void scal_cpu(int N, float ALPHA, real *X, int INCX);
 void scal_float_cpu(int N, float ALPHA, float *X, int INCX);
-void fill_cpu(int N, real ALPHA, real * X, int INCX);
+void fill_cpu(int N, float ALPHA, real * X, int INCX);
 void fill_float_cpu(int N, float ALPHA, float *X, int INCX);
 void normalize_cpu(real *x, real *mean, real *variance, int batch, int filters, int spatial);
 void normalize_float_cpu(float *x, float *mean, float *variance, int batch, int filters, int spatial);
-void softmax(real *input, int n, real temp, int stride, real *output);
+void softmax(real *input, int n, float temp, int stride, real *output);
 
 int best_3d_shift_r(image a, image b, int min, int max);
 #ifdef GPU
 void axpy_gpu(int N, float ALPHA, real * X, int INCX, real * Y, int INCY);
-void fill_gpu(int N, real ALPHA, real * X, int INCX);
+void fill_gpu(int N, float ALPHA, real * X, int INCX);
 void fill_gpu_float(int N, float ALPHA, float *X, int INCX);
 void scal_gpu(int N, float ALPHA, real * X, int INCX);
 void copy_gpu(int N, real * X, int INCX, real * Y, int INCY);
@@ -641,14 +641,14 @@ real *cuda_make_array(real *x, size_t n);
 float *cuda_make_float_array(float *x, size_t n);
 void cuda_pull_array(real *x_gpu, real *x, size_t n);
 void cuda_pull_float_array(float *x_gpu, float *x, size_t n);
-real cuda_mag_array(real *x_gpu, size_t n);
+float cuda_mag_array(real *x_gpu, size_t n);
 void cuda_push_array(real *x_gpu, real *x, size_t n);
 
 void forward_network_gpu(network *net);
 void backward_network_gpu(network *net);
 void update_network_gpu(network *net);
 
-real train_networks(network **nets, int n, data d, int interval);
+float train_networks(network **nets, int n, data d, int interval);
 void sync_nets(network **nets, int n, int interval);
 void harmless_update_network_gpu(network *net);
 #endif
@@ -660,7 +660,7 @@ void get_next_batch(data d, int n, int offset, real *X, real *y);
 void grayscale_image_3c(image im);
 void normalize_image(image p);
 void matrix_to_csv(matrix m);
-real train_network_sgd(network *net, data d, int n);
+float train_network_sgd(network *net, data d, int n);
 void rgbgr_image(image im);
 data copy_data(data d);
 data concat_data(data d1, data d2);
@@ -670,7 +670,7 @@ void matrix_add_matrix(matrix from, matrix to);
 void scale_matrix(matrix m, float scale);
 matrix csv_to_matrix(char *filename);
 real *network_accuracies(network *net, data d, int n);
-real train_network_datum(network *net);
+float train_network_datum(network *net);
 image make_random_image(int w, int h, int c);
 
 void denormalize_connected_layer(layer l);
@@ -681,7 +681,7 @@ void rgbgr_weights(layer l);
 image *get_weights(layer l);
 
 void demo(char *cfgfile, char *weightfile, float thresh, int cam_index, const char *filename, char **names, int classes, int frame_skip, char *prefix, int avg, float hier_thresh, int w, int h, int fps, int fullscreen);
-void get_detection_detections(layer l, int w, int h, real thresh, detection *dets);
+void get_detection_detections(layer l, int w, int h, float thresh, detection *dets);
 
 char *option_find_str(list *l, char *key, char *def);
 int option_find_int(list *l, char *key, int def);
@@ -699,11 +699,11 @@ void save_weights_upto(network *net, char *filename, int cutoff);
 void load_weights_upto(network *net, char *filename, int start, int cutoff);
 
 void zero_objectness(layer l);
-void get_region_detections(layer l, int w, int h, int netw, int neth, real thresh, int *map, real tree_thresh, int relative, detection *dets);
+void get_region_detections(layer l, int w, int h, int netw, int neth, float thresh, int *map, float tree_thresh, int relative, detection *dets);
 int get_yolo_detections(layer l, int w, int h, int netw, int neth, float thresh, int *map, int relative, detection *dets, int letter);
 void free_network(network *net);
 void set_batch_network(network *net, int b);
-void set_temp_network(network *net, real t);
+void set_temp_network(network *net, float t);
 image load_image(char *filename, int w, int h, int c);
 image load_image_color(char *filename, int w, int h);
 image make_image(int w, int h, int c);
@@ -722,7 +722,7 @@ void test_resize(char *filename);
 int show_image(image p, const char *name, int ms);
 image copy_image(image p);
 void draw_box_width(image a, int x1, int y1, int x2, int y2, int w, float r, float g, float b);
-real get_current_rate(network *net);
+float get_current_rate(network *net);
 void composite_3d(char *f1, char *f2, char *out, int delta);
 data load_data_old(char **paths, int n, int m, char **labels, int k, int w, int h);
 size_t get_current_batch(network *net);
@@ -757,8 +757,8 @@ real *network_predict_float(network *net, float *input);
 int network_width(network *net);
 int network_height(network *net);
 real *network_predict_image(network *net, image im);
-void network_detect(network *net, image im, real thresh, real hier_thresh, real nms, detection *dets);
-detection *get_network_boxes(network *net, int w, int h, real thresh, real hier, int *map, int relative, int *num, int letter);
+void network_detect(network *net, image im, float thresh, float hier_thresh, float nms, detection *dets);
+detection *get_network_boxes(network *net, int w, int h, float thresh, float hier, int *map, int relative, int *num, int letter);
 void free_detections(detection *dets, int n);
 
 void reset_network_state(network *net, int b);
@@ -776,7 +776,7 @@ void make_window(char *name, int w, int h, int fullscreen);
 #endif
 
 void free_image(image m);
-real train_network(network *net, data d);
+float train_network(network *net, data d);
 pthread_t load_data_in_thread(load_args args);
 void load_data_blocking(load_args args);
 list *get_paths(char *filename);
@@ -793,7 +793,7 @@ void find_replace(char *str, char *orig, char *rep, char *output);
 void free_ptrs(void **ptrs, int n);
 char *fgetl(FILE *fp);
 void strip(char *s);
-real sec(clock_t clocks);
+float sec(clock_t clocks);
 void **list_to_array(list *l);
 void top_k(real *a, int n, int k, int *index);
 void top_k_float(float *a, int n, int k, int *index);
@@ -806,24 +806,23 @@ int sample_array(real *a, int n);
 int sample_float_array(float *a, int n);
 int *random_index_order(int min, int max);
 void free_list(list *l);
-real mse_array(real *a, int n);
-real variance_array(real *a, int n);
+float mse_array(real *a, int n);
+float variance_array(real *a, int n);
 float variance_float_array(float *a, int n);
-real mag_array(real *a, int n);
+float mag_array(real *a, int n);
 float mag_float_array(float *a, int n);
-void scale_array(real *a, int n, real s);
+void scale_array(real *a, int n, float s);
 void scale_float_array(float *a, int n, float s);
-real mean_array(real *a, int n);
+float mean_array(real *a, int n);
 float mean_float_array(float *a, int n);
-real sum_array(real *a, int n);
+float sum_array(real *a, int n);
 float sum_float_array(float *a, int n);
 void normalize_array(real *a, int n);
 void normalize_float_array(float *a, int n);
 int *read_intlist(char *s, int *n, int d);
 size_t rand_size_t();
-real rand_normal();
-real rand_uniform(real min, real max);
-float rand_uniform_float(float min, float max);
+float rand_normal();
+float rand_uniform(float min, float max);
 
 #ifdef __cplusplus
 }

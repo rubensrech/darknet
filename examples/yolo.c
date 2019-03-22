@@ -57,7 +57,7 @@ void train_yolo(char *cfgfile, char *weightfile)
         printf("Loaded: %f seconds\n", (float)sec(clock()-time));
 
         time=clock();
-        real loss = train_network(net, train);
+        float loss = train_network(net, train);
         if (avg_loss < 0) avg_loss = loss;
         avg_loss = avg_loss*.9 + loss*.1;
 
@@ -123,9 +123,9 @@ void validate_yolo(char *cfg, char *weights)
     int i=0;
     int t;
 
-    real thresh = CAST(.001);
+    float thresh = .001;
     int nms = 1;
-    real iou_thresh = CAST(.5);
+    float iou_thresh = .5;
 
     int nthreads = 8;
     image *val = (image*)calloc(nthreads, sizeof(image));
@@ -169,7 +169,7 @@ void validate_yolo(char *cfg, char *weights)
             int nboxes = 0;
             // !!!
             int letter_box = (args.type == LETTERBOX_DATA);
-            detection *dets = get_network_boxes(net, w, h, thresh, CAST(0), 0, 0, &nboxes, letter_box);
+            detection *dets = get_network_boxes(net, w, h, thresh, 0, 0, 0, &nboxes, letter_box);
             if (nms) do_nms_sort(dets, l.side*l.side*l.n, classes, iou_thresh);
             print_yolo_detections(fps, id, l.side*l.side*l.n, classes, w, h, dets);
             free_detections(dets, nboxes);
@@ -207,14 +207,14 @@ void validate_yolo_recall(char *cfg, char *weights)
     int m = plist->size;
     int i=0;
 
-    real thresh = CAST(.001);
-    real iou_thresh = CAST(.5);
-    real nms = CAST(0);
+    float thresh = CAST(.001);
+    float iou_thresh = CAST(.5);
+    float nms = CAST(0);
 
     int total = 0;
     int correct = 0;
     int proposals = 0;
-    real avg_iou = CAST(0);
+    float avg_iou = CAST(0);
 
     for(i = 0; i < m; ++i){
         char *path = paths[i];
@@ -226,7 +226,7 @@ void validate_yolo_recall(char *cfg, char *weights)
         int nboxes = 0;
         // !!!
         int letter_box = 1;
-        detection *dets = get_network_boxes(net, orig.w, orig.h, thresh, CAST(0), 0, 1, &nboxes, letter_box);
+        detection *dets = get_network_boxes(net, orig.w, orig.h, thresh, 0, 0, 1, &nboxes, letter_box);
         if (nms) do_nms_obj(dets, side*side*l.n, 1, nms);
 
         char labelpath[4096];
@@ -276,7 +276,7 @@ void test_yolo(char *cfgfile, char *weightfile, char *filename, float thresh)
     clock_t time;
     char buff[256];
     char *input = buff;
-    real nms = CAST(.4);
+    float nms = .4;
     while(1){
         if(filename){
             strncpy(input, filename, 256);
@@ -297,7 +297,7 @@ void test_yolo(char *cfgfile, char *weightfile, char *filename, float thresh)
         int nboxes = 0;
         // !!!
         int letter_box = 1;
-        detection *dets = get_network_boxes(net, 1, 1, CAST(thresh), CAST(0), 0, 0, &nboxes, letter_box);
+        detection *dets = get_network_boxes(net, 1, 1, thresh, 0, 0, 0, &nboxes, letter_box);
         if (nms) do_nms_sort(dets, l.side*l.side*l.n, l.classes, nms);
 
         draw_detections(im, dets, l.side*l.side*l.n, thresh, voc_names, alphabet, 20);

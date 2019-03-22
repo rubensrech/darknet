@@ -95,10 +95,10 @@ void forward_rnn_layer(layer l, network net)
     layer self_layer = *(l.self_layer);
     layer output_layer = *(l.output_layer);
 
-    fill_cpu(l.outputs * l.batch * l.steps, CAST(0), output_layer.delta, 1);
-    fill_cpu(l.outputs * l.batch * l.steps, CAST(0), self_layer.delta, 1);
-    fill_cpu(l.outputs * l.batch * l.steps, CAST(0), input_layer.delta, 1);
-    if(net.train) fill_cpu(l.outputs * l.batch, CAST(0), l.state, 1);
+    fill_cpu(l.outputs * l.batch * l.steps, 0, output_layer.delta, 1);
+    fill_cpu(l.outputs * l.batch * l.steps, 0, self_layer.delta, 1);
+    fill_cpu(l.outputs * l.batch * l.steps, 0, input_layer.delta, 1);
+    if(net.train) fill_cpu(l.outputs * l.batch, 0, l.state, 1);
 
     for (i = 0; i < l.steps; ++i) {
         s.input = net.input;
@@ -112,7 +112,7 @@ void forward_rnn_layer(layer l, network net)
         if(l.shortcut){
             copy_cpu(l.outputs * l.batch, old_state, 1, l.state, 1);
         }else{
-            fill_cpu(l.outputs * l.batch, CAST(0), l.state, 1);
+            fill_cpu(l.outputs * l.batch, 0, l.state, 1);
         }
         axpy_cpu(l.outputs * l.batch, 1, input_layer.output, 1, l.state, 1);
         axpy_cpu(l.outputs * l.batch, 1, self_layer.output, 1, l.state, 1);
@@ -150,14 +150,6 @@ void backward_rnn_layer(layer l, network net)
         backward_connected_layer(output_layer, s);
 
         l.state -= l.outputs*l.batch;
-        /*
-           if(i > 0){
-           copy_cpu(l.outputs * l.batch, input_layer.output - l.outputs*l.batch, 1, l.state, 1);
-           axpy_cpu(l.outputs * l.batch, 1, self_layer.output - l.outputs*l.batch, 1, l.state, 1);
-           }else{
-           fill_cpu(l.outputs * l.batch, 0, l.state, 1);
-           }
-         */
 
         s.input = l.state;
         s.delta = self_layer.delta - l.outputs*l.batch;
@@ -209,12 +201,12 @@ void forward_rnn_layer_gpu(layer l, network net)
     layer self_layer = *(l.self_layer);
     layer output_layer = *(l.output_layer);
 
-    fill_gpu(l.outputs * l.batch * l.steps, CAST(0), output_layer.delta_gpu, 1);
-    fill_gpu(l.outputs * l.batch * l.steps, CAST(0), self_layer.delta_gpu, 1);
-    fill_gpu(l.outputs * l.batch * l.steps, CAST(0), input_layer.delta_gpu, 1);
+    fill_gpu(l.outputs * l.batch * l.steps, 0, output_layer.delta_gpu, 1);
+    fill_gpu(l.outputs * l.batch * l.steps, 0, self_layer.delta_gpu, 1);
+    fill_gpu(l.outputs * l.batch * l.steps, 0, input_layer.delta_gpu, 1);
 
     if(net.train) {
-        fill_gpu(l.outputs * l.batch * l.steps, CAST(0), l.delta_gpu, 1);
+        fill_gpu(l.outputs * l.batch * l.steps, 0, l.delta_gpu, 1);
         copy_gpu(l.outputs*l.batch, l.state_gpu, 1, l.prev_state_gpu, 1);
     }
 
@@ -225,7 +217,7 @@ void forward_rnn_layer_gpu(layer l, network net)
         s.input_gpu = l.state_gpu;
         forward_connected_layer_gpu(self_layer, s);
 
-        fill_gpu(l.outputs * l.batch, CAST(0), l.state_gpu, 1);
+        fill_gpu(l.outputs * l.batch, 0, l.state_gpu, 1);
         axpy_gpu(l.outputs * l.batch, 1, input_layer.output_gpu, 1, l.state_gpu, 1);
         axpy_gpu(l.outputs * l.batch, 1, self_layer.output_gpu, 1, l.state_gpu, 1);
 
@@ -253,7 +245,7 @@ void backward_rnn_layer_gpu(layer l, network net)
     real *last_input = input_layer.output_gpu;
     real *last_self = self_layer.output_gpu;
     for (i = l.steps-1; i >= 0; --i) {
-        fill_gpu(l.outputs * l.batch, CAST(0), l.state_gpu, 1);
+        fill_gpu(l.outputs * l.batch, 0, l.state_gpu, 1);
         axpy_gpu(l.outputs * l.batch, 1, input_layer.output_gpu, 1, l.state_gpu, 1);
         axpy_gpu(l.outputs * l.batch, 1, self_layer.output_gpu, 1, l.state_gpu, 1);
 
@@ -262,7 +254,7 @@ void backward_rnn_layer_gpu(layer l, network net)
         backward_connected_layer_gpu(output_layer, s);
 
         if(i != 0) {
-            fill_gpu(l.outputs * l.batch, CAST(0), l.state_gpu, 1);
+            fill_gpu(l.outputs * l.batch, 0, l.state_gpu, 1);
             axpy_gpu(l.outputs * l.batch, 1, input_layer.output_gpu - l.outputs*l.batch, 1, l.state_gpu, 1);
             axpy_gpu(l.outputs * l.batch, 1, self_layer.output_gpu - l.outputs*l.batch, 1, l.state_gpu, 1);
         }else {
@@ -285,7 +277,7 @@ void backward_rnn_layer_gpu(layer l, network net)
         increment_layer(&self_layer,   -1);
         increment_layer(&output_layer, -1);
     }
-    fill_gpu(l.outputs * l.batch, CAST(0), l.state_gpu, 1);
+    fill_gpu(l.outputs * l.batch, 0, l.state_gpu, 1);
     axpy_gpu(l.outputs * l.batch, 1, last_input, 1, l.state_gpu, 1);
     axpy_gpu(l.outputs * l.batch, 1, last_self, 1, l.state_gpu, 1);
 }

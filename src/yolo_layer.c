@@ -277,7 +277,7 @@ void correct_yolo_boxes(detection *dets, int n, int w, int h, int netw, int neth
     }
 }
 
-int yolo_num_detections(layer l, real thresh)
+int yolo_num_detections(layer l, float thresh)
 {
     int i, n;
     int count = 0;

@@ -168,17 +168,17 @@ void forward_lstm_layer(layer l, network state)
     layer ug = *(l.ug);
     layer uo = *(l.uo);
 
-    fill_cpu(l.outputs * l.batch * l.steps, CAST(0), wf.delta, 1);
-    fill_cpu(l.outputs * l.batch * l.steps, CAST(0), wi.delta, 1);
-    fill_cpu(l.outputs * l.batch * l.steps, CAST(0), wg.delta, 1);
-    fill_cpu(l.outputs * l.batch * l.steps, CAST(0), wo.delta, 1);
+    fill_cpu(l.outputs * l.batch * l.steps, 0, wf.delta, 1);
+    fill_cpu(l.outputs * l.batch * l.steps, 0, wi.delta, 1);
+    fill_cpu(l.outputs * l.batch * l.steps, 0, wg.delta, 1);
+    fill_cpu(l.outputs * l.batch * l.steps, 0, wo.delta, 1);
 
-    fill_cpu(l.outputs * l.batch * l.steps, CAST(0), uf.delta, 1);
-    fill_cpu(l.outputs * l.batch * l.steps, CAST(0), ui.delta, 1);
-    fill_cpu(l.outputs * l.batch * l.steps, CAST(0), ug.delta, 1);
-    fill_cpu(l.outputs * l.batch * l.steps, CAST(0), uo.delta, 1);
+    fill_cpu(l.outputs * l.batch * l.steps, 0, uf.delta, 1);
+    fill_cpu(l.outputs * l.batch * l.steps, 0, ui.delta, 1);
+    fill_cpu(l.outputs * l.batch * l.steps, 0, ug.delta, 1);
+    fill_cpu(l.outputs * l.batch * l.steps, 0, uo.delta, 1);
     if (state.train) {
-        fill_cpu(l.outputs * l.batch * l.steps, CAST(0), l.delta, 1);
+        fill_cpu(l.outputs * l.batch * l.steps, 0, l.delta, 1);
     }
 
     for (i = 0; i < l.steps; ++i) {
@@ -410,17 +410,17 @@ void forward_lstm_layer_gpu(layer l, network state)
     layer ug = *(l.ug);
     layer uo = *(l.uo);
 
-    fill_gpu(l.outputs * l.batch * l.steps, CAST(0), wf.delta_gpu, 1);
-    fill_gpu(l.outputs * l.batch * l.steps, CAST(0), wi.delta_gpu, 1);
-    fill_gpu(l.outputs * l.batch * l.steps, CAST(0), wg.delta_gpu, 1);
-    fill_gpu(l.outputs * l.batch * l.steps, CAST(0), wo.delta_gpu, 1);
+    fill_gpu(l.outputs * l.batch * l.steps, 0, wf.delta_gpu, 1);
+    fill_gpu(l.outputs * l.batch * l.steps, 0, wi.delta_gpu, 1);
+    fill_gpu(l.outputs * l.batch * l.steps, 0, wg.delta_gpu, 1);
+    fill_gpu(l.outputs * l.batch * l.steps, 0, wo.delta_gpu, 1);
 
-    fill_gpu(l.outputs * l.batch * l.steps, CAST(0), uf.delta_gpu, 1);
-    fill_gpu(l.outputs * l.batch * l.steps, CAST(0), ui.delta_gpu, 1);
-    fill_gpu(l.outputs * l.batch * l.steps, CAST(0), ug.delta_gpu, 1);
-    fill_gpu(l.outputs * l.batch * l.steps, CAST(0), uo.delta_gpu, 1);
+    fill_gpu(l.outputs * l.batch * l.steps, 0, uf.delta_gpu, 1);
+    fill_gpu(l.outputs * l.batch * l.steps, 0, ui.delta_gpu, 1);
+    fill_gpu(l.outputs * l.batch * l.steps, 0, ug.delta_gpu, 1);
+    fill_gpu(l.outputs * l.batch * l.steps, 0, uo.delta_gpu, 1);
     if (state.train) {
-        fill_gpu(l.outputs * l.batch * l.steps, CAST(0), l.delta_gpu, 1);
+        fill_gpu(l.outputs * l.batch * l.steps, 0, l.delta_gpu, 1);
     }
 
     for (i = 0; i < l.steps; ++i) {

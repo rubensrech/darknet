@@ -19,7 +19,7 @@ void train_cifar(char *cfgfile, char *weightfile)
     while(get_current_batch(net) < net->max_batches || net->max_batches == 0){
         clock_t time=clock();
 
-        real loss = train_network_sgd(net, train, 1);
+        float loss = train_network_sgd(net, train, 1);
         if(avg_loss == -1) avg_loss = loss;
         avg_loss = avg_loss*.95 + loss*.05;
         printf("%ld, %.3lf: %lf, %lf avg, %lf rate, %f seconds, %ld images\n", get_current_batch(net), (float)(*net->seen)/N, (float)loss, (float)avg_loss, (float)get_current_rate(net), (float)sec(clock()-time), *net->seen);
@@ -72,7 +72,7 @@ void train_cifar_distill(char *cfgfile, char *weightfile)
     while(get_current_batch(net) < net->max_batches || net->max_batches == 0){
         clock_t time=clock();
 
-        real loss = train_network_sgd(net, train, 1);
+        float loss = train_network_sgd(net, train, 1);
         if(avg_loss == -1) avg_loss = loss;
         avg_loss = avg_loss*.95 + loss*.05;
         printf("%ld, %.3lf: %lf, %lf avg, %lf rate, %f seconds, %ld images\n", get_current_batch(net), (float)(*net->seen)/N, (float)loss, (float)avg_loss, (float)get_current_rate(net), (float)sec(clock()-time), *net->seen);

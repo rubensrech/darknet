@@ -53,9 +53,8 @@ local_layer make_local_layer(int batch, int h, int w, int c, int n, int size, in
     l.biases = (real*)calloc(l.outputs, sizeof(real));
     l.bias_updates = (real*)calloc(l.outputs, sizeof(real));
 
-    // real scale = 1./sqrt(size*size*c);
-    real scale = sqrt(CAST(2./(size*size*c)));
-    for(i = 0; i < c*n*size*size; ++i) l.weights[i] = scale*rand_uniform(CAST(-1),CAST(1));
+    float scale = sqrt(2./(size*size*c));
+    for(i = 0; i < c*n*size*size; ++i) l.weights[i] = scale*rand_uniform(-1,1);
 
     l.output = (real*)calloc(l.batch*out_h * out_w * n, sizeof(real));
     l.delta  = (real*)calloc(l.batch*out_h * out_w * n, sizeof(real));

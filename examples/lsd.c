@@ -102,8 +102,6 @@ void test_dcgan(char *cfgfile, char *weightfile)
         for(i = 0; i < im.w*im.h*im.c; ++i){
             im.data[i] = rand_normal();
         }
-        //real mag = mag_array(im.data, im.w*im.h*im.c);
-        //scale_array(im.data, im.w*im.h*im.c, 1./mag);
 
         float *X = im.data;
         time=clock();
@@ -210,17 +208,11 @@ void train_prog(char *cfg, char *weight, char *acfg, char *aweight, int clear, i
             for(z = 0; z < x_size; ++z){
                 gnet->input[z] = rand_normal();
             }
-            /*
-               for(z = 0; z < gnet->batch; ++z){
-               real mag = mag_array(gnet->input + z*gnet->inputs, gnet->inputs);
-               scale_array(gnet->input + z*gnet->inputs, gnet->inputs, 1./mag);
-               }
-             */
             *gnet->seen += gnet->batch;
             forward_network(gnet);
 
-            fill_gpu(imlayer.outputs*imlayer.batch, CAST(0), imerror, 1);
-            fill_cpu(anet->truths*anet->batch, CAST(1), anet->truth, 1);
+            fill_gpu(imlayer.outputs*imlayer.batch, 0, imerror, 1);
+            fill_cpu(anet->truths*anet->batch, 1, anet->truth, 1);
             copy_cpu(anet->inputs*anet->batch, imlayer.output, 1, anet->input, 1);
             anet->delta_gpu = imerror;
             forward_network(anet);
@@ -245,7 +237,7 @@ void train_prog(char *cfg, char *weight, char *acfg, char *aweight, int clear, i
         harmless_update_network_gpu(anet);
 
         data merge = concat_data(train, gen);
-        real aloss = train_network(anet, merge);
+        float aloss = train_network(anet, merge);
 
 #ifdef OPENCV
         if(display){
@@ -374,8 +366,8 @@ void train_dcgan(char *cfg, char *weight, char *acfg, char *aweight, int clear, 
                 gnet->input[z] = rand_normal();
             }
             for(z = 0; z < gnet->batch; ++z){
-                real mag = mag_array(gnet->input + z*gnet->inputs, gnet->inputs);
-                scale_array(gnet->input + z*gnet->inputs, gnet->inputs, CAST(1./mag));
+                float mag = mag_array(gnet->input + z*gnet->inputs, gnet->inputs);
+                scale_array(gnet->input + z*gnet->inputs, gnet->inputs, 1./mag);
             }
             /*
                for(z = 0; z < 100; ++z){
@@ -390,8 +382,8 @@ void train_dcgan(char *cfg, char *weight, char *acfg, char *aweight, int clear, 
             *gnet->seen += gnet->batch;
             forward_network(gnet);
 
-            fill_gpu(imlayer.outputs*imlayer.batch, CAST(0), imerror, 1);
-            fill_cpu(anet->truths*anet->batch, CAST(1), anet->truth, 1);
+            fill_gpu(imlayer.outputs*imlayer.batch, 0, imerror, 1);
+            fill_cpu(anet->truths*anet->batch, 1, anet->truth, 1);
             copy_cpu(anet->inputs*anet->batch, imlayer.output, 1, anet->input, 1);
             anet->delta_gpu = imerror;
             forward_network(anet);
@@ -402,9 +394,6 @@ void train_dcgan(char *cfg, char *weight, char *acfg, char *aweight, int clear, 
 
             scal_gpu(imlayer.outputs*imlayer.batch, 1, imerror, 1);
             scal_gpu(imlayer.outputs*imlayer.batch, 0, gnet->layers[gnet->n-1].delta_gpu, 1);
-
-            //printf("realness %f\n", cuda_mag_array(imerror, imlayer.outputs*imlayer.batch));
-            //printf("features %f\n", cuda_mag_array(gnet->layers[gnet->n-1].delta_gpu, imlayer.outputs*imlayer.batch));
 
             axpy_gpu(imlayer.outputs*imlayer.batch, 1, imerror, 1, gnet->layers[gnet->n-1].delta_gpu, 1);
 
@@ -429,7 +418,7 @@ void train_dcgan(char *cfg, char *weight, char *acfg, char *aweight, int clear, 
 
         data merge = concat_data(train, gen);
         //randomize_data(merge);
-        real aloss = train_network(anet, merge);
+        float aloss = train_network(anet, merge);
 
         //translate_image(im, 1);
         //scale_image(im, .5);
@@ -578,9 +567,9 @@ void train_colorizer(char *cfg, char *weight, char *acfg, char *aweight, int cle
             *net->seen += net->batch;
             forward_network_gpu(net);
 
-            fill_gpu(imlayer.outputs*imlayer.batch, CAST(0), imerror, 1);
+            fill_gpu(imlayer.outputs*imlayer.batch, 0, imerror, 1);
             copy_gpu(anet->inputs*anet->batch, imlayer.output_gpu, 1, anet->input_gpu, 1);
-            fill_gpu(anet->inputs*anet->batch, CAST(.95), anet->truth_gpu, 1);
+            fill_gpu(anet->inputs*anet->batch, .95, anet->truth_gpu, 1);
             anet->delta_gpu = imerror;
             forward_network_gpu(anet);
             backward_network_gpu(anet);
@@ -610,7 +599,7 @@ void train_colorizer(char *cfg, char *weight, char *acfg, char *aweight, int cle
 
         data merge = concat_data(train, gray);
         //randomize_data(merge);
-        real aloss = train_network(anet, merge);
+        float aloss = train_network(anet, merge);
 
         update_network_gpu(net);
 

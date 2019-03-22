@@ -81,7 +81,7 @@ void train_segmenter(char *datacfg, char *cfgfile, char *weightfile, int *gpus, 
         printf("Loaded: %lf seconds\n", what_time_is_it_now()-time);
         time = what_time_is_it_now();
 
-        real loss = CAST(0);
+        float loss = 0;
 #ifdef GPU
         if(ngpus == 1){
             loss = train_network(net, train);

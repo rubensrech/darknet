@@ -72,7 +72,7 @@ void binarize_weights_gpu(real *weights, int n, int size, real *binary)
 
 void forward_convolutional_layer_gpu(convolutional_layer l, network net)
 {
-    fill_gpu(l.outputs*l.batch, CAST(0), l.output_gpu, 1);
+    fill_gpu(l.outputs*l.batch, 0, l.output_gpu, 1);
     if(l.binary){
         binarize_weights_gpu(l.weights_gpu, l.n, l.c/l.groups*l.size*l.size, l.binary_weights_gpu);
         swap_binary(&l);

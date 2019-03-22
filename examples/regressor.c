@@ -77,7 +77,7 @@ void train_regressor(char *datacfg, char *cfgfile, char *weightfile, int *gpus, 
         printf("Loaded: %f seconds\n", (float)sec(clock()-time));
         time=clock();
 
-        real loss = CAST(0);
+        float loss = 0;
 #ifdef GPU
         if(ngpus == 1){
             loss = train_network(net, train);

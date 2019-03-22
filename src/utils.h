@@ -45,7 +45,7 @@ int rand_int(int min, int max);
 void mean_arrays(real **a, int n, int els, real *avg);
 float dist_array(float *a, float *b, int n, int sub);
 float **one_hot_encode(float *a, int n, int k);
-real sec(clock_t clocks);
+float sec(clock_t clocks);
 void print_statistics(real *a, int n);
 int int_index(int *a, int val, int n);
 

@@ -200,7 +200,7 @@ void train_char_rnn(char *cfgfile, char *weightfile, char *filename, int clear, 
 
         copy_cpu(net->inputs*net->batch, p.x, 1, net->input, 1);
         copy_cpu(net->truths*net->batch, p.y, 1, net->truth, 1);
-        real loss = train_network_datum(net) / CAST(batch);
+        float loss = train_network_datum(net) / batch;
         free(p.x);
         free(p.y);
         if (avg_loss < 0) avg_loss = loss;
@@ -262,14 +262,6 @@ void test_char_rnn(char *cfgfile, char *weightfile, int num, char *seed, real te
     int c = 0;
     int len = strlen(seed);
     real *input = (real*)calloc(inputs, sizeof(real));
-
-    /*
-       fill_cpu(inputs, 0, input, 1);
-       for(i = 0; i < 10; ++i){
-       network_predict(net, input);
-       }
-       fill_cpu(inputs, 0, input, 1);
-     */
 
     for(i = 0; i < len-1; ++i){
         c = seed[i];

@@ -212,7 +212,7 @@ void scal_float_cpu(int N, float ALPHA, float *X, int INCX)
     for(i = 0; i < N; ++i) X[i*INCX] *= ALPHA;
 }
 
-void fill_cpu(int N, real ALPHA, real *X, int INCX)
+void fill_cpu(int N, float ALPHA, real *X, int INCX)
 {
     int i;
     for(i = 0; i < N; ++i) X[i*INCX] = ALPHA;
@@ -331,10 +331,10 @@ void l2_cpu(int n, real *pred, real *truth, real *delta, real *error)
     }
 }
 
-real dot_cpu(int N, real *X, int INCX, real *Y, int INCY)
+float dot_cpu(int N, real *X, int INCX, real *Y, int INCY)
 {
     int i;
-    real dot = CAST(0);
+    float dot = 0;
     for(i = 0; i < N; ++i) dot += X[i*INCX] * Y[i*INCY];
     return dot;
 }
@@ -347,16 +347,16 @@ float dot_float_cpu(int N, float *X, int INCX, float *Y, int INCY)
     return dot;
 }
 
-void softmax(real *input, int n, real temp, int stride, real *output)
+void softmax(real *input, int n, float temp, int stride, real *output)
 {
     int i;
-    real sum = CAST(0);
+    float sum = 0;
     real largest = -REAL_MAX;
     for(i = 0; i < n; ++i){
         if(input[i*stride] > largest) largest = input[i*stride];
     }
     for(i = 0; i < n; ++i){
-        real e = exp(input[i*stride]/temp - largest/temp);
+        float e = exp(input[i*stride]/temp - largest/temp);
         sum += e;
         output[i*stride] = e;
     }
@@ -371,7 +371,7 @@ void softmax_cpu(real *input, int n, int batch, int batch_offset, int groups, in
     int g, b;
     for(b = 0; b < batch; ++b){
         for(g = 0; g < groups; ++g){
-            softmax(input + b*batch_offset + g*group_offset, n, temp, stride, output + b*batch_offset + g*group_offset);
+            softmax(input + b*batch_offset + g*group_offset, n, CAST(temp), stride, output + b*batch_offset + g*group_offset);
         }
     }
 }

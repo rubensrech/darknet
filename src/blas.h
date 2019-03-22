@@ -40,7 +40,7 @@ void softmax_x_ent_cpu(int n, real *pred, real *truth, real *delta, real *error)
 void weighted_sum_cpu(real *a, real *b, real *s, int num, real *c);
 void weighted_delta_cpu(real *a, real *b, real *s, real *da, real *db, real *ds, int n, real *dc);
 
-void softmax(real *input, int n, real temp, int stride, real *output);
+void softmax(real *input, int n, float temp, int stride, real *output);
 void softmax_cpu(real *input, int n, int batch, int batch_offset, int groups, int group_offset, int stride, real temp, real *output);
 void upsample_cpu(real *in, int w, int h, int c, int batch, int stride, int forward, real scale, real *out);
 
