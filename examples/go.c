@@ -313,13 +313,13 @@ float predict_move2(network *net, float *board, real *move, int multi)
             if(i >= 4) flip_image(oim);
             rotate_image_cw(oim, -i);
 
-            axpy_cpu(19*19+1, CAST(1), output, 1, move, 1);
+            axpy_cpu(19*19+1, 1, output, 1, move, 1);
 
             if(i >= 4) flip_image(bim);
             rotate_image_cw(bim, -i);
         }
         result = result/8;
-        scal_cpu(19*19+1, CAST(1./8.), move, 1);
+        scal_cpu(19*19+1, 1./8., move, 1);
     }
     for(i = 0; i < 19*19; ++i){
         if(board[i] || board[i+19*19]) move[i] = 0;
@@ -418,7 +418,7 @@ real *network_predict_rotations(network *net, float *next)
     }
     free(in);
     free(inds);
-    scal_cpu(19*19+2, CAST(1./n), pred, 1);
+    scal_cpu(19*19+2, 1./n, pred, 1);
     return pred;
 }
 

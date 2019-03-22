@@ -490,7 +490,7 @@ void backward_region_layer_gpu(const layer l, network net)
             if(!l.background) gradient_array_gpu(l.output_gpu + index,   l.w*l.h, LOGISTIC, l.delta_gpu + index);
         }
     }
-    axpy_gpu(l.batch*l.inputs, CAST(1), l.delta_gpu, 1, net.delta_gpu, 1);
+    axpy_gpu(l.batch*l.inputs, 1, l.delta_gpu, 1, net.delta_gpu, 1);
 }
 #endif
 

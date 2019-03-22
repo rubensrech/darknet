@@ -219,7 +219,7 @@ void forward_detection_layer(const detection_layer l, network net)
 
 void backward_detection_layer(const detection_layer l, network net)
 {
-    axpy_cpu(l.batch*l.inputs, CAST(1), l.delta, 1, net.delta, 1);
+    axpy_cpu(l.batch*l.inputs, 1, l.delta, 1, net.delta, 1);
 }
 
 void get_detection_detections(layer l, int w, int h, real thresh, detection *dets)
@@ -268,7 +268,7 @@ void forward_detection_layer_gpu(const detection_layer l, network net)
 
 void backward_detection_layer_gpu(detection_layer l, network net)
 {
-    axpy_gpu(l.batch*l.inputs, CAST(1), l.delta_gpu, 1, net.delta_gpu, 1);
+    axpy_gpu(l.batch*l.inputs, 1, l.delta_gpu, 1, net.delta_gpu, 1);
     //copy_gpu(l.batch*l.inputs, l.delta_gpu, 1, net.delta_gpu, 1);
 }
 #endif

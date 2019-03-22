@@ -48,8 +48,8 @@ void upsample_cpu(real *in, int w, int h, int c, int batch, int stride, int forw
 #include "cuda.h"
 #include "tree.h"
 
-void axpy_gpu(int N, real ALPHA, real * X, int INCX, real * Y, int INCY);
-void axpy_gpu_offset(int N, real ALPHA, real * X, int OFFX, int INCX, real * Y, int OFFY, int INCY);
+void axpy_gpu(int N, float ALPHA, real * X, int INCX, real * Y, int INCY);
+void axpy_gpu_offset(int N, float ALPHA, real * X, int OFFX, int INCX, real * Y, int OFFY, int INCY);
 void copy_gpu(int N, real * X, int INCX, real * Y, int INCY);
 void copy_gpu_offset(int N, real * X, int OFFX, int INCX, real * Y, int OFFY, int INCY);
 void add_gpu(int N, real ALPHA, real * X, int INCX);
@@ -94,8 +94,8 @@ void deinter_gpu(int NX, real *X, int NY, real *Y, int B, real *OUT);
 void reorg_gpu(real *x, int w, int h, int c, int batch, int stride, int forward, real *out);
 
 void softmax_gpu(real *input, int n, int batch, int batch_offset, int groups, int group_offset, int stride, real temp, real *output);
-void adam_update_gpu(real *w, real *d, real *m, real *v, real B1, real B2, real eps, real decay, real rate, int n, int batch, int t);
-void adam_gpu(int n, real *x, real *m, real *v, real B1, real B2, real rate, real eps, int t);
+void adam_update_gpu(real *w, real *d, real *m, real *v, float B1, float B2, float eps, float decay, float rate, int n, int batch, int t);
+void adam_gpu(int n, real *x, real *m, real *v, float B1, float B2, float rate, float eps, int t);
 
 void flatten_gpu(real *x, int spatial, int layers, int batch, int forward, real *out);
 void softmax_tree(real *input, int spatial, int batch, int stride, real temp, real *output, tree hier);

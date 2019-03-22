@@ -43,17 +43,17 @@ void average(int argc, char *argv[])
             layer out = sum->layers[j];
             if(l.type == CONVOLUTIONAL){
                 int num = l.n*l.c*l.size*l.size;
-                axpy_cpu(l.n, CAST(1), l.biases, 1, out.biases, 1);
-                axpy_cpu(num, CAST(1), l.weights, 1, out.weights, 1);
+                axpy_cpu(l.n, 1, l.biases, 1, out.biases, 1);
+                axpy_cpu(num, 1, l.weights, 1, out.weights, 1);
                 if(l.batch_normalize){
-                    axpy_cpu(l.n, CAST(1), l.scales, 1, out.scales, 1);
-                    axpy_cpu(l.n, CAST(1), l.rolling_mean, 1, out.rolling_mean, 1);
-                    axpy_cpu(l.n, CAST(1), l.rolling_variance, 1, out.rolling_variance, 1);
+                    axpy_cpu(l.n, 1, l.scales, 1, out.scales, 1);
+                    axpy_cpu(l.n, 1, l.rolling_mean, 1, out.rolling_mean, 1);
+                    axpy_cpu(l.n, 1, l.rolling_variance, 1, out.rolling_variance, 1);
                 }
             }
             if(l.type == CONNECTED){
-                axpy_cpu(l.outputs, CAST(1), l.biases, 1, out.biases, 1);
-                axpy_cpu(l.outputs*l.inputs, CAST(1), l.weights, 1, out.weights, 1);
+                axpy_cpu(l.outputs, 1, l.biases, 1, out.biases, 1);
+                axpy_cpu(l.outputs*l.inputs, 1, l.weights, 1, out.weights, 1);
             }
         }
     }
@@ -62,17 +62,17 @@ void average(int argc, char *argv[])
         layer l = sum->layers[j];
         if(l.type == CONVOLUTIONAL){
             int num = l.n*l.c*l.size*l.size;
-            scal_cpu(l.n, CAST(1./n), l.biases, 1);
-            scal_cpu(num, CAST(1./n), l.weights, 1);
+            scal_cpu(l.n, 1./n, l.biases, 1);
+            scal_cpu(num, 1./n, l.weights, 1);
                 if(l.batch_normalize){
-                    scal_cpu(l.n, CAST(1./n), l.scales, 1);
-                    scal_cpu(l.n, CAST(1./n), l.rolling_mean, 1);
-                    scal_cpu(l.n, CAST(1./n), l.rolling_variance, 1);
+                    scal_cpu(l.n, 1./n, l.scales, 1);
+                    scal_cpu(l.n, 1./n, l.rolling_mean, 1);
+                    scal_cpu(l.n, 1./n, l.rolling_variance, 1);
                 }
         }
         if(l.type == CONNECTED){
-            scal_cpu(l.outputs, CAST(1./n), l.biases, 1);
-            scal_cpu(l.outputs*l.inputs, CAST(1./n), l.weights, 1);
+            scal_cpu(l.outputs, 1./n, l.biases, 1);
+            scal_cpu(l.outputs*l.inputs, 1./n, l.weights, 1);
         }
     }
     save_weights(sum, outfile);
@@ -148,8 +148,8 @@ void oneoff(char *cfgfile, char *weightfile, char *outfile)
     network *net = parse_network_cfg(cfgfile);
     int oldn = net->layers[net->n - 2].n;
     int c = net->layers[net->n - 2].c;
-    scal_cpu(oldn*c, CAST(.1), net->layers[net->n - 2].weights, 1);
-    scal_cpu(oldn, CAST(0), net->layers[net->n - 2].biases, 1);
+    scal_cpu(oldn*c, .1, net->layers[net->n - 2].weights, 1);
+    scal_cpu(oldn, 0, net->layers[net->n - 2].biases, 1);
     net->layers[net->n - 2].n = 11921;
     net->layers[net->n - 2].biases += 5;
     net->layers[net->n - 2].weights += 5*c;

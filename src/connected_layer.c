@@ -131,20 +131,20 @@ layer make_connected_layer(int batch, int inputs, int outputs, ACTIVATION activa
 
 void update_connected_layer(layer l, update_args a)
 {
-    real learning_rate = a.learning_rate*l.learning_rate_scale;
-    real momentum = a.momentum;
-    real decay = a.decay;
+    float learning_rate = a.learning_rate*l.learning_rate_scale;
+    float momentum = a.momentum;
+    float decay = a.decay;
     int batch = a.batch;
-    axpy_cpu(l.outputs, learning_rate/CAST(batch), l.bias_updates, 1, l.biases, 1);
+    axpy_cpu(l.outputs, learning_rate/batch, l.bias_updates, 1, l.biases, 1);
     scal_cpu(l.outputs, momentum, l.bias_updates, 1);
 
     if(l.batch_normalize){
-        axpy_cpu(l.outputs, learning_rate/CAST(batch), l.scale_updates, 1, l.scales, 1);
+        axpy_cpu(l.outputs, learning_rate/batch, l.scale_updates, 1, l.scales, 1);
         scal_cpu(l.outputs, momentum, l.scale_updates, 1);
     }
 
-    axpy_cpu(l.inputs*l.outputs, -decay*CAST(batch), l.weights, 1, l.weight_updates, 1);
-    axpy_cpu(l.inputs*l.outputs, learning_rate/CAST(batch), l.weight_updates, 1, l.weights, 1);
+    axpy_cpu(l.inputs*l.outputs, -decay*batch, l.weights, 1, l.weight_updates, 1);
+    axpy_cpu(l.inputs*l.outputs, learning_rate/batch, l.weight_updates, 1, l.weights, 1);
     scal_cpu(l.inputs*l.outputs, momentum, l.weight_updates, 1);
 }
 
@@ -260,9 +260,9 @@ void push_connected_layer(layer l)
 
 void update_connected_layer_gpu(layer l, update_args a)
 {
-    real learning_rate = a.learning_rate*l.learning_rate_scale;
-    real momentum = a.momentum;
-    real decay = a.decay;
+    float learning_rate = a.learning_rate*l.learning_rate_scale;
+    float momentum = a.momentum;
+    float decay = a.decay;
     int batch = a.batch;
     if(a.adam){
         adam_update_gpu(l.weights_gpu, l.weight_updates_gpu, l.m_gpu, l.v_gpu, a.B1, a.B2, a.eps, decay, learning_rate, l.inputs*l.outputs, batch, a.t);
@@ -271,16 +271,16 @@ void update_connected_layer_gpu(layer l, update_args a)
             adam_update_gpu(l.scales_gpu, l.scale_updates_gpu, l.scale_m_gpu, l.scale_v_gpu, a.B1, a.B2, a.eps, decay, learning_rate, l.outputs, batch, a.t);
         }
     }else{
-        axpy_gpu(l.outputs, learning_rate/CAST(batch), l.bias_updates_gpu, 1, l.biases_gpu, 1);
+        axpy_gpu(l.outputs, learning_rate/batch, l.bias_updates_gpu, 1, l.biases_gpu, 1);
         scal_gpu(l.outputs, momentum, l.bias_updates_gpu, 1);
 
         if(l.batch_normalize){
-            axpy_gpu(l.outputs, learning_rate/CAST(batch), l.scale_updates_gpu, 1, l.scales_gpu, 1);
+            axpy_gpu(l.outputs, learning_rate/batch, l.scale_updates_gpu, 1, l.scales_gpu, 1);
             scal_gpu(l.outputs, momentum, l.scale_updates_gpu, 1);
         }
 
-        axpy_gpu(l.inputs*l.outputs, -decay*CAST(batch), l.weights_gpu, 1, l.weight_updates_gpu, 1);
-        axpy_gpu(l.inputs*l.outputs, learning_rate/CAST(batch), l.weight_updates_gpu, 1, l.weights_gpu, 1);
+        axpy_gpu(l.inputs*l.outputs, -decay*batch, l.weights_gpu, 1, l.weight_updates_gpu, 1);
+        axpy_gpu(l.inputs*l.outputs, learning_rate/batch, l.weight_updates_gpu, 1, l.weights_gpu, 1);
         scal_gpu(l.inputs*l.outputs, momentum, l.weight_updates_gpu, 1);
     }
 }

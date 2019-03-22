@@ -114,8 +114,8 @@ void forward_rnn_layer(layer l, network net)
         }else{
             fill_cpu(l.outputs * l.batch, CAST(0), l.state, 1);
         }
-        axpy_cpu(l.outputs * l.batch, CAST(1), input_layer.output, 1, l.state, 1);
-        axpy_cpu(l.outputs * l.batch, CAST(1), self_layer.output, 1, l.state, 1);
+        axpy_cpu(l.outputs * l.batch, 1, input_layer.output, 1, l.state, 1);
+        axpy_cpu(l.outputs * l.batch, 1, self_layer.output, 1, l.state, 1);
 
         s.input = l.state;
         forward_connected_layer(output_layer, s);
@@ -143,7 +143,7 @@ void backward_rnn_layer(layer l, network net)
     l.state += l.outputs*l.batch*l.steps;
     for (i = l.steps-1; i >= 0; --i) {
         copy_cpu(l.outputs * l.batch, input_layer.output, 1, l.state, 1);
-        axpy_cpu(l.outputs * l.batch, CAST(1), self_layer.output, 1, l.state, 1);
+        axpy_cpu(l.outputs * l.batch, 1, self_layer.output, 1, l.state, 1);
 
         s.input = l.state;
         s.delta = self_layer.delta;
@@ -165,7 +165,7 @@ void backward_rnn_layer(layer l, network net)
         backward_connected_layer(self_layer, s);
 
         copy_cpu(l.outputs*l.batch, self_layer.delta, 1, input_layer.delta, 1);
-        if (i > 0 && l.shortcut) axpy_cpu(l.outputs*l.batch, CAST(1), self_layer.delta, 1, self_layer.delta - l.outputs*l.batch, 1);
+        if (i > 0 && l.shortcut) axpy_cpu(l.outputs*l.batch, 1, self_layer.delta, 1, self_layer.delta - l.outputs*l.batch, 1);
         s.input = net.input + i*l.inputs*l.batch;
         if(net.delta) s.delta = net.delta + i*l.inputs*l.batch;
         else s.delta = 0;
@@ -226,8 +226,8 @@ void forward_rnn_layer_gpu(layer l, network net)
         forward_connected_layer_gpu(self_layer, s);
 
         fill_gpu(l.outputs * l.batch, CAST(0), l.state_gpu, 1);
-        axpy_gpu(l.outputs * l.batch, CAST(1), input_layer.output_gpu, 1, l.state_gpu, 1);
-        axpy_gpu(l.outputs * l.batch, CAST(1), self_layer.output_gpu, 1, l.state_gpu, 1);
+        axpy_gpu(l.outputs * l.batch, 1, input_layer.output_gpu, 1, l.state_gpu, 1);
+        axpy_gpu(l.outputs * l.batch, 1, self_layer.output_gpu, 1, l.state_gpu, 1);
 
         s.input_gpu = l.state_gpu;
         forward_connected_layer_gpu(output_layer, s);
@@ -254,8 +254,8 @@ void backward_rnn_layer_gpu(layer l, network net)
     real *last_self = self_layer.output_gpu;
     for (i = l.steps-1; i >= 0; --i) {
         fill_gpu(l.outputs * l.batch, CAST(0), l.state_gpu, 1);
-        axpy_gpu(l.outputs * l.batch, CAST(1), input_layer.output_gpu, 1, l.state_gpu, 1);
-        axpy_gpu(l.outputs * l.batch, CAST(1), self_layer.output_gpu, 1, l.state_gpu, 1);
+        axpy_gpu(l.outputs * l.batch, 1, input_layer.output_gpu, 1, l.state_gpu, 1);
+        axpy_gpu(l.outputs * l.batch, 1, self_layer.output_gpu, 1, l.state_gpu, 1);
 
         s.input_gpu = l.state_gpu;
         s.delta_gpu = self_layer.delta_gpu;
@@ -263,8 +263,8 @@ void backward_rnn_layer_gpu(layer l, network net)
 
         if(i != 0) {
             fill_gpu(l.outputs * l.batch, CAST(0), l.state_gpu, 1);
-            axpy_gpu(l.outputs * l.batch, CAST(1), input_layer.output_gpu - l.outputs*l.batch, 1, l.state_gpu, 1);
-            axpy_gpu(l.outputs * l.batch, CAST(1), self_layer.output_gpu - l.outputs*l.batch, 1, l.state_gpu, 1);
+            axpy_gpu(l.outputs * l.batch, 1, input_layer.output_gpu - l.outputs*l.batch, 1, l.state_gpu, 1);
+            axpy_gpu(l.outputs * l.batch, 1, self_layer.output_gpu - l.outputs*l.batch, 1, l.state_gpu, 1);
         }else {
             copy_gpu(l.outputs*l.batch, l.prev_state_gpu, 1, l.state_gpu, 1);
         }
@@ -286,7 +286,7 @@ void backward_rnn_layer_gpu(layer l, network net)
         increment_layer(&output_layer, -1);
     }
     fill_gpu(l.outputs * l.batch, CAST(0), l.state_gpu, 1);
-    axpy_gpu(l.outputs * l.batch, CAST(1), last_input, 1, l.state_gpu, 1);
-    axpy_gpu(l.outputs * l.batch, CAST(1), last_self, 1, l.state_gpu, 1);
+    axpy_gpu(l.outputs * l.batch, 1, last_input, 1, l.state_gpu, 1);
+    axpy_gpu(l.outputs * l.batch, 1, last_self, 1, l.state_gpu, 1);
 }
 #endif

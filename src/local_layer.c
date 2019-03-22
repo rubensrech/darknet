@@ -127,7 +127,7 @@ void backward_local_layer(local_layer l, network net)
     gradient_array(l.output, l.outputs*l.batch, l.activation, l.delta);
 
     for(i = 0; i < l.batch; ++i){
-        axpy_cpu(l.outputs, CAST(1), l.delta + i*l.outputs, 1, l.bias_updates, 1);
+        axpy_cpu(l.outputs, 1, l.delta + i*l.outputs, 1, l.bias_updates, 1);
     }
 
     for(i = 0; i < l.batch; ++i){
@@ -166,18 +166,18 @@ void backward_local_layer(local_layer l, network net)
 
 void update_local_layer(local_layer l, update_args a)
 {
-    real learning_rate = a.learning_rate*l.learning_rate_scale;
-    real momentum = a.momentum;
-    real decay = a.decay;
+    float learning_rate = a.learning_rate*l.learning_rate_scale;
+    float momentum = a.momentum;
+    float decay = a.decay;
     int batch = a.batch;
 
     int locations = l.out_w*l.out_h;
     int size = l.size*l.size*l.c*l.n*locations;
-    axpy_cpu(l.outputs, learning_rate/CAST(batch), l.bias_updates, 1, l.biases, 1);
+    axpy_cpu(l.outputs, learning_rate/batch, l.bias_updates, 1, l.biases, 1);
     scal_cpu(l.outputs, momentum, l.bias_updates, 1);
 
-    axpy_cpu(size, -decay*CAST(batch), l.weights, 1, l.weight_updates, 1);
-    axpy_cpu(size, learning_rate/CAST(batch), l.weight_updates, 1, l.weights, 1);
+    axpy_cpu(size, -decay*batch, l.weights, 1, l.weight_updates, 1);
+    axpy_cpu(size, learning_rate/batch, l.weight_updates, 1, l.weights, 1);
     scal_cpu(size, momentum, l.weight_updates, 1);
 }
 
@@ -221,7 +221,7 @@ void backward_local_layer_gpu(local_layer l, network net)
 
     gradient_array_gpu(l.output_gpu, l.outputs*l.batch, l.activation, l.delta_gpu);
     for(i = 0; i < l.batch; ++i){
-        axpy_gpu(l.outputs, CAST(1), l.delta_gpu + i*l.outputs, 1, l.bias_updates_gpu, 1);
+        axpy_gpu(l.outputs, 1, l.delta_gpu + i*l.outputs, 1, l.bias_updates_gpu, 1);
     }
 
     for(i = 0; i < l.batch; ++i){
@@ -260,18 +260,18 @@ void backward_local_layer_gpu(local_layer l, network net)
 
 void update_local_layer_gpu(local_layer l, update_args a)
 {
-    real learning_rate = a.learning_rate*l.learning_rate_scale;
-    real momentum = a.momentum;
-    real decay = a.decay;
+    float learning_rate = a.learning_rate*l.learning_rate_scale;
+    float momentum = a.momentum;
+    float decay = a.decay;
     int batch = a.batch;
 
     int locations = l.out_w*l.out_h;
     int size = l.size*l.size*l.c*l.n*locations;
-    axpy_gpu(l.outputs, learning_rate/CAST(batch), l.bias_updates_gpu, 1, l.biases_gpu, 1);
+    axpy_gpu(l.outputs, learning_rate/batch, l.bias_updates_gpu, 1, l.biases_gpu, 1);
     scal_gpu(l.outputs, momentum, l.bias_updates_gpu, 1);
 
-    axpy_gpu(size, -decay*CAST(batch), l.weights_gpu, 1, l.weight_updates_gpu, 1);
-    axpy_gpu(size, learning_rate/CAST(batch), l.weight_updates_gpu, 1, l.weights_gpu, 1);
+    axpy_gpu(size, -decay*batch, l.weights_gpu, 1, l.weight_updates_gpu, 1);
+    axpy_gpu(size, learning_rate/batch, l.weight_updates_gpu, 1, l.weights_gpu, 1);
     scal_gpu(size, momentum, l.weight_updates_gpu, 1);
 }
 

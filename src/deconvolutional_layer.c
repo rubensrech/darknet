@@ -70,7 +70,7 @@ layer make_deconvolutional_layer(int batch, int h, int w, int c, int n, int size
     l.outputs = l.out_w * l.out_h * l.out_c;
     l.inputs = l.w * l.h * l.c;
 
-    scal_cpu(l.nweights, CAST((float)l.out_w*l.out_h/(l.w*l.h)), l.weights, 1);
+    scal_cpu(l.nweights, (float)l.out_w*l.out_h/(l.w*l.h), l.weights, 1);
 
     l.output = (real*)calloc(l.batch*l.outputs, sizeof(real));
     l.delta  = (real*)calloc(l.batch*l.outputs, sizeof(real));
@@ -289,22 +289,22 @@ void backward_deconvolutional_layer(layer l, network net)
 
 void update_deconvolutional_layer(layer l, update_args a)
 {
-    real learning_rate = a.learning_rate*l.learning_rate_scale;
-    real momentum = a.momentum;
-    real decay = a.decay;
+    float learning_rate = a.learning_rate*l.learning_rate_scale;
+    float momentum = a.momentum;
+    float decay = a.decay;
     int batch = a.batch;
 
     int size = l.size*l.size*l.c*l.n;
-    axpy_cpu(l.n, learning_rate/CAST(batch), l.bias_updates, 1, l.biases, 1);
+    axpy_cpu(l.n, learning_rate/batch, l.bias_updates, 1, l.biases, 1);
     scal_cpu(l.n, momentum, l.bias_updates, 1);
 
     if(l.scales){
-        axpy_cpu(l.n, learning_rate/CAST(batch), l.scale_updates, 1, l.scales, 1);
+        axpy_cpu(l.n, learning_rate/batch, l.scale_updates, 1, l.scales, 1);
         scal_cpu(l.n, momentum, l.scale_updates, 1);
     }
 
-    axpy_cpu(size, -decay*CAST(batch), l.weights, 1, l.weight_updates, 1);
-    axpy_cpu(size, learning_rate/CAST(batch), l.weight_updates, 1, l.weights, 1);
+    axpy_cpu(size, -decay*batch, l.weights, 1, l.weight_updates, 1);
+    axpy_cpu(size, learning_rate/batch, l.weight_updates, 1, l.weights, 1);
     scal_cpu(size, momentum, l.weight_updates, 1);
 }
 

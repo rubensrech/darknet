@@ -285,7 +285,7 @@ void validate_classifier_10(char *datacfg, char *filename, char *weightfile)
         for(j = 0; j < 10; ++j){
             real *p = network_predict_float(net, images[j].data);
             if(net->hierarchy) hierarchy_predictions(p, net->outputs, net->hierarchy, 1, 1);
-            axpy_cpu(classes, CAST(1), p, 1, pred, 1);
+            axpy_cpu(classes, 1, p, 1, pred, 1);
             free_image(images[j]);
         }
         free_image(im);
@@ -461,10 +461,10 @@ void validate_classifier_multi(char *datacfg, char *cfg, char *weights)
             resize_network(net, r.w, r.h);
             real *p = network_predict_float(net, r.data);
             if(net->hierarchy) hierarchy_predictions(p, net->outputs, net->hierarchy, 1 , 1);
-            axpy_cpu(classes, CAST(1), p, 1, pred, 1);
+            axpy_cpu(classes, 1, p, 1, pred, 1);
             flip_image(r);
             p = network_predict_float(net, r.data);
-            axpy_cpu(classes, CAST(1), p, 1, pred, 1);
+            axpy_cpu(classes, 1, p, 1, pred, 1);
             if(r.data != im.data) free_image(r);
         }
         free_image(im);

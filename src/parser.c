@@ -1346,7 +1346,6 @@ void load_convolutional_weights(layer l, FILE *fp)
     fread(l.weights, sizeof(real), num, fp);
 #endif
 
-    //if(l.c == 3) scal_cpu(num, 1./256, l.weights, 1);
     if (l.flipped) {
         transpose_matrix(l.weights, l.c*l.size*l.size, l.n);
     }

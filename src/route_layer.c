@@ -95,7 +95,7 @@ void backward_route_layer(const route_layer l, network net)
         real *delta = net.layers[index].delta;
         int input_size = l.input_sizes[i];
         for(j = 0; j < l.batch; ++j){
-            axpy_cpu(input_size, CAST(1), l.delta + offset + j*l.outputs, 1, delta + j*input_size, 1);
+            axpy_cpu(input_size, 1, l.delta + offset + j*l.outputs, 1, delta + j*input_size, 1);
         }
         offset += input_size;
     }
@@ -126,7 +126,7 @@ void backward_route_layer_gpu(const route_layer l, network net)
         real *delta = net.layers[index].delta_gpu;
         int input_size = l.input_sizes[i];
         for(j = 0; j < l.batch; ++j){
-            axpy_gpu(input_size, CAST(1), l.delta_gpu + offset + j*l.outputs, 1, delta + j*input_size, 1);
+            axpy_gpu(input_size, 1, l.delta_gpu + offset + j*l.outputs, 1, delta + j*input_size, 1);
         }
         offset += input_size;
     }

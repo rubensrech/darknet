@@ -128,7 +128,7 @@ void forward_cost_layer_gpu(cost_layer l, network net)
 {
     if (!net.truth) return;
     if(l.smooth){
-        scal_gpu(l.batch*l.inputs, CAST(1-l.smooth), net.truth_gpu, 1);
+        scal_gpu(l.batch*l.inputs, 1-l.smooth, net.truth_gpu, 1);
         add_gpu(l.batch*l.inputs, CAST(l.smooth * 1./l.inputs), net.truth_gpu, 1);
     }
 

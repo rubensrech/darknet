@@ -153,7 +153,7 @@ void reconstruct_picture(network *net, float *features, image recon, image updat
 
         forward_network_gpu(net);
         cuda_push_array(l.delta_gpu, featuresReal, l.outputs);
-        axpy_gpu(l.outputs, CAST(-1), l.output_gpu, 1, l.delta_gpu, 1);
+        axpy_gpu(l.outputs, -1, l.output_gpu, 1, l.delta_gpu, 1);
         backward_network_gpu(net);
 
         cuda_pull_array(net->delta_gpu, deltaDataReal, delta.w*delta.h*delta.c); // cuda_pull_array(net->delta_gpu, delta.data, delta.w*delta.h*delta.c);
@@ -178,7 +178,6 @@ void reconstruct_picture(network *net, float *features, image recon, image updat
 
         float mag = mag_float_array(delta.data, recon.w*recon.h*recon.c);
         printf("mag: %f\n", (float)mag);
-        //scal_cpu(recon.w*recon.h*recon.c, 600/mag, recon.data, 1);
 
         constrain_image(recon);
         free_image(delta);

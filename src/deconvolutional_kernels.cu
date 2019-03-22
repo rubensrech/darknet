@@ -111,9 +111,9 @@ void push_deconvolutional_layer(layer l)
 
 void update_deconvolutional_layer_gpu(layer l, update_args a)
 {
-    real learning_rate = a.learning_rate*l.learning_rate_scale;
-    real momentum = a.momentum;
-    real decay = a.decay;
+    float learning_rate = a.learning_rate*l.learning_rate_scale;
+    float momentum = a.momentum;
+    float decay = a.decay;
     int batch = a.batch;
 
     if(a.adam){
@@ -123,15 +123,15 @@ void update_deconvolutional_layer_gpu(layer l, update_args a)
             adam_update_gpu(l.scales_gpu, l.scale_updates_gpu, l.scale_m_gpu, l.scale_v_gpu, a.B1, a.B2, a.eps, decay, learning_rate, l.n, batch, a.t);
         }
     }else{
-        axpy_gpu(l.nweights, CAST(-decay*batch), l.weights_gpu, 1, l.weight_updates_gpu, 1);
-        axpy_gpu(l.nweights, CAST(learning_rate/batch), l.weight_updates_gpu, 1, l.weights_gpu, 1);
+        axpy_gpu(l.nweights, -decay*batch, l.weights_gpu, 1, l.weight_updates_gpu, 1);
+        axpy_gpu(l.nweights, learning_rate/batch, l.weight_updates_gpu, 1, l.weights_gpu, 1);
         scal_gpu(l.nweights, momentum, l.weight_updates_gpu, 1);
 
-        axpy_gpu(l.n, CAST(learning_rate/batch), l.bias_updates_gpu, 1, l.biases_gpu, 1);
+        axpy_gpu(l.n, learning_rate/batch, l.bias_updates_gpu, 1, l.biases_gpu, 1);
         scal_gpu(l.n, momentum, l.bias_updates_gpu, 1);
 
         if(l.scales_gpu){
-            axpy_gpu(l.n, CAST(learning_rate/batch), l.scale_updates_gpu, 1, l.scales_gpu, 1);
+            axpy_gpu(l.n, learning_rate/batch, l.scale_updates_gpu, 1, l.scales_gpu, 1);
             scal_gpu(l.n, momentum, l.scale_updates_gpu, 1);
         }
     }

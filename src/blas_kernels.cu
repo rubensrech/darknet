@@ -171,21 +171,21 @@ __global__ void adam_kernel(int N, real_device *x, real_device *m, real_device *
     x[index] = x[index] + rate * mhat / (sqrt_real(vhat) + eps);
 }
 
-void adam_gpu(int n, real *x, real *m, real *v, real B1, real B2, real rate, real eps, int t)
+void adam_gpu(int n, real *x, real *m, real *v, float B1, float B2, float rate, float eps, int t)
 {
     adam_kernel<<<cuda_gridsize(n), BLOCK>>>(n, (real_device*)x, (real_device*)m, (real_device*)v, (real_device)B1, (real_device)B2, (real_device)rate, (real_device)eps, t);
     check_error(cudaPeekAtLastError());
 }
 
-void adam_update_gpu(real *w, real *d, real *m, real *v, real B1, real B2, real eps, real decay, real rate, int n, int batch, int t)
+void adam_update_gpu(real *w, real *d, real *m, real *v, float B1, float B2, float eps, float decay, float rate, int n, int batch, int t)
 {
     scal_gpu(n, B1, m, 1);
     scal_gpu(n, B2, v, 1);
-    axpy_gpu(n, CAST(-decay*batch), w, 1, d, 1);
+    axpy_gpu(n, -decay*batch, w, 1, d, 1);
 
-    axpy_gpu(n, CAST(1-B1), d, 1, m, 1);
+    axpy_gpu(n, 1-B1, d, 1, m, 1);
     mul_gpu(n, d, 1, d, 1);
-    axpy_gpu(n, CAST(1-B2), d, 1, v, 1);
+    axpy_gpu(n, 1-B2, d, 1, v, 1);
 
     adam_gpu(n, w, m, v, B1, B2, rate, eps, t);
     fill_gpu(n, CAST(0), d, 1);
@@ -588,7 +588,7 @@ void variance_gpu(real *x, real *mean, int batch, int filters, int spatial, real
     check_error(cudaPeekAtLastError());
 }
 
-extern "C" void axpy_gpu(int N, real ALPHA, real *X, int INCX, real *Y, int INCY)
+extern "C" void axpy_gpu(int N, float ALPHA, real *X, int INCX, real *Y, int INCY)
 {
     axpy_gpu_offset(N, ALPHA, X, 0, INCX, Y, 0, INCY);
 }
@@ -599,7 +599,7 @@ void pow_gpu(int N, real ALPHA, real *X, int INCX, real  *Y, int INCY)
     check_error(cudaPeekAtLastError());
 }
 
-void axpy_gpu_offset(int N, real ALPHA, real *X, int OFFX, int INCX, real *Y, int OFFY, int INCY)
+void axpy_gpu_offset(int N, float ALPHA, real *X, int OFFX, int INCX, real *Y, int OFFY, int INCY)
 {
     axpy_kernel<<<cuda_gridsize(N), BLOCK>>>(N, (real_device)ALPHA, (real_device*)X, OFFX, INCX, (real_device*)Y, OFFY, INCY);
     check_error(cudaPeekAtLastError());
@@ -696,7 +696,7 @@ void add_gpu(int N, real ALPHA, real *X, int INCX)
     check_error(cudaPeekAtLastError());
 }
 
-extern "C" void scal_gpu(int N, real ALPHA, real * X, int INCX)
+extern "C" void scal_gpu(int N, float ALPHA, real * X, int INCX)
 {
     scal_kernel<<<cuda_gridsize(N), BLOCK>>>(N, (real_device)ALPHA, (real_device*)X, INCX);
     check_error(cudaPeekAtLastError());

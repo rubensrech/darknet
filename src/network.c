@@ -902,14 +902,14 @@ pthread_t train_network_in_thread(network *net, data d, real *err)
 void merge_weights(layer l, layer base)
 {
     if (l.type == CONVOLUTIONAL) {
-        axpy_cpu(l.n, CAST(1), l.bias_updates, 1, base.biases, 1);
-        axpy_cpu(l.nweights, CAST(1), l.weight_updates, 1, base.weights, 1);
+        axpy_cpu(l.n, 1, l.bias_updates, 1, base.biases, 1);
+        axpy_cpu(l.nweights, 1, l.weight_updates, 1, base.weights, 1);
         if (l.scales) {
-            axpy_cpu(l.n, CAST(1), l.scale_updates, 1, base.scales, 1);
+            axpy_cpu(l.n, 1, l.scale_updates, 1, base.scales, 1);
         }
     } else if(l.type == CONNECTED) {
-        axpy_cpu(l.outputs, CAST(1), l.bias_updates, 1, base.biases, 1);
-        axpy_cpu(l.outputs*l.inputs, CAST(1), l.weight_updates, 1, base.weights, 1);
+        axpy_cpu(l.outputs, 1, l.bias_updates, 1, base.biases, 1);
+        axpy_cpu(l.outputs*l.inputs, 1, l.weight_updates, 1, base.weights, 1);
     }
 }
 

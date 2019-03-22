@@ -98,13 +98,13 @@ typedef enum{
 
 typedef struct{
     int batch;
-    real learning_rate;
-    real momentum;
-    real decay;
+    float learning_rate;
+    float momentum;
+    float decay;
     int adam;
-    real B1;
-    real B2;
-    real eps;
+    float B1;
+    float B2;
+    float eps;
     int t;
 } update_args;
 
@@ -615,11 +615,11 @@ void update_network(network *net);
 
 real dot_cpu(int N, real *X, int INCX, real *Y, int INCY);
 float dot_float_cpu(int N, float *X, int INCX, float *Y, int INCY);
-void axpy_cpu(int N, real ALPHA, real *X, int INCX, real *Y, int INCY);
+void axpy_cpu(int N, float ALPHA, real *X, int INCX, real *Y, int INCY);
 void axpy_float_cpu(int N, float ALPHA, float *X, int INCX, float *Y, int INCY);
 void copy_cpu(int N, real *X, int INCX, real *Y, int INCY);
 void copy_float_cpu(int N, float *X, int INCX, float *Y, int INCY);
-void scal_cpu(int N, real ALPHA, real *X, int INCX);
+void scal_cpu(int N, float ALPHA, real *X, int INCX);
 void scal_float_cpu(int N, float ALPHA, float *X, int INCX);
 void fill_cpu(int N, real ALPHA, real * X, int INCX);
 void fill_float_cpu(int N, float ALPHA, float *X, int INCX);
@@ -629,10 +629,10 @@ void softmax(real *input, int n, real temp, int stride, real *output);
 
 int best_3d_shift_r(image a, image b, int min, int max);
 #ifdef GPU
-void axpy_gpu(int N, real ALPHA, real * X, int INCX, real * Y, int INCY);
+void axpy_gpu(int N, float ALPHA, real * X, int INCX, real * Y, int INCY);
 void fill_gpu(int N, real ALPHA, real * X, int INCX);
 void fill_gpu_float(int N, float ALPHA, float *X, int INCX);
-void scal_gpu(int N, real ALPHA, real * X, int INCX);
+void scal_gpu(int N, float ALPHA, real * X, int INCX);
 void copy_gpu(int N, real * X, int INCX, real * Y, int INCY);
 
 void cuda_set_device(int n);

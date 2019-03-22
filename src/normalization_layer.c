@@ -69,7 +69,7 @@ void forward_normalization_layer(const layer layer, network net)
     int w = layer.w;
     int h = layer.h;
     int c = layer.c;
-    scal_cpu(w*h*c*layer.batch, CAST(0), layer.squared, 1);
+    scal_cpu(w*h*c*layer.batch, 0, layer.squared, 1);
 
     for(b = 0; b < layer.batch; ++b){
         real *squared = layer.squared + w*h*c*b;
@@ -113,7 +113,7 @@ void forward_normalization_layer_gpu(const layer layer, network net)
     int w = layer.w;
     int h = layer.h;
     int c = layer.c;
-    scal_gpu(w*h*c*layer.batch, CAST(0), layer.squared_gpu, 1);
+    scal_gpu(w*h*c*layer.batch, 0, layer.squared_gpu, 1);
 
     for(b = 0; b < layer.batch; ++b){
         real *squared = layer.squared_gpu + w*h*c*b;
