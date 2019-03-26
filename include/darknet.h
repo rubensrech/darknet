@@ -154,16 +154,16 @@ struct layer{
     int steps;
     int hidden;
     int truth;
-    real smooth;
-    real dot;
-    real angle;
-    real jitter;
-    real saturation;
-    real exposure;
-    real shift;
-    real ratio;
-    real learning_rate_scale;
-    real clip;
+    float smooth;
+    float dot;
+    float angle;
+    float jitter;
+    float saturation;
+    float exposure;
+    float shift;
+    float ratio;
+    float learning_rate_scale;
+    float clip;
     int noloss;
     int softmax;
     int classes;
@@ -179,21 +179,21 @@ struct layer{
     int *mask;
     int total;
 
-    real alpha;
-    real beta;
-    real kappa;
+    float alpha;
+    float beta;
+    float kappa;
 
-    real coord_scale;
-    real object_scale;
-    real noobject_scale;
-    real mask_scale;
-    real class_scale;
+    float coord_scale;
+    float object_scale;
+    float noobject_scale;
+    float mask_scale;
+    float class_scale;
     int bias_match;
     int random;
-    real ignore_thresh;
-    real truth_thresh;
-    real thresh;
-    real focus;
+    float ignore_thresh;
+    float truth_thresh;
+    float thresh;
+    float focus;
     int classfix;
     int absolute;
 
@@ -204,9 +204,9 @@ struct layer{
     int dontloadscales;
     int numload;
 
-    real temperature;
-    real probability;
-    real scale;
+    float temperature;
+    float probability;
+    float scale;
 
     char  * cweights;
     int   * indexes;
@@ -432,18 +432,18 @@ typedef struct network{
     int batch;
     size_t *seen;
     int *t;
-    real epoch;
+    float epoch;
     int subdivisions;
     layer *layers;
     real *output;
     learning_rate_policy policy;
 
-    real learning_rate;
-    real momentum;
-    real decay;
-    real gamma;
-    real scale;
-    real power;
+    float learning_rate;
+    float momentum;
+    float decay;
+    float gamma;
+    float scale;
+    float power;
     int time_steps;
     int step;
     int max_batches;
@@ -453,9 +453,9 @@ typedef struct network{
     int burn_in;
 
     int adam;
-    real B1;
-    real B2;
-    real eps;
+    float B1;
+    float B2;
+    float eps;
 
     int inputs;
     int outputs;
@@ -464,14 +464,14 @@ typedef struct network{
     int h, w, c;
     int max_crop;
     int min_crop;
-    real max_ratio;
-    real min_ratio;
+    float max_ratio;
+    float min_ratio;
     int center;
-    real angle;
-    real aspect;
-    real exposure;
-    real saturation;
-    real hue;
+    float angle;
+    float aspect;
+    float exposure;
+    float saturation;
+    float hue;
     int random;
 
     int gpu_index;
@@ -484,7 +484,7 @@ typedef struct network{
     int train;
     int index;
     real *cost;
-    real clip;
+    float clip;
 
 #ifdef GPU
     real *input_gpu;
@@ -785,7 +785,6 @@ void change_leaves(tree *t, char *leaf_list);
 
 int find_int_arg(int argc, char **argv, char *arg, int def);
 float find_float_arg(int argc, char **argv, char *arg, float def);
-real find_real_arg(int argc, char **argv, char *arg, real def);
 int find_arg(int argc, char* argv[], char *arg);
 char *find_char_arg(int argc, char **argv, char *arg, char *def);
 char *basecfg(char *cfgfile);

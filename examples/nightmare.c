@@ -4,17 +4,17 @@
 
 // ./darknet nightmare cfg/extractor.recon.cfg ~/trained/yolo-coco.conv frame6.png -reconstruct -iters 500 -i 3 -lambda .1 -rate .01 -smooth 2
 
-real abs_mean(real *x, int n)
+float abs_mean(real *x, int n)
 {
     int i;
-    real sum = CAST(0);
+    float sum = 0;
     for (i = 0; i < n; ++i){
         sum += fabs(x[i]);
     }
-    return CAST(sum/n);
+    return sum/n;
 }
 
-void calculate_loss(real *output, real *delta, int n, real thresh)
+void calculate_loss(real *output, real *delta, int n, float thresh)
 {
     int i;
     float mean = mean_array(output, n); 
@@ -25,7 +25,7 @@ void calculate_loss(real *output, real *delta, int n, real thresh)
     }
 }
 
-void optimize_picture(network *net, image orig, int max_layer, real scale, real rate, real thresh, int norm)
+void optimize_picture(network *net, image orig, int max_layer, float scale, float rate, float thresh, int norm)
 {
     //scale_image(orig, 2);
     //translate_image(orig, -1);
@@ -114,7 +114,7 @@ void optimize_picture(network *net, image orig, int max_layer, real scale, real 
 
 }
 
-void smooth(image recon, image update, real lambda, int num)
+void smooth(image recon, image update, float lambda, int num)
 {
     int i, j, k;
     int ii, jj;
@@ -202,12 +202,12 @@ void run_nightmare(int argc, char **argv)
     int rounds = find_int_arg(argc, argv, (char*)"-rounds", 1);
     int iters = find_int_arg(argc, argv, (char*)"-iters", 10);
     int octaves = find_int_arg(argc, argv, (char*)"-octaves", 4);
-    real zoom = find_real_arg(argc, argv, (char*)"-zoom", CAST(1.));
-    real rate = find_real_arg(argc, argv, (char*)"-rate", CAST(.04));
-    real thresh = find_real_arg(argc, argv, (char*)"-thresh", CAST(1.));
+    float zoom = find_float_arg(argc, argv, (char*)"-zoom", 1.);
+    float rate = find_float_arg(argc, argv, (char*)"-rate", .04);
+    float thresh = find_float_arg(argc, argv, (char*)"-thresh", 1.);
     float rotate = find_float_arg(argc, argv, (char*)"-rotate", 0);
-    real momentum = find_real_arg(argc, argv, (char*)"-momentum", CAST(.9));
-    real lambda = find_real_arg(argc, argv, (char*)"-lambda", CAST(.01));
+    float momentum = find_float_arg(argc, argv, (char*)"-momentum", .9);
+    float lambda = find_float_arg(argc, argv, (char*)"-lambda", .01);
     char *prefix = find_char_arg(argc, argv, (char*)"-prefix", 0);
     int reconstruct = find_arg(argc, argv, (char*)"-reconstruct");
     int smooth_size = find_int_arg(argc, argv, (char*)"-smooth", 1);
@@ -219,7 +219,7 @@ void run_nightmare(int argc, char **argv)
     set_batch_network(net, 1);
     image im = load_image_color(input, 0, 0);
     if(0){
-        real scale = CAST(1);
+        float scale = 1;
         if(im.w > 512 || im.h > 512){
             if(im.w > im.h) scale = 512.0/im.w;
             else scale = 512.0/im.h;

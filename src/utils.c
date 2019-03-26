@@ -160,21 +160,6 @@ float find_float_arg(int argc, char **argv, char *arg, float def)
     return def;
 }
 
-real find_real_arg(int argc, char **argv, char *arg, real def)
-{
-    int i;
-    for(i = 0; i < argc-1; ++i){
-        if(!argv[i]) continue;
-        if(0==strcmp(argv[i], arg)){
-            def = atof(argv[i+1]);
-            del_arg(argc, argv, i);
-            del_arg(argc, argv, i);
-            break;
-        }
-    }
-    return def;
-}
-
 char *find_char_arg(int argc, char **argv, char *arg, char *def)
 {
     int i;

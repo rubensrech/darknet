@@ -143,8 +143,8 @@ void forward_cost_layer_gpu(cost_layer l, network net)
     }
 
     if (l.cost_type == SEG && l.noobject_scale != 1) {
-        scale_mask_gpu(l.batch*l.inputs, l.delta_gpu, CAST(0), net.truth_gpu, l.noobject_scale);
-        scale_mask_gpu(l.batch*l.inputs, l.output_gpu, CAST(0), net.truth_gpu, l.noobject_scale);
+        scale_mask_gpu(l.batch*l.inputs, l.delta_gpu, 0, net.truth_gpu, l.noobject_scale);
+        scale_mask_gpu(l.batch*l.inputs, l.output_gpu, 0, net.truth_gpu, l.noobject_scale);
     }
     if (l.cost_type == MASKED) {
         mask_gpu(l.batch*l.inputs, net.delta_gpu, CAST(SECRET_NUM), net.truth_gpu, CAST(0));

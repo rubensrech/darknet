@@ -306,7 +306,7 @@ void forward_connected_layer_gpu(layer l, network net)
 
 void backward_connected_layer_gpu(layer l, network net)
 {
-    constrain_gpu(l.outputs*l.batch, CAST(1), l.delta_gpu, 1);
+    constrain_gpu(l.outputs*l.batch, 1, l.delta_gpu, 1);
     gradient_array_gpu(l.output_gpu, l.outputs*l.batch, l.activation, l.delta_gpu);
     if(l.batch_normalize){
         backward_batchnorm_layer_gpu(l, net);

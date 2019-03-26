@@ -86,7 +86,7 @@ void forward_convolutional_layer_gpu(convolutional_layer l, network net)
     }
 
 #ifdef CUDNN
-    real one = 1;
+    float one = 1;
     cudnnConvolutionForward(cudnn_handle(),
                 &one,
                 l.srcTensorDesc,
@@ -178,7 +178,7 @@ __global__ void smooth_kernel(real_device *x, int n, int w, int h, int c, int si
     }
 }
 
-extern "C" void smooth_layer(layer l, int size, real rate)
+extern "C" void smooth_layer(layer l, int size, float rate)
 {
     int h = l.out_h;
     int w = l.out_w;
@@ -195,7 +195,6 @@ void backward_convolutional_layer_gpu(convolutional_layer l, network net)
     if(l.smooth){
         smooth_layer(l, 5, l.smooth);
     }
-    //constrain_gpu(l.outputs*l.batch, 1, l.delta_gpu, 1);
     gradient_array_gpu(l.output_gpu, l.outputs*l.batch, l.activation, l.delta_gpu);
 
 
@@ -208,7 +207,7 @@ void backward_convolutional_layer_gpu(convolutional_layer l, network net)
 
     if(l.xnor) net.input_gpu = l.binary_input_gpu;
 #ifdef CUDNN
-    real one = 1;
+    float one = 1;
     cudnnConvolutionBackwardFilter(cudnn_handle(),
             &one,
             l.srcTensorDesc,

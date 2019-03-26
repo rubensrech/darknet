@@ -170,7 +170,7 @@ void train_char_rnn(char *cfgfile, char *weightfile, char *filename, int clear, 
     char *backup_directory = (char*)"/home/pjreddie/backup/";
     char *base = basecfg(cfgfile);
     fprintf(stderr, "%s\n", base);
-    real avg_loss = CAST(-1);
+    float avg_loss = -1;
     network *net = load_network(cfgfile, weightfile, clear);
 
     int inputs = net->inputs;
@@ -242,7 +242,7 @@ void print_symbol(int n, char **tokens){
     }
 }
 
-void test_char_rnn(char *cfgfile, char *weightfile, int num, char *seed, real temp, int rseed, char *token_file)
+void test_char_rnn(char *cfgfile, char *weightfile, int num, char *seed, float temp, int rseed, char *token_file)
 {
     char **tokens = 0;
     if(token_file){
@@ -288,7 +288,7 @@ void test_char_rnn(char *cfgfile, char *weightfile, int num, char *seed, real te
     printf("\n");
 }
 
-void test_tactic_rnn_multi(char *cfgfile, char *weightfile, int num, real temp, int rseed, char *token_file)
+void test_tactic_rnn_multi(char *cfgfile, char *weightfile, int num, float temp, int rseed, char *token_file)
 {
     char **tokens = 0;
     if(token_file){
@@ -333,7 +333,7 @@ void test_tactic_rnn_multi(char *cfgfile, char *weightfile, int num, real temp, 
     }
 }
 
-void test_tactic_rnn(char *cfgfile, char *weightfile, int num, real temp, int rseed, char *token_file)
+void test_tactic_rnn(char *cfgfile, char *weightfile, int num, float temp, int rseed, char *token_file)
 {
     char **tokens = 0;
     if(token_file){
@@ -395,9 +395,9 @@ void valid_tactic_rnn(char *cfgfile, char *weightfile, char *seed)
         network_predict(net, input);
         input[(int)c] = 0;
     }
-    real sum = CAST(0);
+    float sum = 0;
     c = getc(stdin);
-    real log2 = log(CAST(2));
+    float log2 = log(2);
     int in = 0;
     while(c != EOF){
         int next = getc(stdin);
@@ -444,9 +444,9 @@ void valid_char_rnn(char *cfgfile, char *weightfile, char *seed)
         network_predict(net, input);
         input[(int)c] = 0;
     }
-    real sum = CAST(0);
+    float sum = 0;
     c = getc(stdin);
-    real log2 = log(CAST(2));
+    float log2 = log(2);
     while(c != EOF){
         int next = getc(stdin);
         if(next == EOF) break;
@@ -517,7 +517,7 @@ void run_char_rnn(int argc, char **argv)
     char *filename = find_char_arg(argc, argv, (char*)"-file", (char*)"data/shakespeare.txt");
     char *seed = find_char_arg(argc, argv, (char*)"-seed", (char*)"\n\n");
     int len = find_int_arg(argc, argv, (char*)"-len", 1000);
-    real temp = find_real_arg(argc, argv, (char*)"-temp", CAST(.7));
+    float temp = find_float_arg(argc, argv, (char*)"-temp", .7);
     int rseed = find_int_arg(argc, argv, (char*)"-srand", time(0));
     int clear = find_arg(argc, argv, (char*)"-clear");
     int tokenized = find_arg(argc, argv, (char*)"-tokenized");

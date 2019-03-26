@@ -65,7 +65,7 @@ void weighted_delta_cpu(real *a, real *b, real *s, real *da, real *db, real *ds,
     }
 }
 
-void shortcut_cpu(int batch, int w1, int h1, int c1, real *add, int w2, int h2, int c2, real s1, real s2, real *out)
+void shortcut_cpu(int batch, int w1, int h1, int c1, real *add, int w2, int h2, int c2, float s1, float s2, real *out)
 {
     int stride = w1/w2;
     int sample = w2/w1;
@@ -170,7 +170,7 @@ void normalize_float_cpu(float *x, float *mean, float *variance, int batch, int 
     }
 }
 
-void const_cpu(int N, real ALPHA, real *X, int INCX)
+void const_cpu(int N, float ALPHA, real *X, int INCX)
 {
     int i;
     for(i = 0; i < N; ++i) X[i*INCX] = ALPHA;
@@ -182,7 +182,7 @@ void mul_cpu(int N, real *X, int INCX, real *Y, int INCY)
     for(i = 0; i < N; ++i) Y[i*INCY] *= X[i*INCX];
 }
 
-void pow_cpu(int N, real ALPHA, real *X, int INCX, real *Y, int INCY)
+void pow_cpu(int N, float ALPHA, real *X, int INCX, real *Y, int INCY)
 {
     int i;
     for(i = 0; i < N; ++i) Y[i*INCY] = pow(X[i*INCX], ALPHA);
@@ -366,17 +366,17 @@ void softmax(real *input, int n, float temp, int stride, real *output)
 }
 
 
-void softmax_cpu(real *input, int n, int batch, int batch_offset, int groups, int group_offset, int stride, real temp, real *output)
+void softmax_cpu(real *input, int n, int batch, int batch_offset, int groups, int group_offset, int stride, float temp, real *output)
 {
     int g, b;
     for(b = 0; b < batch; ++b){
         for(g = 0; g < groups; ++g){
-            softmax(input + b*batch_offset + g*group_offset, n, CAST(temp), stride, output + b*batch_offset + g*group_offset);
+            softmax(input + b*batch_offset + g*group_offset, n, temp, stride, output + b*batch_offset + g*group_offset);
         }
     }
 }
 
-void upsample_cpu(real *in, int w, int h, int c, int batch, int stride, int forward, real scale, real *out)
+void upsample_cpu(real *in, int w, int h, int c, int batch, int stride, int forward, float scale, real *out)
 {
     int i, j, k, b;
     for(b = 0; b < batch; ++b){

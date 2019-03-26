@@ -75,7 +75,7 @@ void forward_normalization_layer(const layer layer, network net)
         real *squared = layer.squared + w*h*c*b;
         real *norms   = layer.norms + w*h*c*b;
         real *input   = net.input + w*h*c*b;
-        pow_cpu(w*h*c, CAST(2), input, 1, squared, 1);
+        pow_cpu(w*h*c, 2, input, 1, squared, 1);
 
         const_cpu(w*h, layer.kappa, norms, 1);
         for(k = 0; k < layer.size/2; ++k){
@@ -119,7 +119,7 @@ void forward_normalization_layer_gpu(const layer layer, network net)
         real *squared = layer.squared_gpu + w*h*c*b;
         real *norms   = layer.norms_gpu + w*h*c*b;
         real *input   = net.input_gpu + w*h*c*b;
-        pow_gpu(w*h*c, CAST(2), input, 1, squared, 1);
+        pow_gpu(w*h*c, 2, input, 1, squared, 1);
 
         const_gpu(w*h, layer.kappa, norms, 1);
         for(k = 0; k < layer.size/2; ++k){

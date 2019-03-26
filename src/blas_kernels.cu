@@ -593,7 +593,7 @@ extern "C" void axpy_gpu(int N, float ALPHA, real *X, int INCX, real *Y, int INC
     axpy_gpu_offset(N, ALPHA, X, 0, INCX, Y, 0, INCY);
 }
 
-void pow_gpu(int N, real ALPHA, real *X, int INCX, real  *Y, int INCY)
+void pow_gpu(int N, float ALPHA, real *X, int INCX, real  *Y, int INCY)
 {
     pow_kernel<<<cuda_gridsize(N), BLOCK>>>(N, (real_device)ALPHA, (real_device*)X, INCX, (real_device*)Y, INCY);
     check_error(cudaPeekAtLastError());
@@ -671,19 +671,19 @@ __global__ void scale_mask_kernel(int n,  real_device *x, real_device mask_num, 
     if(i < n && mask[i] == mask_num) x[i] *= scale;
 }
 
-void scale_mask_gpu(int N, real *X, real mask_num, real * mask, real scale)
+void scale_mask_gpu(int N, real *X, float mask_num, real * mask, float scale)
 {
     scale_mask_kernel<<<cuda_gridsize(N), BLOCK>>>(N, (real_device*)X, (real_device)mask_num, (real_device*)mask, (real_device)scale);
     check_error(cudaPeekAtLastError());
 }
 
-void const_gpu(int N, real ALPHA, real *X, int INCX)
+void const_gpu(int N, float ALPHA, real *X, int INCX)
 {
     const_kernel<<<cuda_gridsize(N), BLOCK>>>(N, (real_device)ALPHA, (real_device*)X, INCX);
     check_error(cudaPeekAtLastError());
 }
 
-void constrain_gpu(int N, real ALPHA, real *X, int INCX)
+void constrain_gpu(int N, float ALPHA, real *X, int INCX)
 {
     constrain_kernel<<<cuda_gridsize(N), BLOCK>>>(N, (real_device)ALPHA, (real_device*)X, INCX);
     check_error(cudaPeekAtLastError());
@@ -738,7 +738,7 @@ __global__ void shortcut_kernel(int size, int minw, int minh, int minc, int stri
     //out[out_index] += add[add_index];
 }
 
-void shortcut_gpu(int batch, int w1, int h1, int c1, real *add, int w2, int h2, int c2, real s1, real s2, real *out)
+void shortcut_gpu(int batch, int w1, int h1, int c1, real *add, int w2, int h2, int c2, float s1, float s2, real *out)
 {
     int minw = (w1 < w2) ? w1 : w2;
     int minh = (h1 < h2) ? h1 : h2;
@@ -981,18 +981,10 @@ __global__ void softmax_tree_kernel(real_device *input, int spatial, int batch, 
     softmax_device(input + goff + boff + s, group_size[g], temp, spatial, output + goff + boff + s);
 }
 
-void softmax_tree(real *input, int spatial, int batch, int stride, real temp, real *output, tree hier)
+void softmax_tree(real *input, int spatial, int batch, int stride, float temp, real *output, tree hier)
 {
     int *tree_groups_size = cuda_make_int_array(hier.group_size, hier.groups);
     int *tree_groups_offset = cuda_make_int_array(hier.group_offset, hier.groups);
-    /*
-       static int *tree_groups_size = 0;
-       static int *tree_groups_offset = 0;
-       if(!tree_groups_size){
-       tree_groups_size = cuda_make_int_array(hier.group_size, hier.groups);
-       tree_groups_offset = cuda_make_int_array(hier.group_offset, hier.groups);
-       }
-     */
     int num = spatial*batch*hier.groups;
     softmax_tree_kernel<<<cuda_gridsize(num), BLOCK>>>((real_device*)input, spatial, batch, stride, (real_device)temp, (real_device*)output, hier.groups, tree_groups_size, tree_groups_offset);
     check_error(cudaPeekAtLastError());
@@ -1009,7 +1001,7 @@ __global__ void softmax_kernel(real_device *input, int n, int batch, int batch_o
     softmax_device(input + b*batch_offset + g*group_offset, n, temp, stride, output + b*batch_offset + g*group_offset);
 }
 
-void softmax_gpu(real *input, int n, int batch, int batch_offset, int groups, int group_offset, int stride, real temp, real *output)
+void softmax_gpu(real *input, int n, int batch, int batch_offset, int groups, int group_offset, int stride, float temp, real *output)
 {
     softmax_kernel<<<cuda_gridsize(batch*groups), BLOCK>>>((real_device*)input, n, batch, batch_offset, groups, group_offset, stride, (real_device)temp, (real_device*)output);
     check_error(cudaPeekAtLastError());
@@ -1039,7 +1031,7 @@ __global__ void upsample_kernel(size_t N, real_device *x, int w, int h, int c, i
     if(forward) out[out_index] += scale * x[in_index];
     else atomicAdd_real(x+in_index, scale * out[out_index]);
 }
-void upsample_gpu(real *in, int w, int h, int c, int batch, int stride, int forward, real scale, real *out)
+void upsample_gpu(real *in, int w, int h, int c, int batch, int stride, int forward, float scale, real *out)
 {
     size_t size = w*h*c*batch*stride*stride;
     upsample_kernel<<<cuda_gridsize(size), BLOCK>>>(size, (real_device*)in, w, h, c, batch, stride, forward, (real_device)scale, (real_device*)out);

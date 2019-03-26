@@ -109,11 +109,11 @@ void delta_region_mask(real *truth, real *x, int n, int index, real *delta, int 
 }
 
 
-void delta_region_class(real *output, real *delta, int index, int _class, int classes, tree *hier, real scale, int stride, real *avg_cat, int tag)
+void delta_region_class(real *output, real *delta, int index, int _class, int classes, tree *hier, float scale, int stride, real *avg_cat, int tag)
 {
     int i, n;
     if(hier){
-        real pred = CAST(1);
+        float pred = 1;
         while(_class >= 0){
             pred *= output[index + stride*_class];
             int g = hier->group[_class];
@@ -181,7 +181,7 @@ void forward_region_layer(const layer l, network net)
         }
     } else if (l.softmax){
         int index = entry_index(l, 0, 0, l.coords + !l.background);
-        softmax_cpu(net.input + index, l.classes + l.background, l.batch*l.n, l.inputs/l.n, l.w*l.h, 1, l.w*l.h, CAST(1), l.output + index);
+        softmax_cpu(net.input + index, l.classes + l.background, l.batch*l.n, l.inputs/l.n, l.w*l.h, 1, l.w*l.h, 1, l.output + index);
     }
 #endif
 
@@ -461,7 +461,7 @@ void forward_region_layer_gpu(const layer l, network net)
         softmax_tree(net.input_gpu + index, l.w*l.h, l.batch*l.n, l.inputs/l.n, CAST(1), l.output_gpu + index, *l.softmax_tree);
     } else if (l.softmax) {
         int index = entry_index(l, 0, 0, l.coords + !l.background);
-        softmax_gpu(net.input_gpu + index, l.classes + l.background, l.batch*l.n, l.inputs/l.n, l.w*l.h, 1, l.w*l.h, CAST(1), l.output_gpu + index);
+        softmax_gpu(net.input_gpu + index, l.classes + l.background, l.batch*l.n, l.inputs/l.n, l.w*l.h, 1, l.w*l.h, 1, l.output_gpu + index);
     }
     if(!net.train || l.onlyforward){
         cuda_pull_array(l.output_gpu, l.output, l.batch*l.outputs);

@@ -9,7 +9,7 @@ void train_yolo(char *cfgfile, char *weightfile)
     srand(time(0));
     char *base = basecfg(cfgfile);
     printf("%s\n", base);
-    real avg_loss = CAST(-1);
+    float avg_loss = -1;
     network *net = load_network(cfgfile, weightfile, 0);
     printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", (float)net->learning_rate, (float)net->momentum, (float)net->decay);
     int imgs = net->batch*net->subdivisions;
@@ -21,7 +21,7 @@ void train_yolo(char *cfgfile, char *weightfile)
 
     int side = l.side;
     int classes = l.classes;
-    real jitter = l.jitter;
+    float jitter = l.jitter;
 
     list *plist = get_paths(train_images);
     //int N = plist->size;

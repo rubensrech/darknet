@@ -197,10 +197,10 @@ void forward_crop_layer_gpu(crop_layer layer, network net)
 {
     cuda_random(layer.rand_gpu, layer.batch*8);
 
-    real radians = layer.angle*CAST(3.14159265f/180.f);
+    float radians = layer.angle*(3.14159265f/180.f);
 
-    real scale = CAST(2);
-    real translate = CAST(-1);
+    float scale = 2;
+    float translate = -1;
     if(layer.noadjust){
         scale = 1;
         translate = 0;
