@@ -17,7 +17,7 @@ IplImage *image_to_ipl(image im)
     for(y = 0; y < im.h; ++y){
         for(x = 0; x < im.w; ++x){
             for(c= 0; c < im.c; ++c){
-                real val = im.data[c*im.h*im.w + y*im.w + x];
+                float val = im.data[c*im.h*im.w + y*im.w + x];
                 disp->imageData[y*step + x*im.c + c] = (unsigned char)(val*255);
             }
         }

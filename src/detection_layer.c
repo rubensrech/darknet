@@ -65,11 +65,11 @@ void forward_detection_layer(const detection_layer l, network net)
         }
     }
     if(net.train){
-        real avg_iou = CAST(0);
-        real avg_cat = CAST(0);
-        real avg_allcat = CAST(0);
-        real avg_obj = CAST(0);
-        real avg_anyobj = CAST(0);
+        float avg_iou = 0;
+        float avg_cat = 0;
+        float avg_allcat = 0;
+        float avg_obj = 0;
+        float avg_anyobj = 0;
         int count = 0;
         *(l.cost) = 0;
         int size = l.inputs * l.batch;
@@ -195,7 +195,7 @@ void forward_detection_layer(const detection_layer l, network net)
             }
             int indexes[100];
             top_k(costs, l.batch*locations*l.n, 100, indexes);
-            real cutoff = costs[indexes[99]];
+            float cutoff = costs[indexes[99]];
             for (b = 0; b < l.batch; ++b) {
                 int index = b*l.inputs;
                 for (i = 0; i < locations; ++i) {

@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-layer make_normalization_layer(int batch, int w, int h, int c, int size, real alpha, real beta, real kappa)
+layer make_normalization_layer(int batch, int w, int h, int c, int size, float alpha, float beta, float kappa)
 {
     fprintf(stderr, "Local Response Normalization Layer: %d x %d x %d image, %d size\n", w,h,c,size);
     layer layer = {}; // zero init

@@ -4,7 +4,7 @@
 #include "col2im.h"
 
 void col2im_add_pixel(real *im, int height, int width, int channels,
-                        int row, int col, int channel, int pad, real val)
+                        int row, int col, int channel, int pad, float val)
 {
     row -= pad;
     col -= pad;

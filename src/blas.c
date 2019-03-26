@@ -93,7 +93,7 @@ void shortcut_cpu(int batch, int w1, int h1, int c1, real *add, int w2, int h2, 
 
 void mean_cpu(real *x, int batch, int filters, int spatial, real *mean)
 {
-    real scale = CAST(1./(batch * spatial));
+    float scale = 1./(batch * spatial);
     int i,j,k;
     for(i = 0; i < filters; ++i){
         mean[i] = 0;
@@ -109,7 +109,7 @@ void mean_cpu(real *x, int batch, int filters, int spatial, real *mean)
 
 void variance_cpu(real *x, real *mean, int batch, int filters, int spatial, real *variance)
 {
-    real scale = CAST(1./(batch * spatial - 1));
+    float scale = 1./(batch * spatial - 1);
     int i,j,k;
     for(i = 0; i < filters; ++i){
         variance[i] = 0;
@@ -128,7 +128,7 @@ void l2normalize_cpu(real *x, real *dx, int batch, int filters, int spatial)
     int b,f,i;
     for(b = 0; b < batch; ++b){
         for(i = 0; i < spatial; ++i){
-            real sum = CAST(0);
+            float sum = 0;
             for(f = 0; f < filters; ++f){
                 int index = b*filters*spatial + f*spatial + i;
                 sum += powf(x[index], 2);
@@ -276,8 +276,8 @@ void smooth_l1_cpu(int n, real *pred, real *truth, real *delta, real *error)
 {
     int i;
     for(i = 0; i < n; ++i){
-        real diff = truth[i] - pred[i];
-        real abs_val = fabs(diff);
+        float diff = truth[i] - pred[i];
+        float abs_val = fabs(diff);
         if(abs_val < 1) {
             error[i] = diff * diff;
             delta[i] = diff;
@@ -293,7 +293,7 @@ void l1_cpu(int n, real *pred, real *truth, real *delta, real *error)
 {
     int i;
     for(i = 0; i < n; ++i){
-        real diff = truth[i] - pred[i];
+        float diff = truth[i] - pred[i];
         error[i] = fabs(diff);
         delta[i] = diff > 0 ? 1 : -1;
     }
@@ -303,8 +303,8 @@ void softmax_x_ent_cpu(int n, real *pred, real *truth, real *delta, real *error)
 {
     int i;
     for(i = 0; i < n; ++i){
-        real t = truth[i];
-        real p = pred[i];
+        float t = truth[i];
+        float p = pred[i];
         error[i] = (t) ? -log(p) : 0;
         delta[i] = t-p;
     }
@@ -314,8 +314,8 @@ void logistic_x_ent_cpu(int n, real *pred, real *truth, real *delta, real *error
 {
     int i;
     for(i = 0; i < n; ++i){
-        real t = truth[i];
-        real p = pred[i];
+        float t = truth[i];
+        float p = pred[i];
         error[i] = -t*log(p) - (1-t)*log(1-p);
         delta[i] = t-p;
     }
@@ -325,7 +325,7 @@ void l2_cpu(int n, real *pred, real *truth, real *delta, real *error)
 {
     int i;
     for(i = 0; i < n; ++i){
-        real diff = truth[i] - pred[i];
+        float diff = truth[i] - pred[i];
         error[i] = diff * diff;
         delta[i] = diff;
     }
@@ -351,7 +351,7 @@ void softmax(real *input, int n, float temp, int stride, real *output)
 {
     int i;
     float sum = 0;
-    real largest = -REAL_MAX;
+    float largest = -FLT_MAX;
     for(i = 0; i < n; ++i){
         if(input[i*stride] > largest) largest = input[i*stride];
     }

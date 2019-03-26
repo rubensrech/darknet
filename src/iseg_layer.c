@@ -118,7 +118,7 @@ void forward_iseg_layer(const layer l, network net)
             // add up metric embeddings for each instance
             for(k = 0; k < l.w*l.h; ++k){
                 int index = b*l.outputs + c*l.w*l.h + k;
-                real v = net.truth[b*l.truths + i*(l.w*l.h + 1) + 1 + k];
+                float v = net.truth[b*l.truths + i*(l.w*l.h + 1) + 1 + k];
                 if(v){
                     l.delta[index] = v - l.output[index];
                     axpy_cpu(ids, 1, l.output + b*l.outputs + l.classes*l.w*l.h + k, l.w*l.h, l.sums[i], 1);
@@ -132,10 +132,10 @@ void forward_iseg_layer(const layer l, network net)
             int c = net.truth[b*l.truths + i*(l.w*l.h+1)];
             if(c < 0) break;
             for(k = 0; k < l.w*l.h; ++k){
-                real v = net.truth[b*l.truths + i*(l.w*l.h + 1) + 1 + k];
+                float v = net.truth[b*l.truths + i*(l.w*l.h + 1) + 1 + k];
                 if(v){
                     int z;
-                    real sum = CAST(0);
+                    float sum = 0;
                     for(z = 0; z < ids; ++z){
                         int index = b*l.outputs + (l.classes + z)*l.w*l.h + k;
                         sum += pow(l.sums[i][z]/l.counts[i] - l.output[index], 2);
@@ -164,14 +164,14 @@ void forward_iseg_layer(const layer l, network net)
         for(i = 0; i < 90; ++i){
             if(!l.counts[i]) continue;
             for(k = 0; k < l.w*l.h; ++k){
-                real v = net.truth[b*l.truths + i*(l.w*l.h + 1) + 1 + k];
+                float v = net.truth[b*l.truths + i*(l.w*l.h + 1) + 1 + k];
                 if(v){
                     for(j = 0; j < 90; ++j){
                         if(!l.counts[j])continue;
                         int z;
                         for(z = 0; z < ids; ++z){
                             int index = b*l.outputs + (l.classes + z)*l.w*l.h + k;
-                            real diff = l.sums[j][z] - l.output[index];
+                            float diff = l.sums[j][z] - l.output[index];
                             if (j == i) l.delta[index] +=   diff < 0? -.1 : .1;
                             else        l.delta[index] += -(diff < 0? -.1 : .1);
                         }

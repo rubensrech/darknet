@@ -27,9 +27,9 @@ void demo_art(char *cfgfile, char *weightfile, int cam_index)
         printf("\033[2J");
         printf("\033[1;1H");
 
-        real score = 0;
+        float score = 0;
         for(i = 0; i < n; ++i){
-            real s = p[idx[i]];
+            float s = p[idx[i]];
             if (s > score) score = s;
         }
         score = score;

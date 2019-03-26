@@ -199,7 +199,7 @@ void denormalize_connected_layer(layer l)
 {
     int i, j;
     for(i = 0; i < l.outputs; ++i){
-        real scale = l.scales[i]/sqrt(l.rolling_variance[i] + CAST(.000001));
+        float scale = l.scales[i]/sqrt(l.rolling_variance[i] + CAST(.000001));
         for(j = 0; j < l.inputs; ++j){
             l.weights[i*l.inputs + j] *= scale;
         }

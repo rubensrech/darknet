@@ -10,7 +10,7 @@
 void train_compare(char *cfgfile, char *weightfile)
 {
     srand(time(0));
-    real avg_loss = -1;
+    float avg_loss = -1;
     char *base = basecfg(cfgfile);
     char *backup_directory = "/home/pjreddie/backup/";
     printf("%s\n", base);
@@ -150,7 +150,7 @@ typedef struct {
     char *filename;
     int class;
     int classes;
-    real elo;
+    float elo;
     real *elos;
 } sortable_bbox;
 
@@ -193,10 +193,10 @@ int bbox_comparator(const void *a, const void *b)
 void bbox_update(sortable_bbox *a, sortable_bbox *b, int class, int result)
 {
     int k = 32;
-    real EA = 1./(1+pow(10, (b->elos[class] - a->elos[class])/400.));
-    real EB = 1./(1+pow(10, (a->elos[class] - b->elos[class])/400.));
-    real SA = result ? 1 : 0;
-    real SB = result ? 0 : 1;
+    float EA = 1./(1+pow(10, (b->elos[class] - a->elos[class])/400.));
+    float EB = 1./(1+pow(10, (a->elos[class] - b->elos[class])/400.));
+    float SA = result ? 1 : 0;
+    float SB = result ? 0 : 1;
     a->elos[class] += k*(SA - EA);
     b->elos[class] += k*(SB - EB);
 }

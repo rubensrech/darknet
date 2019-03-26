@@ -188,8 +188,8 @@ void validate_classifier_crop(char *datacfg, char *filename, char *weightfile)
     free_list(plist);
 
     clock_t time;
-    real avg_acc = CAST(0);
-    real avg_topk = CAST(0);
+    float avg_acc = 0;
+    float avg_topk = 0;
     int splits = m/1000;
     int num = (i+1)*m/splits - i*m/splits;
 
@@ -252,8 +252,8 @@ void validate_classifier_10(char *datacfg, char *filename, char *weightfile)
     int m = plist->size;
     free_list(plist);
 
-    real avg_acc = CAST(0);
-    real avg_topk = CAST(0);
+    float avg_acc = 0;
+    float avg_topk = 0;
     int *indexes = (int*)calloc(topk, sizeof(int));
 
     for(i = 0; i < m; ++i){
@@ -321,8 +321,8 @@ void validate_classifier_full(char *datacfg, char *filename, char *weightfile)
     int m = plist->size;
     free_list(plist);
 
-    real avg_acc = CAST(0);
-    real avg_topk = CAST(0);
+    float avg_acc = 0;
+    float avg_topk = 0;
     int *indexes = (int*)calloc(topk, sizeof(int));
 
     int size = net->w;
@@ -381,8 +381,8 @@ void validate_classifier_single(char *datacfg, char *filename, char *weightfile)
     int m = plist->size;
     free_list(plist);
 
-    real avg_acc = CAST(0);
-    real avg_topk = CAST(0);
+    float avg_acc = 0;
+    float avg_topk = 0;
     int *indexes = (int*)calloc(topk, sizeof(int));
 
     for(i = 0; i < m; ++i){
@@ -441,8 +441,8 @@ void validate_classifier_multi(char *datacfg, char *cfg, char *weights)
     int m = plist->size;
     free_list(plist);
 
-    real avg_acc = CAST(0);
-    real avg_topk = CAST(0);
+    float avg_acc = 0;
+    float avg_topk = 0;
     int *indexes = (int*)calloc(topk, sizeof(int));
 
     for(i = 0; i < m; ++i){
@@ -797,8 +797,8 @@ void file_output_classifier(char *datacfg, char *filename, char *weightfile, cha
 void threat_classifier(char *datacfg, char *cfgfile, char *weightfile, int cam_index, const char *filename)
 {
 #ifdef OPENCV
-    real threat = 0;
-    real roll = .2;
+    float threat = 0;
+    float roll = .2;
 
     printf("Classifier Demo\n");
     network *net = load_network(cfgfile, weightfile, 0);
@@ -818,7 +818,7 @@ void threat_classifier(char *datacfg, char *cfgfile, char *weightfile, int cam_i
     if(!cap) error("Couldn't connect to webcam.\n");
     //cvNamedWindow("Threat", CV_WINDOW_NORMAL); 
     //cvResizeWindow("Threat", 512, 512);
-    real fps = 0;
+    float fps = 0;
     int i;
 
     int count = 0;
@@ -843,7 +843,7 @@ void threat_classifier(char *datacfg, char *cfgfile, char *weightfile, int cam_i
         int w = x2 - x1 - 2*border;
 
         real *predictions = network_predict(net, in_s.data);
-        real curr_threat = 0;
+        float curr_threat = 0;
         if(1){
             curr_threat = predictions[0] * 0 + 
                 predictions[1] * .6 + 
@@ -910,7 +910,7 @@ void threat_classifier(char *datacfg, char *cfgfile, char *weightfile, int cam_i
 
         gettimeofday(&tval_after, NULL);
         timersub(&tval_after, &tval_before, &tval_result);
-        real curr = 1000000.f/((long int)tval_result.tv_usec);
+        float curr = 1000000.f/((long int)tval_result.tv_usec);
         fps = .9*fps + .1*curr;
     }
 #endif
@@ -938,7 +938,7 @@ void gun_classifier(char *datacfg, char *cfgfile, char *weightfile, int cam_inde
     int *indexes = calloc(top, sizeof(int));
 
     if(!cap) error("Couldn't connect to webcam.\n");
-    real fps = 0;
+    float fps = 0;
     int i;
 
     while(1){
@@ -977,7 +977,7 @@ void gun_classifier(char *datacfg, char *cfgfile, char *weightfile, int cam_inde
 
         gettimeofday(&tval_after, NULL);
         timersub(&tval_after, &tval_before, &tval_result);
-        real curr = 1000000.f/((long int)tval_result.tv_usec);
+        float curr = 1000000.f/((long int)tval_result.tv_usec);
         fps = .9*fps + .1*curr;
     }
 #endif
@@ -1008,7 +1008,7 @@ void demo_classifier(char *datacfg, char *cfgfile, char *weightfile, int cam_ind
     int *indexes = calloc(top, sizeof(int));
 
     if(!cap) error("Couldn't connect to webcam.\n");
-    real fps = 0;
+    float fps = 0;
     int i;
 
     while(1){
@@ -1050,7 +1050,7 @@ void demo_classifier(char *datacfg, char *cfgfile, char *weightfile, int cam_ind
 
         gettimeofday(&tval_after, NULL);
         timersub(&tval_after, &tval_before, &tval_result);
-        real curr = 1000000.f/((long int)tval_result.tv_usec);
+        float curr = 1000000.f/((long int)tval_result.tv_usec);
         fps = .9*fps + .1*curr;
     }
 #endif

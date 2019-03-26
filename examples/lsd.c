@@ -117,7 +117,7 @@ void test_dcgan(char *cfgfile, char *weightfile)
     }
 }
 
-void set_network_alpha_beta(network *net, real alpha, real beta)
+void set_network_alpha_beta(network *net, float alpha, float beta)
 {
     int i;
     for(i = 0; i < net->n; ++i){
@@ -172,15 +172,15 @@ void train_prog(char *cfg, char *weight, char *acfg, char *aweight, int clear, i
     int y_size = gnet->truths*gnet->batch;
     real *imerror = cuda_make_array(0, y_size);
 
-    real aloss_avg = CAST(-1);
+    float aloss_avg = -1;
 
     if (maxbatch == 0) maxbatch = gnet->max_batches;
     while (get_current_batch(gnet) < maxbatch) {
         {
             int cb = get_current_batch(gnet);
-            real alpha = CAST((real)cb / (maxbatch/2));
+            float alpha = (float)cb / (maxbatch/2);
             if(alpha > 1) alpha = 1;
-            real beta = CAST(1) - alpha;
+            float beta = CAST(1) - alpha;
             printf("%f %f\n", (float)alpha, (float)beta);
             set_network_alpha_beta(gnet, alpha, beta);
             set_network_alpha_beta(anet, beta, alpha);
@@ -217,8 +217,6 @@ void train_prog(char *cfg, char *weight, char *acfg, char *aweight, int clear, i
             anet->delta_gpu = imerror;
             forward_network(anet);
             backward_network(anet);
-
-            //real genaloss = *anet->cost / anet->batch;
 
             scal_gpu(imlayer.outputs*imlayer.batch, 1, imerror, 1);
             scal_gpu(imlayer.outputs*imlayer.batch, 0, gnet->layers[gnet->n-1].delta_gpu, 1);
@@ -290,7 +288,6 @@ void train_dcgan(char *cfg, char *weight, char *acfg, char *aweight, int clear, 
     printf("%s\n", base);
     network *gnet = load_network(cfg, weight, clear);
     network *anet = load_network(acfg, aweight, clear);
-    //real orig_rate = anet->learning_rate;
 
     int i, j, k;
     layer imlayer = {}; // zero init
@@ -334,7 +331,7 @@ void train_dcgan(char *cfg, char *weight, char *acfg, char *aweight, int clear, 
 
     //int ay_size = anet->truths*anet->batch;
 
-    real aloss_avg = CAST(-1);
+    float aloss_avg = -1;
 
     //data generated = copy_data(train);
 
@@ -388,9 +385,6 @@ void train_dcgan(char *cfg, char *weight, char *acfg, char *aweight, int clear, 
             anet->delta_gpu = imerror;
             forward_network(anet);
             backward_network(anet);
-
-            //real genaloss = *anet->cost / anet->batch;
-            //printf("%f\n", genaloss);
 
             scal_gpu(imlayer.outputs*imlayer.batch, 1, imerror, 1);
             scal_gpu(imlayer.outputs*imlayer.batch, 0, gnet->layers[gnet->n-1].delta_gpu, 1);
@@ -534,8 +528,8 @@ void train_colorizer(char *cfg, char *weight, char *acfg, char *aweight, int cle
 
     real *imerror = cuda_make_array(0, imlayer.outputs*imlayer.batch);
 
-    real aloss_avg = CAST(-1);
-    real gloss_avg = CAST(-1);
+    float aloss_avg = -1;
+    float gloss_avg = -1;
 
     //data generated = copy_data(train);
 
@@ -556,7 +550,7 @@ void train_colorizer(char *cfg, char *weight, char *acfg, char *aweight, int cle
             gray.y.vals[j][0] = .05;
         }
         time=clock();
-        real gloss = CAST(0);
+        float gloss = 0;
 
         for(j = 0; j < net->subdivisions; ++j){
             get_next_batch(train, net->batch, j*net->batch, pixs, 0);

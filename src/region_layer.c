@@ -83,7 +83,7 @@ box get_region_box(real *x, real *biases, int n, int index, int i, int j, int w,
     return b;
 }
 
-real delta_region_box(box truth, real *x, real *biases, int n, int index, int i, int j, int w, int h, real *delta, real scale, int stride)
+float delta_region_box(box truth, real *x, real *biases, int n, int index, int i, int j, int w, int h, real *delta, float scale, int stride)
 {
     box pred = get_region_box(x, biases, n, index, i, j, w, h, stride);
     float iou = box_iou(pred, truth);
@@ -97,7 +97,7 @@ real delta_region_box(box truth, real *x, real *biases, int n, int index, int i,
     delta[index + 1*stride] = scale * (ty - x[index + 1*stride]);
     delta[index + 2*stride] = scale * (tw - x[index + 2*stride]);
     delta[index + 3*stride] = scale * (th - x[index + 3*stride]);
-    return CAST(iou);
+    return iou;
 }
 
 void delta_region_mask(real *truth, real *x, int n, int index, real *delta, int stride, int scale)
@@ -109,7 +109,7 @@ void delta_region_mask(real *truth, real *x, int n, int index, real *delta, int 
 }
 
 
-void delta_region_class(real *output, real *delta, int index, int _class, int classes, tree *hier, float scale, int stride, real *avg_cat, int tag)
+void delta_region_class(real *output, real *delta, int index, int _class, int classes, tree *hier, float scale, int stride, float *avg_cat, int tag)
 {
     int i, n;
     if(hier){
@@ -138,14 +138,14 @@ void delta_region_class(real *output, real *delta, int index, int _class, int cl
     }
 }
 
-real logit(real x)
+float logit(float x)
 {
-    return log(x/(CAST(1.)-x));
+    return log(x/(1.-x));
 }
 
-real tisnan(real x)
+float tisnan(float x)
 {
-    return CAST(x != x);
+    return x != x;
 }
 
 int entry_index(layer l, int batch, int location, int entry)
@@ -187,11 +187,11 @@ void forward_region_layer(const layer l, network net)
 
     memset(l.delta, 0, l.outputs * l.batch * sizeof(real));
     if(!net.train) return;
-    real avg_iou = CAST(0);
-    real recall = CAST(0);
-    real avg_cat = CAST(0);
-    real avg_obj = CAST(0);
-    real avg_anyobj = CAST(0);
+    float avg_iou = 0;
+    float recall = 0;
+    float avg_cat = 0;
+    float avg_obj = 0;
+    float avg_anyobj = 0;
     int count = 0;
     int class_count = 0;
     *(l.cost) = 0;
@@ -202,15 +202,15 @@ void forward_region_layer(const layer l, network net)
                 box truth = real_to_box(net.truth + t*(l.coords + 1) + b*l.truths, 1);
                 if(!truth.x) break;
                 int _class = net.truth[t*(l.coords + 1) + b*l.truths + l.coords];
-                real maxp = CAST(0);
+                float maxp = 0;
                 int maxi = 0;
                 if(truth.x > 100000 && truth.y > 100000){
                     for(n = 0; n < l.n*l.w*l.h; ++n){
                         int class_index = entry_index(l, b, n, l.coords + 1);
                         int obj_index = entry_index(l, b, n, l.coords);
-                        real scale =  l.output[obj_index];
+                        float scale =  l.output[obj_index];
                         l.delta[obj_index] = l.noobject_scale * (0 - l.output[obj_index]);
-                        real p = scale*get_hierarchy_probability(l.output + class_index, l.softmax_tree, _class, l.w*l.h);
+                        float p = scale*get_hierarchy_probability(l.output + class_index, l.softmax_tree, _class, l.w*l.h);
                         if(p > maxp){
                             maxp = p;
                             maxi = n;
@@ -290,7 +290,7 @@ void forward_region_layer(const layer l, network net)
             }
 
             int box_index = entry_index(l, b, best_n*l.w*l.h + j*l.w + i, 0);
-            real iou = delta_region_box(truth, l.output, l.biases, best_n, box_index, i, j, l.w, l.h, l.delta, CAST(l.coord_scale *  (2 - truth.w*truth.h)), l.w*l.h);
+            float iou = delta_region_box(truth, l.output, l.biases, best_n, box_index, i, j, l.w, l.h, l.delta, l.coord_scale *  (2 - truth.w*truth.h), l.w*l.h);
             if(l.coords > 4){
                 int mask_index = entry_index(l, b, best_n*l.w*l.h + j*l.w + i, 4);
                 delta_region_mask(net.truth + t*(l.coords + 1) + b*l.truths + 5, l.output, l.coords - 4, mask_index, l.delta, l.w*l.h, l.mask_scale);
@@ -373,7 +373,7 @@ void get_region_detections(layer l, int w, int h, int netw, int neth, float thre
                     for(z = 0; z < l.classes + l.coords + 1; ++z){
                         int i1 = z*l.w*l.h*l.n + n*l.w*l.h + j*l.w + i;
                         int i2 = z*l.w*l.h*l.n + n*l.w*l.h + j*l.w + (l.w - i - 1);
-                        real swap = flip[i1];
+                        float swap = flip[i1];
                         flip[i1] = flip[i2];
                         flip[i2] = swap;
                         if(z == 0){

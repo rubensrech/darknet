@@ -7,7 +7,7 @@ void train_super(char *cfgfile, char *weightfile, int clear)
     srand(time(0));
     char *base = basecfg(cfgfile);
     printf("%s\n", base);
-    real avg_loss = CAST(-1);
+    float avg_loss = -1;
     network *net = load_network(cfgfile, weightfile, clear);
     printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", (float)net->learning_rate, (float)net->momentum, (float)net->decay);
     int imgs = net->batch*net->subdivisions;

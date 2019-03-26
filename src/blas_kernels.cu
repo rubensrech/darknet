@@ -117,49 +117,6 @@ void backward_bias_gpu(real *bias_updates, real *delta, int batch, int n, int si
     check_error(cudaPeekAtLastError());
 }
 
-/*
-__global__ void dot_kernel(real *output, real scale, int batch, int n, int size, real *delta)
-{
-    int index = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
-    int f1 = index / n;
-    int f2 = index % n;
-    if (f2 <= f1) return;
-    
-    real sum = 0;
-    real norm1 = 0;
-    real norm2 = 0;
-    int b, i;
-    for(b = 0; b <  batch; ++b){
-        for(i = 0; i < size; ++i){
-            int i1 = b * size * n + f1 * size + i;
-            int i2 = b * size * n + f2 * size + i;
-            sum += output[i1] * output[i2];
-            norm1 += output[i1] * output[i1];
-            norm2 += output[i2] * output[i2];
-        }
-    }
-    norm1 = sqrt(norm1);
-    norm2 = sqrt(norm2);
-    real norm = norm1 * norm2;
-    sum = sum / norm;
-    for(b = 0; b <  batch; ++b){
-        for(i = 0; i < size; ++i){
-            int i1 = b * size * n + f1 * size + i;
-            int i2 = b * size * n + f2 * size + i;
-            delta[i1] += - scale * sum * output[i2] / norm;
-            delta[i2] += - scale * sum * output[i1] / norm;
-        }
-    }
-}
-
-void dot_error_gpu(layer l)
-{
-    dot_kernel<<<cuda_gridsize(l.n*l.n), BLOCK>>>(l.output_gpu, l.dot, l.batch, l.n, l.out_w * l.out_h, l.delta_gpu);
-    check_error(cudaPeekAtLastError());
-}
-*/
-
-
 __global__ void adam_kernel(int N, real_device *x, real_device *m, real_device *v, real_device B1, real_device B2, real_device rate, real_device eps, int t)
 {
     int index = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
@@ -659,7 +616,7 @@ __global__ void mask_kernel(int n, real_device *x, real_device mask_num, real_de
     if(i < n && mask[i] == mask_num) x[i] = val;
 }
 
-void mask_gpu(int N, real * X, real mask_num, real *mask, real val)
+void mask_gpu(int N, real * X, float mask_num, real *mask, float val)
 {
     mask_kernel<<<cuda_gridsize(N), BLOCK>>>(N, (real_device*)X, (real_device)mask_num, (real_device*)mask, (real_device)val);
     check_error(cudaPeekAtLastError());
@@ -690,7 +647,7 @@ void constrain_gpu(int N, float ALPHA, real *X, int INCX)
 }
 
 
-void add_gpu(int N, real ALPHA, real *X, int INCX)
+void add_gpu(int N, float ALPHA, real *X, int INCX)
 {
     add_kernel<<<cuda_gridsize(N), BLOCK>>>(N, (real_device)ALPHA, (real_device*)X, INCX);
     check_error(cudaPeekAtLastError());
@@ -702,7 +659,7 @@ extern "C" void scal_gpu(int N, float ALPHA, real * X, int INCX)
     check_error(cudaPeekAtLastError());
 }
 
-void supp_gpu(int N, real ALPHA, real *X, int INCX)
+void supp_gpu(int N, float ALPHA, real *X, int INCX)
 {
     supp_kernel<<<cuda_gridsize(N), BLOCK>>>(N, (real_device)ALPHA, (real_device*)X, INCX);
     check_error(cudaPeekAtLastError());

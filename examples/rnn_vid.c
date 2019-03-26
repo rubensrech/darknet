@@ -4,7 +4,7 @@
 image get_image_from_stream(CvCapture *cap);
 image ipl_to_image(IplImage* src);
 
-void reconstruct_picture(network net, real *features, image recon, image update, real rate, real momentum, real lambda, int smooth_size, int iters);
+void reconstruct_picture(network net, real *features, image recon, image update, float rate, float momentum, float lambda, int smooth_size, int iters);
 
 
 typedef struct {
@@ -75,7 +75,7 @@ void train_vid_rnn(char *cfgfile, char *weightfile)
     srand(time(0));
     char *base = basecfg(cfgfile);
     printf("%s\n", base);
-    real avg_loss = -1;
+    float avg_loss = -1;
     network net = parse_network_cfg(cfgfile);
     if(weightfile){
         load_weights(&net, weightfile);

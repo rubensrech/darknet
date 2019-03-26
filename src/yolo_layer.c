@@ -90,7 +90,7 @@ box get_yolo_box(real *x, real *biases, int n, int index, int i, int j, int lw, 
     return b;
 }
 
-real delta_yolo_box(box truth, real *x, real *biases, int n, int index, int i, int j, int lw, int lh, int w, int h, real *delta, real scale, int stride)
+float delta_yolo_box(box truth, real *x, real *biases, int n, int index, int i, int j, int lw, int lh, int w, int h, real *delta, float scale, int stride)
 {
     box pred = get_yolo_box(x, biases, n, index, i, j, lw, lh, w, h, stride);
     float iou = box_iou(pred, truth);
@@ -104,11 +104,11 @@ real delta_yolo_box(box truth, real *x, real *biases, int n, int index, int i, i
     delta[index + 1*stride] = scale * (ty - x[index + 1*stride]);
     delta[index + 2*stride] = scale * (tw - x[index + 2*stride]);
     delta[index + 3*stride] = scale * (th - x[index + 3*stride]);
-    return CAST(iou);
+    return iou;
 }
 
 
-void delta_yolo_class(real *output, real *delta, int index, int _class, int classes, int stride, real *avg_cat)
+void delta_yolo_class(real *output, real *delta, int index, int _class, int classes, int stride, float *avg_cat)
 {
     int n;
     if (delta[index]){
@@ -147,12 +147,12 @@ void forward_yolo_layer(const layer l, network net)
 
     memset(l.delta, 0, l.outputs * l.batch * sizeof(real));
     if(!net.train) return;
-    real avg_iou = CAST(0);
-    real recall = CAST(0);
-    real recall75 = CAST(0);
-    real avg_cat = CAST(0);
-    real avg_obj = CAST(0);
-    real avg_anyobj = CAST(0);
+    float avg_iou = 0;
+    float recall = 0;
+    float recall75 = 0;
+    float avg_cat = 0;
+    float avg_obj = 0;
+    float avg_anyobj = 0;
     int count = 0;
     int class_count = 0;
     *(l.cost) = 0;
@@ -216,7 +216,7 @@ void forward_yolo_layer(const layer l, network net)
             int mask_n = int_index(l.mask, best_n, l.n);
             if(mask_n >= 0){
                 int box_index = entry_index(l, b, mask_n*l.w*l.h + j*l.w + i, 0);
-                real iou = delta_yolo_box(truth, l.output, l.biases, best_n, box_index, i, j, l.w, l.h, net.w, net.h, l.delta, CAST(2-truth.w*truth.h), l.w*l.h);
+                float iou = delta_yolo_box(truth, l.output, l.biases, best_n, box_index, i, j, l.w, l.h, net.w, net.h, l.delta, 2-truth.w*truth.h, l.w*l.h);
 
                 int obj_index = entry_index(l, b, mask_n*l.w*l.h + j*l.w + i, 4);
                 avg_obj += l.output[obj_index];
@@ -302,7 +302,7 @@ void avg_flipped_yolo(layer l)
                 for(z = 0; z < l.classes + 4 + 1; ++z){
                     int i1 = z*l.w*l.h*l.n + n*l.w*l.h + j*l.w + i;
                     int i2 = z*l.w*l.h*l.n + n*l.w*l.h + j*l.w + (l.w - i - 1);
-                    real swap = flip[i1];
+                    float swap = flip[i1];
                     flip[i1] = flip[i2];
                     flip[i2] = swap;
                     if(z == 0){

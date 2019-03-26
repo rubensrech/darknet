@@ -13,7 +13,7 @@ image get_crop_image(crop_layer l)
 void backward_crop_layer(const crop_layer l, network net){}
 void backward_crop_layer_gpu(const crop_layer l, network net){}
 
-crop_layer make_crop_layer(int batch, int h, int w, int c, int crop_height, int crop_width, int flip, real angle, real saturation, real exposure)
+crop_layer make_crop_layer(int batch, int h, int w, int c, int crop_height, int crop_width, int flip, float angle, float saturation, float exposure)
 {
     fprintf(stderr, "Crop Layer: %d x %d -> %d x %d x %d image\n", h,w,crop_height,crop_width,c);
     crop_layer l = {}; // zero init
@@ -72,8 +72,8 @@ void forward_crop_layer(const crop_layer l, network net)
     int flip = (l.flip && rand()%2);
     int dh = rand()%(l.h - l.out_h + 1);
     int dw = rand()%(l.w - l.out_w + 1);
-    real scale = CAST(2);
-    real trans = CAST(-1);
+    float scale = 2;
+    float trans = -1;
     if(l.noadjust){
         scale = 1;
         trans = 0;

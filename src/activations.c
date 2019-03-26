@@ -63,7 +63,7 @@ ACTIVATION get_activation(char *s)
     return RELU;
 }
 
-real activate(real x, ACTIVATION a)
+float activate(float x, ACTIVATION a)
 {
     switch(a){
         case LINEAR:
@@ -95,7 +95,7 @@ real activate(real x, ACTIVATION a)
         case LHTAN:
             return lhtan_activate(x);
     }
-    return CAST(0);
+    return 0;
 }
 
 void activate_array(real *x, const int n, const ACTIVATION a)
@@ -106,7 +106,7 @@ void activate_array(real *x, const int n, const ACTIVATION a)
     }
 }
 
-real gradient(real x, ACTIVATION a)
+float gradient(float x, ACTIVATION a)
 {
     switch(a){
         case LINEAR:
@@ -138,7 +138,7 @@ real gradient(real x, ACTIVATION a)
         case LHTAN:
             return lhtan_gradient(x);
     }
-    return CAST(0);
+    return 0;
 }
 
 void gradient_array(const real *x, const int n, const ACTIVATION a, real *delta)

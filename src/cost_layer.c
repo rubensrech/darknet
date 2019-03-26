@@ -38,7 +38,7 @@ char *get_cost_string(COST_TYPE a)
     return (char*)"sse";
 }
 
-cost_layer make_cost_layer(int batch, int inputs, COST_TYPE cost_type, real scale)
+cost_layer make_cost_layer(int batch, int inputs, COST_TYPE cost_type, float scale)
 {
     fprintf(stderr, "cost                                           %4d\n",  inputs);
     cost_layer l = {}; // zero init
@@ -117,9 +117,9 @@ void push_cost_layer(cost_layer l)
 
 int real_abs_compare (const void * a, const void * b)
 {
-    real fa = *(const real*) a;
+    float fa = *(const real*) a;
     if(fa < 0) fa = -fa;
-    real fb = *(const real*) b;
+    float fb = *(const real*) b;
     if(fb < 0) fb = -fb;
     return (fa > fb) - (fa < fb);
 }
@@ -154,7 +154,7 @@ void forward_cost_layer_gpu(cost_layer l, network net)
         cuda_pull_array(l.delta_gpu, l.delta, l.batch*l.inputs);
         qsort(l.delta, l.batch*l.inputs, sizeof(real), real_abs_compare);
         int n = (1-l.ratio) * l.batch*l.inputs;
-        real thresh = l.delta[n];
+        float thresh = l.delta[n];
         thresh = 0;
         printf("%f\n", (float)thresh);
         supp_gpu(l.batch*l.inputs, thresh, l.delta_gpu, 1);

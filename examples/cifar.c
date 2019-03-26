@@ -3,7 +3,7 @@
 void train_cifar(char *cfgfile, char *weightfile)
 {
     srand(time(0));
-    real avg_loss = CAST(-1);
+    float avg_loss = -1;
     char *base = basecfg(cfgfile);
     printf("%s\n", base);
     network *net = load_network(cfgfile, weightfile, 0);
@@ -48,7 +48,7 @@ void train_cifar(char *cfgfile, char *weightfile)
 void train_cifar_distill(char *cfgfile, char *weightfile)
 {
     srand(time(0));
-    real avg_loss = CAST(-1);
+    float avg_loss = -1;
     char *base = basecfg(cfgfile);
     printf("%s\n", base);
     network *net = load_network(cfgfile, weightfile, 0);
@@ -104,14 +104,14 @@ void test_cifar_multi(char *filename, char *weightfile)
     set_batch_network(net, 1);
     srand(time(0));
 
-    real avg_acc = CAST(0);
+    float avg_acc = 0;
     data test = load_cifar10_data((char*)"data/cifar/cifar-10-batches-bin/test_batch.bin");
 
     int i;
     for(i = 0; i < test.X.rows; ++i){
         image im = float_to_image(32, 32, 3, test.X.vals[i]);
 
-        real pred[10] = {CAST(0)};
+        real pred[10] = { CAST(0) };
 
         real *p = network_predict_float(net, im.data);
         axpy_cpu(10, 1, p, 1, pred, 1);
@@ -133,8 +133,8 @@ void test_cifar(char *filename, char *weightfile)
     srand(time(0));
 
     clock_t time;
-    real avg_acc = CAST(0);
-    real avg_top5 = CAST(0);
+    float avg_acc = 0;
+    float avg_top5 = 0;
     data test = load_cifar10_data((char*)"data/cifar/cifar-10-batches-bin/test_batch.bin");
 
     time=clock();

@@ -73,7 +73,7 @@ void backward_scale_cpu(real *x_norm, real *delta, int batch, int n, int size, r
 {
     int i,b,f;
     for(f = 0; f < n; ++f){
-        real sum = CAST(0);
+        float sum = 0;
         for(b = 0; b < batch; ++b){
             for(i = 0; i < size; ++i){
                 int index = i + size*(f + n*b);
@@ -192,8 +192,8 @@ void forward_batchnorm_layer_gpu(layer l, network net)
     copy_gpu(l.outputs*l.batch, l.output_gpu, 1, l.x_gpu, 1);
     if (net.train) {
 #ifdef CUDNN
-        real one = 1;
-        real zero = 0;
+        float one = 1;
+        float zero = 0;
         cudnnBatchNormalizationForwardTraining(cudnn_handle(),
                 CUDNN_BATCHNORM_SPATIAL,
                 &one,
@@ -242,8 +242,8 @@ void backward_batchnorm_layer_gpu(layer l, network net)
         l.variance_gpu = l.rolling_variance_gpu;
     }
 #ifdef CUDNN
-    real one = 1;
-    real zero = 0;
+    float one = 1;
+    float zero = 0;
     cudnnBatchNormalizationBackward(cudnn_handle(),
             CUDNN_BATCHNORM_SPATIAL,
             &one,

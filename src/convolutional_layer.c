@@ -29,7 +29,7 @@ void binarize_weights(real *weights, int n, int size, real *binary)
 {
     int i, f;
     for(f = 0; f < n; ++f){
-        real mean = CAST(0);
+        float mean = 0;
         for(i = 0; i < size; ++i){
             mean += fabs(weights[f*size + i]);
         }
@@ -52,7 +52,7 @@ void binarize_input(real *input, int n, int size, real *binary)
 {
     int i, s;
     for(s = 0; s < size; ++s){
-        real mean = CAST(0);
+        float mean = 0;
         for(i = 0; i < n; ++i){
             mean += fabs(input[i*size + s]);
         }
@@ -327,7 +327,7 @@ void denormalize_convolutional_layer(convolutional_layer l)
 {
     int i, j;
     for(i = 0; i < l.n; ++i){
-        real scale = l.scales[i]/CAST(sqrt(l.rolling_variance[i] + .00001));
+        float scale = l.scales[i]/sqrt(l.rolling_variance[i] + .00001);
         for(j = 0; j < l.c/l.groups*l.size*l.size; ++j){
             l.weights[i*l.c/l.groups*l.size*l.size + j] *= scale;
         }
@@ -337,31 +337,6 @@ void denormalize_convolutional_layer(convolutional_layer l)
         l.rolling_variance[i] = 1;
     }
 }
-
-/*
-void test_convolutional_layer()
-{
-    convolutional_layer l = make_convolutional_layer(1, 5, 5, 3, 2, 5, 2, 1, LEAKY, 1, 0, 0, 0);
-    l.batch_normalize = 1;
-    real data[] = {1,1,1,1,1,
-        1,1,1,1,1,
-        1,1,1,1,1,
-        1,1,1,1,1,
-        1,1,1,1,1,
-        2,2,2,2,2,
-        2,2,2,2,2,
-        2,2,2,2,2,
-        2,2,2,2,2,
-        2,2,2,2,2,
-        3,3,3,3,3,
-        3,3,3,3,3,
-        3,3,3,3,3,
-        3,3,3,3,3,
-        3,3,3,3,3};
-    //net.input = data;
-    //forward_convolutional_layer(l);
-}
-*/
 
 void resize_convolutional_layer(convolutional_layer *l, int w, int h)
 {

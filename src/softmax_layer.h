@@ -5,7 +5,7 @@
 
 typedef layer softmax_layer;
 
-void softmax_array(real *input, int n, real temp, real *output);
+void softmax_array(real *input, int n, float temp, real *output);
 softmax_layer make_softmax_layer(int batch, int inputs, int groups);
 void forward_softmax_layer(const softmax_layer l, network net);
 void backward_softmax_layer(const softmax_layer l, network net);

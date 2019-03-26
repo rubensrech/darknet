@@ -18,11 +18,11 @@ static size_t get_workspace_size(layer l){
 void bilinear_init(layer l)
 {
     int i,j,f;
-    real center = CAST((l.size-1) / 2.0);
+    float center = (l.size-1) / 2.0;
     for(f = 0; f < l.n; ++f){
         for(j = 0; j < l.size; ++j){
             for(i = 0; i < l.size; ++i){
-                real val = CAST((1 - fabs(i - center)) * (1 - fabs(j - center)));
+                float val = (1 - fabs(i - center)) * (1 - fabs(j - center));
                 int c = f%l.c;
                 int ind = f*l.size*l.size*l.c + c*l.size*l.size + j*l.size + i;
                 l.weights[ind] = val;
@@ -54,9 +54,7 @@ layer make_deconvolutional_layer(int batch, int h, int w, int c, int n, int size
 
     l.biases = (real*)calloc(n, sizeof(real));
     l.bias_updates = (real*)calloc(n, sizeof(real));
-    //real scale = n/(size*size*c);
-    //printf("scale: %f\n", scale);
-    real scale = CAST(0.02);
+    float scale = 0.02;
     for(i = 0; i < c*n*size*size; ++i) l.weights[i] = scale*rand_normal();
     //bilinear_init(l);
     for(i = 0; i < n; ++i){
@@ -169,7 +167,7 @@ void denormalize_deconvolutional_layer(layer l)
 {
     int i, j;
     for(i = 0; i < l.n; ++i){
-        real scale = l.scales[i]/CAST(sqrt(l.rolling_variance[i] + .00001));
+        float scale = l.scales[i]/sqrt(l.rolling_variance[i] + .00001);
         for(j = 0; j < l.c*l.size*l.size; ++j){
             l.weights[i*l.c*l.size*l.size + j] *= scale;
         }

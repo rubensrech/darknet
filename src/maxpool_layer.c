@@ -91,7 +91,7 @@ void forward_maxpool_layer(const maxpool_layer l, network net)
             for(i = 0; i < h; ++i){
                 for(j = 0; j < w; ++j){
                     int out_index = j + w*(i + h*(k + c*b));
-                    real max = -REAL_MAX;
+                    float max = -FLT_MAX;
                     int max_i = -1;
                     for(n = 0; n < l.size; ++n){
                         for(m = 0; m < l.size; ++m){
@@ -100,7 +100,7 @@ void forward_maxpool_layer(const maxpool_layer l, network net)
                             int index = cur_w + l.w*(cur_h + l.h*(k + b*l.c));
                             int valid = (cur_h >= 0 && cur_h < l.h &&
                                          cur_w >= 0 && cur_w < l.w);
-                            real val = (valid != 0) ? net.input[index] : -REAL_MAX;
+                            float val = (valid != 0) ? net.input[index] : -REAL_MAX;
                             max_i = (val > max) ? index : max_i;
                             max   = (val > max) ? val   : max;
                         }

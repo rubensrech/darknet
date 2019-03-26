@@ -368,7 +368,7 @@ typedef struct mcts_tree{
     real *mean;
     real *prob;
     int total_count;
-    real result;
+    float result;
     int done;
     int pass;
 } mcts_tree;
@@ -436,7 +436,7 @@ mcts_tree *expand(float *next, float *ko, network *net)
     int i;
     real *pred = network_predict_rotations(net, next);
     copy_cpu(19*19+1, pred, 1, root->prior, 1);
-    real val = CAST(2*pred[19*19 + 1] - 1);
+    float val = 2*pred[19*19 + 1] - 1;
     root->result = val;
     for(i = 0; i < 19*19+1; ++i) {
         root->visit_count[i] = 0;

@@ -3,7 +3,7 @@
 void train_tag(char *cfgfile, char *weightfile, int clear)
 {
     srand(time(0));
-    real avg_loss = CAST(-1);
+    float avg_loss = -1;
     char *base = basecfg(cfgfile);
     char *backup_directory = (char*)"/home/pjreddie/backup/";
     printf("%s\n", base);

@@ -91,8 +91,8 @@ void forward_softmax_layer_gpu(const softmax_layer l, network net)
     if(net.truth && !l.noloss){
         softmax_x_ent_gpu(l.batch*l.inputs, l.output_gpu, net.truth_gpu, l.delta_gpu, l.loss_gpu);
         if(l.softmax_tree){
-            mask_gpu(l.batch*l.inputs, l.delta_gpu, CAST(SECRET_NUM), net.truth_gpu, CAST(0));
-            mask_gpu(l.batch*l.inputs, l.loss_gpu, CAST(SECRET_NUM), net.truth_gpu, CAST(0));
+            mask_gpu(l.batch*l.inputs, l.delta_gpu, SECRET_NUM, net.truth_gpu, 0);
+            mask_gpu(l.batch*l.inputs, l.loss_gpu, SECRET_NUM, net.truth_gpu, 0);
         }
         cuda_pull_array(l.loss_gpu, l.loss, l.batch*l.inputs);
         l.cost[0] = sum_array(l.loss, l.batch*l.inputs);

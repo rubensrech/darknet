@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-dropout_layer make_dropout_layer(int batch, int inputs, real probability)
+dropout_layer make_dropout_layer(int batch, int inputs, float probability)
 {
     dropout_layer l = {}; // zero init
     l.type = DROPOUT;
@@ -52,7 +52,7 @@ void backward_dropout_layer(dropout_layer l, network net)
     int i;
     if(!net.delta) return;
     for(i = 0; i < l.batch * l.inputs; ++i){
-        real r = l.rand[i];
+        float r = l.rand[i];
         if(r < l.probability) net.delta[i] = 0;
         else net.delta[i] *= l.scale;
     }

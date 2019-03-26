@@ -7,7 +7,7 @@ void train_isegmenter(char *datacfg, char *cfgfile, char *weightfile, int *gpus,
 {
     int i;
 
-    real avg_loss = CAST(-1);
+    float avg_loss = -1;
     char *base = basecfg(cfgfile);
     printf("%s\n", base);
     printf("%d\n", ngpus);
@@ -190,7 +190,7 @@ void demo_isegmenter(char *datacfg, char *cfg, char *weights, int cam_index, con
     void * cap = open_video_stream(filename, cam_index, 0,0,0);
 
     if(!cap) error("Couldn't connect to webcam.\n");
-    real fps = 0;
+    float fps = 0;
 
     while(1){
         struct timeval tval_before, tval_after, tval_result;
@@ -215,7 +215,7 @@ void demo_isegmenter(char *datacfg, char *cfg, char *weights, int cam_index, con
 
         gettimeofday(&tval_after, NULL);
         timersub(&tval_after, &tval_before, &tval_result);
-        real curr = 1000000.f/((long int)tval_result.tv_usec);
+        float curr = 1000000.f/((long int)tval_result.tv_usec);
         fps = .9*fps + .1*curr;
     }
 #endif

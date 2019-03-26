@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <math.h>
 
-void gemm_bin(int M, int N, int K, real ALPHA, 
+void gemm_bin(int M, int N, int K, float ALPHA, 
         char  *A, int lda, 
         real *B, int ldb,
         real *C, int ldc)
@@ -62,16 +62,16 @@ void time_random_matrix(int TA, int TB, int m, int k, int n)
 }
 
 
-void gemm(int TA, int TB, int M, int N, int K, real ALPHA, 
+void gemm(int TA, int TB, int M, int N, int K, float ALPHA, 
         real *A, int lda, 
         real *B, int ldb,
-        real BETA,
+        float BETA,
         real *C, int ldc)
 {
     gemm_cpu( TA,  TB,  M, N, K, ALPHA,A,lda, B, ldb,BETA,C,ldc);
 }
 
-void gemm_nn(int M, int N, int K, real ALPHA, 
+void gemm_nn(int M, int N, int K, float ALPHA, 
         real *A, int lda, 
         real *B, int ldb,
         real *C, int ldc)
@@ -80,7 +80,7 @@ void gemm_nn(int M, int N, int K, real ALPHA,
     #pragma omp parallel for
     for(i = 0; i < M; ++i){
         for(k = 0; k < K; ++k){
-            register real A_PART = ALPHA*A[i*lda+k];
+            register float A_PART = ALPHA*A[i*lda+k];
             for(j = 0; j < N; ++j){
                 C[i*ldc+j] += A_PART*B[k*ldb+j];
             }
@@ -88,7 +88,7 @@ void gemm_nn(int M, int N, int K, real ALPHA,
     }
 }
 
-void gemm_nt(int M, int N, int K, real ALPHA, 
+void gemm_nt(int M, int N, int K, float ALPHA, 
         real *A, int lda, 
         real *B, int ldb,
         real *C, int ldc)
@@ -97,7 +97,7 @@ void gemm_nt(int M, int N, int K, real ALPHA,
     #pragma omp parallel for
     for(i = 0; i < M; ++i){
         for(j = 0; j < N; ++j){
-            register real sum = CAST(0);
+            register float sum = 0;
             for(k = 0; k < K; ++k){
                 sum += ALPHA*A[i*lda+k]*B[j*ldb + k];
             }
@@ -106,7 +106,7 @@ void gemm_nt(int M, int N, int K, real ALPHA,
     }
 }
 
-void gemm_tn(int M, int N, int K, real ALPHA, 
+void gemm_tn(int M, int N, int K, float ALPHA, 
         real *A, int lda, 
         real *B, int ldb,
         real *C, int ldc)
@@ -115,7 +115,7 @@ void gemm_tn(int M, int N, int K, real ALPHA,
     #pragma omp parallel for
     for(i = 0; i < M; ++i){
         for(k = 0; k < K; ++k){
-            register real A_PART = ALPHA*A[k*lda+i];
+            register float A_PART = ALPHA*A[k*lda+i];
             for(j = 0; j < N; ++j){
                 C[i*ldc+j] += A_PART*B[k*ldb+j];
             }
@@ -123,7 +123,7 @@ void gemm_tn(int M, int N, int K, real ALPHA,
     }
 }
 
-void gemm_tt(int M, int N, int K, real ALPHA, 
+void gemm_tt(int M, int N, int K, float ALPHA, 
         real *A, int lda, 
         real *B, int ldb,
         real *C, int ldc)
@@ -132,7 +132,7 @@ void gemm_tt(int M, int N, int K, real ALPHA,
     #pragma omp parallel for
     for(i = 0; i < M; ++i){
         for(j = 0; j < N; ++j){
-            register real sum = CAST(0);
+            register float sum = 0;
             for(k = 0; k < K; ++k){
                 sum += ALPHA*A[i+k*lda]*B[k+j*ldb];
             }
@@ -142,10 +142,10 @@ void gemm_tt(int M, int N, int K, real ALPHA,
 }
 
 
-void gemm_cpu(int TA, int TB, int M, int N, int K, real ALPHA, 
+void gemm_cpu(int TA, int TB, int M, int N, int K, float ALPHA, 
         real *A, int lda, 
         real *B, int ldb,
-        real BETA,
+        float BETA,
         real *C, int ldc)
 {
     //printf("cpu: %d %d %d %d %d %f %d %d %f %d\n",TA, TB, M, N, K, ALPHA, lda, ldb, BETA, ldc);
@@ -169,10 +169,10 @@ void gemm_cpu(int TA, int TB, int M, int N, int K, real ALPHA,
 
 #include <math.h>
 
-void gemm_gpu(int TA, int TB, int M, int N, int K, real ALPHA, 
+void gemm_gpu(int TA, int TB, int M, int N, int K, float ALPHA, 
         real *A_gpu, int lda, 
         real *B_gpu, int ldb,
-        real BETA,
+        float BETA,
         real *C_gpu, int ldc)
 {
     cublasHandle_t handle = blas_handle();
