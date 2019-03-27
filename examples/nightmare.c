@@ -75,7 +75,6 @@ void optimize_picture(network *net, image orig, int max_layer, float scale, floa
     delta.data = cast_array_real2float(deltaDataReal, im.w*im.h*im.c);
 
     if(flip) flip_image(delta);
-    //normalize_array(delta.data, delta.w*delta.h*delta.c);
     image resized = resize_image(delta, orig.w, orig.h);
     image out = crop_image(resized, -dx, -dy, orig.w, orig.h);
 
@@ -91,18 +90,8 @@ void optimize_picture(network *net, image orig, int max_layer, float scale, floa
     axpy_float_cpu(orig.w*orig.h*orig.c, -1, orig.data, 1, gray.data, 1);
     axpy_float_cpu(orig.w*orig.h*orig.c, .1, gray.data, 1, out.data, 1);
 
-    if(norm) normalize_float_array(out.data, out.w*out.h*out.c);
+    if(norm) normalize_array(out.data, out.w*out.h*out.c);
     axpy_float_cpu(orig.w*orig.h*orig.c, rate, out.data, 1, orig.data, 1);
-
-    /*
-       normalize_array(orig.data, orig.w*orig.h*orig.c);
-       scale_image(orig, sqrt(var));
-       translate_image(orig, mean);
-     */
-
-    //translate_image(orig, 1);
-    //scale_image(orig, .5);
-    //normalize_image(orig);
 
     constrain_image(orig);
 
@@ -169,9 +158,7 @@ void reconstruct_picture(network *net, float *features, image recon, image updat
 #endif
         delta.data = cast_array_real2float(deltaDataReal, delta.w*delta.h*delta.c);
 
-        //normalize_array(delta.data, delta.w*delta.h*delta.c);
         axpy_float_cpu(recon.w*recon.h*recon.c, 1, delta.data, 1, update.data, 1);
-        //smooth(recon, update, lambda, smooth_size);
 
         axpy_float_cpu(recon.w*recon.h*recon.c, rate, update.data, 1, recon.data, 1);
         scal_float_cpu(recon.w*recon.h*recon.c, momentum, update.data, 1);

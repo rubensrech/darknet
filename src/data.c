@@ -1632,7 +1632,7 @@ void normalize_data_rows(data d)
 {
     int i;
     for(i = 0; i < d.X.rows; ++i){
-        normalize_float_array(d.X.vals[i], d.X.cols);
+        normalize_array(d.X.vals[i], d.X.cols);
     }
 }
 

@@ -590,19 +590,7 @@ float mse_array(real *a, int n)
     return sqrt(sum/n);
 }
 
-void normalize_array(real *a, int n)
-{
-    int i;
-    float mu = mean_array(a,n);
-    float sigma = sqrt(variance_array(a,n));
-    for(i = 0; i < n; ++i){
-        a[i] = (a[i] - mu)/sigma;
-    }
-    mu = mean_array(a,n);
-    sigma = sqrt(variance_array(a,n));
-}
-
-void normalize_float_array(float *a, int n)
+void normalize_array(float *a, int n)
 {
     int i;
     float mu = mean_float_array(a,n);
