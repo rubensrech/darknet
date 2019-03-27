@@ -1470,8 +1470,8 @@ void get_random_batch(data d, int n, real *X, real *y)
     for(j = 0; j < n; ++j){
         int index = rand()%d.X.rows;
         // # CAST INTERFACE #
-        real *data_x_real = cast_array_float2real(d.X.vals[index], d.X.cols);
-        real *data_y_real = cast_array_float2real(d.y.vals[index], d.y.cols);
+        real *data_x_real = cast_array_float2real(d.X.vals[index], d.X.cols, NULL);
+        real *data_y_real = cast_array_float2real(d.y.vals[index], d.y.cols, NULL);
         memcpy(X+j*d.X.cols, data_x_real, d.X.cols*sizeof(real));
         memcpy(y+j*d.y.cols, data_y_real, d.y.cols*sizeof(real));
     }
@@ -1483,10 +1483,10 @@ void get_next_batch(data d, int n, int offset, real *X, real *y)
     for(j = 0; j < n; ++j){
         int index = offset + j;
         // # CAST INTERFACE #
-        real *data_x_real = cast_array_float2real(d.X.vals[index], d.X.cols);
+        real *data_x_real = cast_array_float2real(d.X.vals[index], d.X.cols, NULL);
         memcpy(X+j*d.X.cols, data_x_real, d.X.cols*sizeof(real));
         if(y) {
-            real *data_y_real = cast_array_float2real(d.y.vals[index], d.y.cols);
+            real *data_y_real = cast_array_float2real(d.y.vals[index], d.y.cols, NULL);
             memcpy(y+j*d.y.cols, data_y_real, d.y.cols*sizeof(real));
         }   
     }

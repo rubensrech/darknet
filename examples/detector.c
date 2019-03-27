@@ -971,74 +971,50 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
 }
 
 void test(char *filename) {
-    char *datacfg = (char *)"../cfg/coco.data";
+    // char *datacfg = (char *)"../cfg/coco.data";
     char *cfgfile = (char *)"cfg/yolov3-tiny.cfg";
     char *weightfile = (char *)"../yolov3-tiny2.weights";
 
-    list *options = read_data_cfg(datacfg);
-    char *valid_images = option_find_str(options, (char*)"valid", (char*)"data/train.txt");
+double t1;
 
-    network *net;
-    net = parse_network_cfg_custom(cfgfile, 1);    // set batch=1
-    if (weightfile) {
-        load_weights(net, weightfile);
+    // Load neural network
+    network *net = load_network(cfgfile, weightfile, 0);
+    set_batch_network(net, 1);
+    srand(2222222);
+
+    char buff[256];
+    char *input = buff;
+    strncpy(input, filename, 256);
+
+    // Load input image
+    image im = load_image_color(input, 0, 0);
+    image sized = letterbox_image(im, net->w, net->h);
+
+    float *X = sized.data;
+
+    int size = sized.c*sized.h*sized.w;
+    printf("Sized img size: %d\n", size);
+
+    int i;
+    real *X_real;
+
+    X_real = (real*)calloc(size, sizeof(real));
+
+t1 = what_time_is_it_now();
+
+    for (i = 0; i < 5000; i++) {
+        float2real_array(X, X_real, size);
     }
 
-    srand(time(0));
+printf("t1: %f secs.\n", what_time_is_it_now()-t1);
 
-    list *plist = get_paths(valid_images);
-    char **paths = (char **)list_to_array(plist);  
+t1 = what_time_is_it_now();
 
-    int m = plist->size;
-
-    int nthreads = 4;
-    if (m < 4) nthreads = m;
-    image *val = (image*)calloc(nthreads, sizeof(image));
-    image *val_resized = (image*)calloc(nthreads, sizeof(image));
-    image *buf = (image*)calloc(nthreads, sizeof(image));
-    image *buf_resized = (image*)calloc(nthreads, sizeof(image));
-    pthread_t *thr = (pthread_t*)calloc(nthreads, sizeof(pthread_t));
-
-    load_args args = { 0 };
-    args.w = net->w;
-    args.h = net->h;
-    args.type = IMAGE_DATA;
-
-
-    int i = 0;
-    int t;
-
-    double loadTime = what_time_is_it_now();
-
-    for (t = 0; t < nthreads; ++t) {
-        args.path = paths[i + t];
-        args.im = &buf[t];
-        args.resized = &buf_resized[t];
-        thr[t] = load_data_in_thread(args);
+    for (i = 0; i < 5000; i++) {
+        X_real = cast_array_float2real(X, size, NULL);
     }
 
-    for (i = nthreads; i < m + nthreads; i += nthreads) {
-        // fprintf(stderr, "\r%d ", i);
-
-        // Get loaded image from each thread
-        for (t = 0; t < nthreads && ((i + t) - nthreads < m); ++t) {
-            pthread_join(thr[t], 0);
-            val[t] = buf[t];
-            val_resized[t] = buf_resized[t];
-        }
-
-        // Start new threads to load next images
-        for (t = 0; t < nthreads && ((i + t) < m); ++t) {
-            args.path = paths[i + t];
-            args.im = &buf[t];
-            args.resized = &buf_resized[t];
-            thr[t] = load_data_in_thread(args);
-        }
-
-
-    }
-
-    printf("Load time: %f seconds\n", what_time_is_it_now() - loadTime);
+printf("t1: %f secs.\n", what_time_is_it_now()-t1);
 
 }
 

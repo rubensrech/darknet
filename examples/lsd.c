@@ -209,13 +209,13 @@ void train_prog(char *cfg, char *weight, char *acfg, char *aweight, int clear, i
                 gnet->input[z] = rand_normal();
             }
             *gnet->seen += gnet->batch;
-            forward_network(gnet);
+            forward_network(gnet, 1);
 
             fill_gpu(imlayer.outputs*imlayer.batch, 0, imerror, 1);
             fill_cpu(anet->truths*anet->batch, 1, anet->truth, 1);
             copy_cpu(anet->inputs*anet->batch, imlayer.output, 1, anet->input, 1);
             anet->delta_gpu = imerror;
-            forward_network(anet);
+            forward_network(anet, 1);
             backward_network(anet);
 
             scal_gpu(imlayer.outputs*imlayer.batch, 1, imerror, 1);
@@ -228,7 +228,7 @@ void train_prog(char *cfg, char *weight, char *acfg, char *aweight, int clear, i
             for(k = 0; k < gnet->batch; ++k){
                 int index = j*gnet->batch + k;
                 // # CAST INTERFACE #
-                float *outFloat = cast_array_real2float(gnet->output + k*gnet->outputs, gnet->outputs);
+                float *outFloat = cast_array_real2float(gnet->output + k*gnet->outputs, gnet->outputs, NULL);
                 copy_float_cpu(gnet->outputs, outFloat, 1, gen.X.vals[index], 1);
             }
         }
@@ -377,13 +377,13 @@ void train_dcgan(char *cfg, char *weight, char *acfg, char *aweight, int clear, 
             //cuda_push_array(gnet->input_gpu, gnet->input, x_size);
             //cuda_push_array(gnet->truth_gpu, gnet->truth, y_size);
             *gnet->seen += gnet->batch;
-            forward_network(gnet);
+            forward_network(gnet, 1);
 
             fill_gpu(imlayer.outputs*imlayer.batch, 0, imerror, 1);
             fill_cpu(anet->truths*anet->batch, 1, anet->truth, 1);
             copy_cpu(anet->inputs*anet->batch, imlayer.output, 1, anet->input, 1);
             anet->delta_gpu = imerror;
-            forward_network(anet);
+            forward_network(anet, 1);
             backward_network(anet);
 
             scal_gpu(imlayer.outputs*imlayer.batch, 1, imerror, 1);
@@ -404,7 +404,7 @@ void train_dcgan(char *cfg, char *weight, char *acfg, char *aweight, int clear, 
             for(k = 0; k < gnet->batch; ++k){
                 int index = j*gnet->batch + k;
                 // # CAST INTERFACE #
-                float *outFloat = cast_array_real2float(gnet->output + k*gnet->outputs, gnet->outputs);
+                float *outFloat = cast_array_real2float(gnet->output + k*gnet->outputs, gnet->outputs, NULL);
                 copy_float_cpu(gnet->outputs, outFloat, 1, gen.X.vals[index], 1);
             }
         }
@@ -559,13 +559,13 @@ void train_colorizer(char *cfg, char *weight, char *acfg, char *aweight, int cle
             cuda_push_array(net->truth_gpu, pixs, net->truths*net->batch);
 
             *net->seen += net->batch;
-            forward_network_gpu(net);
+            forward_network_gpu(net, 1);
 
             fill_gpu(imlayer.outputs*imlayer.batch, 0, imerror, 1);
             copy_gpu(anet->inputs*anet->batch, imlayer.output_gpu, 1, anet->input_gpu, 1);
             fill_gpu(anet->inputs*anet->batch, .95, anet->truth_gpu, 1);
             anet->delta_gpu = imerror;
-            forward_network_gpu(anet);
+            forward_network_gpu(anet, 1);
             backward_network_gpu(anet);
 
             scal_gpu(imlayer.outputs*imlayer.batch, 1./100., net->layers[net->n-1].delta_gpu, 1);
@@ -585,7 +585,7 @@ void train_colorizer(char *cfg, char *weight, char *acfg, char *aweight, int cle
             for(k = 0; k < net->batch; ++k){
                 int index = j*net->batch + k;
                 // # CAST INTERFACE #
-                float *outFloat = cast_array_real2float(imlayer.output + k*imlayer.outputs, imlayer.outputs);
+                float *outFloat = cast_array_real2float(imlayer.output + k*imlayer.outputs, imlayer.outputs, NULL);
                 copy_float_cpu(imlayer.outputs, outFloat, 1, gray.X.vals[index], 1);
             }
         }

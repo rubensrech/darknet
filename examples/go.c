@@ -406,7 +406,7 @@ real *network_predict_rotations(network *net, float *next)
         rotate_image_cw(im, -i);
     }
     real *pred = network_predict_float(net, in);
-    float *predFloat = cast_array_real2float(pred, net->outputs);
+    float *predFloat = cast_array_real2float(pred, net->outputs, NULL);
     for(j = 0; j < n; ++j){
         i = inds[j];
         image im = real_to_image(19, 19, 1, pred + j*(19*19 + 2));

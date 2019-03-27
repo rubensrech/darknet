@@ -608,7 +608,7 @@ data resize_data(data orig, int w, int h);
 data *tile_data(data orig, int divs, int size);
 data select_data(data *orig, int *inds);
 
-void forward_network(network *net);
+void forward_network(network *net, int push_input);
 void backward_network(network *net);
 void update_network(network *net);
 
@@ -644,7 +644,7 @@ void cuda_pull_float_array(float *x_gpu, float *x, size_t n);
 float cuda_mag_array(real *x_gpu, size_t n);
 void cuda_push_array(real *x_gpu, real *x, size_t n);
 
-void forward_network_gpu(network *net);
+void forward_network_gpu(network *net, int push_input);
 void backward_network_gpu(network *net);
 void update_network_gpu(network *net);
 
@@ -752,7 +752,7 @@ matrix network_predict_data(network *net, data test);
 image **load_alphabet();
 image get_network_image(network *net);
 real *network_predict(network *net, real *input);
-real *network_predict_float(network *net, float *input);
+real *network_predict_float(network *net, float *input_float);
 
 int network_width(network *net);
 int network_height(network *net);

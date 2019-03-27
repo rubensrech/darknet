@@ -635,7 +635,7 @@ image real_to_image(int w, int h, int c, real *data)
 {
     image out = make_empty_image(w,h,c);
 
-    float *data_float = cast_array_real2float(data, w*h*c);
+    float *data_float = cast_array_real2float(data, w*h*c, NULL);
 
     out.data = data_float;
     return out;

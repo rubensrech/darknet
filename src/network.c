@@ -185,11 +185,11 @@ network *make_network(int n)
     return net;
 }
 
-void forward_network(network *netp)
+void forward_network(network *netp, int push_input)
 {
 #ifdef GPU
     if(netp->gpu_index >= 0){
-        forward_network_gpu(netp);   
+        forward_network_gpu(netp, push_input);   
         return;
     }
 #endif
@@ -290,7 +290,7 @@ float train_network_datum(network *net)
 {
     *net->seen += net->batch;
     net->train = 1;
-    forward_network(net);
+    forward_network(net, 1);
     backward_network(net);
     float error = *net->cost;
     if(((*net->seen)/net->batch)%net->subdivisions == 0) update_network(net);
@@ -501,20 +501,29 @@ real *network_predict(network *net, real *input)
     net->truth = 0;
     net->train = 0;
     net->delta = 0;
-    forward_network(net);
+    forward_network(net, 1);
     real *out = net->output;
     *net = orig;
     return out;
 }
 
-real *network_predict_float(network *net, float *input)
+real *network_predict_float(network *net, float *input_float)
 {
     network orig = *net;
-    net->input = cast_array_float2real(input, net->layers[0].inputs);
     net->truth = 0;
     net->train = 0;
     net->delta = 0;
-    forward_network(net);
+
+    int N = net->inputs * net->batch;
+
+    #ifdef GPU
+        cast_array_float2real(input_float, N, net->input_gpu);
+        forward_network(net, 0);
+    #else
+        cast_array_float2real(input_float, N, net->input);
+        forward_network(net, 1);
+    #endif
+    
     real *out = net->output;
     *net = orig;
     return out;
@@ -773,14 +782,14 @@ real *network_output(network *net)
 
 #ifdef GPU
 
-void forward_network_gpu(network *netp)
+void forward_network_gpu(network *netp, int push_input)
 {
     network net = *netp;
     cuda_set_device(net.gpu_index);
-    cuda_push_array(net.input_gpu, net.input, net.inputs*net.batch);
-    if(net.truth){
+    if (push_input)
+        cuda_push_array(net.input_gpu, net.input, net.inputs*net.batch);
+    if(net.truth)
         cuda_push_array(net.truth_gpu, net.truth, net.truths*net.batch);
-    }
     
 
 // double time;

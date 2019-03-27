@@ -46,8 +46,8 @@
 void float2real_array(float* src, real* dst, int n);
 void real2float_array(real* src, float* dst, int n);
 
-float* cast_array_real2float(real *src, int n);
-real* cast_array_float2real(float *src, int n);
+float* cast_array_real2float(real *src, int n, float *dst_gpu);
+real* cast_array_float2real(float *src, int n, real *dst_gpu);
 
 #ifdef __NVCC__
 
