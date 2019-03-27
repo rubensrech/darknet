@@ -25,7 +25,7 @@ float* cast_array_real2float(real *src, int n, float *dst_gpu) {
             if (dst_gpu) {
                 // Push 'src' to 'dst_gpu'
                 cuda_push_array(dst_gpu, src, n);
-                return dst;
+                return dst_gpu;
             } else {
                 return src;
             }
@@ -68,7 +68,7 @@ real* cast_array_float2real(float *src, int n, real *dst_gpu) {
             if (dst_gpu) {
                 // Push 'src' to 'dst_gpu'
                 cuda_push_array(dst_gpu, src, n);
-                return dst;
+                return dst_gpu;
             } else {
                 return src;
             }
