@@ -91,7 +91,7 @@ void forward_maxpool_layer(const maxpool_layer l, network net)
             for(i = 0; i < h; ++i){
                 for(j = 0; j < w; ++j){
                     int out_index = j + w*(i + h*(k + c*b));
-                    float max = -FLT_MAX;
+                    float max = -REAL_MAX;
                     int max_i = -1;
                     for(n = 0; n < l.size; ++n){
                         for(m = 0; m < l.size; ++m){

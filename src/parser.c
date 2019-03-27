@@ -440,7 +440,7 @@ cost_layer parse_cost(list *options, size_params params)
 {
     char *type_s = option_find_str(options, (char*)"type", (char*)"sse");
     COST_TYPE type = get_cost_type(type_s);
-    float scale = option_find_float_quiet(options, (char*)"scale", 1);
+    float scale = option_find_float_quiet(options, (char*)"scale", CAST(1));
     cost_layer layer = make_cost_layer(params.batch, params.inputs, type, scale);
     layer.ratio =  option_find_float_quiet(options, (char*)"ratio", CAST(0));
     layer.noobject_scale =  option_find_float_quiet(options, (char*)"noobj", CAST(1));

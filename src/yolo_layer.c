@@ -147,12 +147,12 @@ void forward_yolo_layer(const layer l, network net)
 
     memset(l.delta, 0, l.outputs * l.batch * sizeof(real));
     if(!net.train) return;
-    float avg_iou = 0;
-    float recall = 0;
-    float recall75 = 0;
-    float avg_cat = 0;
-    float avg_obj = 0;
-    float avg_anyobj = 0;
+    float avg_iou = CAST(0);
+    float recall = CAST(0);
+    float recall75 = CAST(0);
+    float avg_cat = CAST(0);
+    float avg_obj = CAST(0);
+    float avg_anyobj = CAST(0);
     int count = 0;
     int class_count = 0;
     *(l.cost) = 0;
@@ -187,7 +187,7 @@ void forward_yolo_layer(const layer l, network net)
                         int class_index = entry_index(l, b, n*l.w*l.h + j*l.w + i, 4 + 1);
                         delta_yolo_class(l.output, l.delta, class_index, _class, l.classes, l.w*l.h, 0);
                         box truth = real_to_box(net.truth + best_t*(4 + 1) + b*l.truths, 1);
-                        delta_yolo_box(truth, l.output, l.biases, l.mask[n], box_index, i, j, l.w, l.h, net.w, net.h, l.delta, CAST(2-truth.w*truth.h), l.w*l.h);
+                        delta_yolo_box(truth, l.output, l.biases, l.mask[n], box_index, i, j, l.w, l.h, net.w, net.h, l.delta, 2-truth.w*truth.h, l.w*l.h);
                     }
                 }
             }

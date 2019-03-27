@@ -54,6 +54,7 @@ layer make_deconvolutional_layer(int batch, int h, int w, int c, int n, int size
 
     l.biases = (real*)calloc(n, sizeof(real));
     l.bias_updates = (real*)calloc(n, sizeof(real));
+    //printf("scale: %f\n", scale);
     float scale = 0.02;
     for(i = 0; i < c*n*size*size; ++i) l.weights[i] = scale*rand_normal();
     //bilinear_init(l);

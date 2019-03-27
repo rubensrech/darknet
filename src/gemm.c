@@ -62,10 +62,10 @@ void time_random_matrix(int TA, int TB, int m, int k, int n)
 }
 
 
-void gemm(int TA, int TB, int M, int N, int K, float ALPHA, 
+void gemm(int TA, int TB, int M, int N, int K, real ALPHA, 
         real *A, int lda, 
         real *B, int ldb,
-        float BETA,
+        real BETA,
         real *C, int ldc)
 {
     gemm_cpu( TA,  TB,  M, N, K, ALPHA,A,lda, B, ldb,BETA,C,ldc);
@@ -142,10 +142,10 @@ void gemm_tt(int M, int N, int K, float ALPHA,
 }
 
 
-void gemm_cpu(int TA, int TB, int M, int N, int K, float ALPHA, 
+void gemm_cpu(int TA, int TB, int M, int N, int K, real ALPHA, 
         real *A, int lda, 
         real *B, int ldb,
-        float BETA,
+        real BETA,
         real *C, int ldc)
 {
     //printf("cpu: %d %d %d %d %d %f %d %d %f %d\n",TA, TB, M, N, K, ALPHA, lda, ldb, BETA, ldc);
@@ -169,10 +169,10 @@ void gemm_cpu(int TA, int TB, int M, int N, int K, float ALPHA,
 
 #include <math.h>
 
-void gemm_gpu(int TA, int TB, int M, int N, int K, float ALPHA, 
+void gemm_gpu(int TA, int TB, int M, int N, int K, real ALPHA, 
         real *A_gpu, int lda, 
         real *B_gpu, int ldb,
-        float BETA,
+        real BETA,
         real *C_gpu, int ldc)
 {
     cublasHandle_t handle = blas_handle();

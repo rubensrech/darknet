@@ -351,7 +351,7 @@ void softmax(real *input, int n, float temp, int stride, real *output)
 {
     int i;
     float sum = 0;
-    float largest = -FLT_MAX;
+    float largest = -REAL_MAX;
     for(i = 0; i < n; ++i){
         if(input[i*stride] > largest) largest = input[i*stride];
     }
