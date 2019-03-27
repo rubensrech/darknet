@@ -147,12 +147,12 @@ void forward_yolo_layer(const layer l, network net)
 
     memset(l.delta, 0, l.outputs * l.batch * sizeof(real));
     if(!net.train) return;
-    float avg_iou = CAST(0);
-    float recall = CAST(0);
-    float recall75 = CAST(0);
-    float avg_cat = CAST(0);
-    float avg_obj = CAST(0);
-    float avg_anyobj = CAST(0);
+    float avg_iou = 0;
+    float recall = 0;
+    float recall75 = 0;
+    float avg_cat = 0;
+    float avg_obj = 0;
+    float avg_anyobj = 0;
     int count = 0;
     int class_count = 0;
     *(l.cost) = 0;

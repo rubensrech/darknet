@@ -233,7 +233,7 @@ void forward_deconvolutional_layer(const layer l, network net)
         real *b = net.input + i*l.c*l.h*l.w;
         real *c = net.workspace;
 
-        gemm_cpu(1,0,m,n,k,CAST(1),a,m,b,n,CAST(0),c,n);
+        gemm_cpu(1,0,m,n,k,1,a,m,b,n,0,c,n);
 
         col2im_cpu(net.workspace, l.out_c, l.out_h, l.out_w, l.size, l.stride, l.pad, l.output+i*l.outputs);
     }
@@ -270,7 +270,7 @@ void backward_deconvolutional_layer(layer l, network net)
 
         im2col_cpu(l.delta + i*l.outputs, l.out_c, l.out_h, l.out_w, 
                 l.size, l.stride, l.pad, b);
-        gemm_cpu(0,1,m,n,k,CAST(1),a,k,b,k,CAST(1),c,n);
+        gemm_cpu(0,1,m,n,k,1,a,k,b,k,1,c,n);
 
         if(net.delta){
             int m = l.c;
@@ -281,7 +281,7 @@ void backward_deconvolutional_layer(layer l, network net)
             real *b = net.workspace;
             real *c = net.delta + i*n*m;
 
-            gemm_cpu(0,0,m,n,k,CAST(1),a,k,b,n,CAST(1),c,n);
+            gemm_cpu(0,0,m,n,k,1,a,k,b,n,1,c,n);
         }
     }
 }

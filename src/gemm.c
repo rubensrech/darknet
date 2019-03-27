@@ -52,7 +52,7 @@ void time_random_matrix(int TA, int TB, int m, int k, int n)
     int i;
     clock_t start = clock(), end;
     for(i = 0; i<10; ++i){
-        gemm_cpu(TA,TB,m,n,k,CAST(1),a,lda,b,ldb,CAST(1),c,n);
+        gemm_cpu(TA,TB,m,n,k,1,a,lda,b,ldb,1,c,n);
     }
     end = clock();
     printf("Matrix Multiplication %dx%d * %dx%d, TA=%d, TB=%d: %lf ms\n",m,k,k,n, TA, TB, (float)(end-start)/CLOCKS_PER_SEC);
@@ -62,10 +62,10 @@ void time_random_matrix(int TA, int TB, int m, int k, int n)
 }
 
 
-void gemm(int TA, int TB, int M, int N, int K, real ALPHA, 
+void gemm(int TA, int TB, int M, int N, int K, float ALPHA, 
         real *A, int lda, 
         real *B, int ldb,
-        real BETA,
+        float BETA,
         real *C, int ldc)
 {
     gemm_cpu( TA,  TB,  M, N, K, ALPHA,A,lda, B, ldb,BETA,C,ldc);
@@ -142,10 +142,10 @@ void gemm_tt(int M, int N, int K, float ALPHA,
 }
 
 
-void gemm_cpu(int TA, int TB, int M, int N, int K, real ALPHA, 
+void gemm_cpu(int TA, int TB, int M, int N, int K, float ALPHA, 
         real *A, int lda, 
         real *B, int ldb,
-        real BETA,
+        float BETA,
         real *C, int ldc)
 {
     //printf("cpu: %d %d %d %d %d %f %d %d %f %d\n",TA, TB, M, N, K, ALPHA, lda, ldb, BETA, ldc);
@@ -169,23 +169,27 @@ void gemm_cpu(int TA, int TB, int M, int N, int K, real ALPHA,
 
 #include <math.h>
 
-void gemm_gpu(int TA, int TB, int M, int N, int K, real ALPHA, 
+void gemm_gpu(int TA, int TB, int M, int N, int K, float ALPHA, 
         real *A_gpu, int lda, 
         real *B_gpu, int ldb,
-        real BETA,
+        float BETA,
         real *C_gpu, int ldc)
 {
     cublasHandle_t handle = blas_handle();
 #if REAL == DOUBLE
+    double alpha = ALPHA;
+    double beta = BETA;
     cudaError_t status = (cudaError_t)cublasDgemm(handle, (TB ? CUBLAS_OP_T : CUBLAS_OP_N), 
-            (TA ? CUBLAS_OP_T : CUBLAS_OP_N), N, M, K, &ALPHA, B_gpu, ldb, A_gpu, lda, &BETA, C_gpu, ldc);
+            (TA ? CUBLAS_OP_T : CUBLAS_OP_N), N, M, K, &alpha, B_gpu, ldb, A_gpu, lda, &beta, C_gpu, ldc);
 #elif REAL == FLOAT
     cudaError_t status = (cudaError_t)cublasSgemm(handle, (TB ? CUBLAS_OP_T : CUBLAS_OP_N), 
             (TA ? CUBLAS_OP_T : CUBLAS_OP_N), N, M, K, &ALPHA, B_gpu, ldb, A_gpu, lda, &BETA, C_gpu, ldc);
 #elif REAL == HALF
+    real alpha = CAST(ALPHA);
+    real beta = CAST(BETA);
     cudaError_t status = (cudaError_t)cublasHgemm(handle, (TB ? CUBLAS_OP_T : CUBLAS_OP_N), 
-            (TA ? CUBLAS_OP_T : CUBLAS_OP_N), N, M, K, (real_device*)(&ALPHA),
-            (real_device*)B_gpu, ldb, (real_device*)A_gpu, lda, (real_device*)(&BETA), (real_device*)C_gpu, ldc);
+            (TA ? CUBLAS_OP_T : CUBLAS_OP_N), N, M, K, (real_device*)(&alpha),
+            (real_device*)B_gpu, ldb, (real_device*)A_gpu, lda, (real_device*)(&beta), (real_device*)C_gpu, ldc);
 #endif
     check_error(status);
 }
@@ -210,7 +214,7 @@ void time_gpu_random_matrix(int TA, int TB, int m, int k, int n)
     int i;
     clock_t start = clock(), end;
     for(i = 0; i<32; ++i){
-        gemm_gpu(TA,TB,m,n,k,CAST(1),a,lda,b,ldb,CAST(1),c,n);
+        gemm_gpu(TA,TB,m,n,k,1,a,lda,b,ldb,1,c,n);
     }
     end = clock();
     printf("Matrix Multiplication %dx%d * %dx%d, TA=%d, TB=%d: %lf s\n",m,k,k,n, TA, TB, (float)(end-start)/CLOCKS_PER_SEC);
@@ -237,7 +241,7 @@ void time_gpu(int TA, int TB, int m, int k, int n)
     int i;
     clock_t start = clock(), end;
     for(i = 0; i<iter; ++i){
-        gemm_gpu(TA,TB,m,n,k,CAST(1),a_cl,lda,b_cl,ldb,CAST(1),c_cl,n);
+        gemm_gpu(TA,TB,m,n,k,1,a_cl,lda,b_cl,ldb,1,c_cl,n);
         cudaThreadSynchronize();
     }
     double flop = ((double)m)*n*(2.*k + 2.)*iter;
@@ -272,11 +276,11 @@ void test_gpu_accuracy(int TA, int TB, int m, int k, int n)
     memset(c_gpu, 0, m*n*sizeof(real));
     int i;
     //pm(m,k,b);
-    gemm_gpu(TA,TB,m,n,k,CAST(1),a,lda,b,ldb,CAST(1),c_gpu,n);
+    gemm_gpu(TA,TB,m,n,k,1,a,lda,b,ldb,1,c_gpu,n);
     //printf("GPU\n");
     //pm(m, n, c_gpu);
 
-    gemm_cpu(TA,TB,m,n,k,CAST(1),a,lda,b,ldb,CAST(1),c,n);
+    gemm_cpu(TA,TB,m,n,k,1,a,lda,b,ldb,1,c,n);
     //printf("\n\nCPU\n");
     //pm(m, n, c);
     double sse = 0;

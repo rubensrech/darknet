@@ -1050,8 +1050,8 @@ void test(char *filename) {
     char *datacfg = (char *)"cfg/coco.data";
     char *cfgfile = (char *)"cfg/yolov3-tiny.cfg";
     char *weightfile = (char *)"../yolov3-tiny2.weights";
-    float thresh = CAST(0.3);
-    float hier_thresh = CAST(0.5);
+    float thresh = 0.3;
+    float hier_thresh = 0.5;
 
     // Load config (classes names file)
     list *options = read_data_cfg(datacfg);
@@ -1070,7 +1070,7 @@ void test(char *filename) {
 
     char buff[256];
     char *input = buff;
-    float nms = CAST(.45);
+    float nms = .45;
 
     strncpy(input, filename, 256);
 

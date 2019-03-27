@@ -215,7 +215,7 @@ void rescale_net(char *cfgfile, char *weightfile, char *outfile)
     for(i = 0; i < net->n; ++i){
         layer l = net->layers[i];
         if(l.type == CONVOLUTIONAL){
-            rescale_weights(l, CAST(2), CAST(-.5));
+            rescale_weights(l, 2, -.5);
             break;
         }
     }

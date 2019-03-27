@@ -112,7 +112,7 @@ void forward_local_layer(const local_layer l, network net)
             int n = 1;
             int k = l.size*l.size*l.c;
 
-            gemm(0,0,m,n,k,CAST(1),a,k,b,locations,CAST(1),c,locations);
+            gemm(0,0,m,n,k,1,a,k,b,locations,1,c,locations);
         }
     }
     activate_array(l.output, l.outputs*l.batch, l.activation);
@@ -142,7 +142,7 @@ void backward_local_layer(local_layer l, network net)
             int n = l.size*l.size*l.c;
             int k = 1;
 
-            gemm(0,1,m,n,k,CAST(1),a,locations,b,locations,CAST(1),c,n);
+            gemm(0,1,m,n,k,1,a,locations,b,locations,1,c,n);
         }
 
         if(net.delta){
@@ -155,7 +155,7 @@ void backward_local_layer(local_layer l, network net)
                 int n = 1;
                 int k = l.n;
 
-                gemm(1,0,m,n,k,CAST(1),a,m,b,locations,CAST(0),c,locations);
+                gemm(1,0,m,n,k,1,a,m,b,locations,0,c,locations);
             }
 
             col2im_cpu(net.workspace, l.c,  l.h,  l.w,  l.size,  l.stride, l.pad, net.delta+i*l.c*l.h*l.w);
@@ -207,7 +207,7 @@ void forward_local_layer_gpu(const local_layer l, network net)
             int n = 1;
             int k = l.size*l.size*l.c;
 
-            gemm_gpu(0,0,m,n,k,CAST(1),a,k,b,locations,CAST(1),c,locations);
+            gemm_gpu(0,0,m,n,k,1,a,k,b,locations,1,c,locations);
         }
     }
     activate_array_gpu(l.output_gpu, l.outputs*l.batch, l.activation);
@@ -236,7 +236,7 @@ void backward_local_layer_gpu(local_layer l, network net)
             int n = l.size*l.size*l.c;
             int k = 1;
 
-            gemm_gpu(0,1,m,n,k,CAST(1),a,locations,b,locations,CAST(1),c,n);
+            gemm_gpu(0,1,m,n,k,1,a,locations,b,locations,1,c,n);
         }
 
         if(net.delta_gpu){
@@ -249,7 +249,7 @@ void backward_local_layer_gpu(local_layer l, network net)
                 int n = 1;
                 int k = l.n;
 
-                gemm_gpu(1,0,m,n,k,CAST(1),a,m,b,locations,CAST(0),c,locations);
+                gemm_gpu(1,0,m,n,k,1,a,m,b,locations,0,c,locations);
             }
 
             col2im_gpu(net.workspace, l.c,  l.h,  l.w,  l.size,  l.stride, l.pad, net.delta_gpu+i*l.c*l.h*l.w);

@@ -117,9 +117,9 @@ void push_cost_layer(cost_layer l)
 
 int real_abs_compare (const void * a, const void * b)
 {
-    real fa = *(const real*) a;
+    float fa = *(const real*) a;
     if(fa < 0) fa = -fa;
-    real fb = *(const real*) b;
+    float fb = *(const real*) b;
     if(fb < 0) fb = -fb;
     return (fa > fb) - (fa < fb);
 }

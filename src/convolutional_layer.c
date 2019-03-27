@@ -466,7 +466,7 @@ void forward_convolutional_layer(convolutional_layer l, network net)
             } else {
                 im2col_cpu(im, l.c/l.groups, l.h, l.w, l.size, l.stride, l.pad, b);
             }
-            gemm(0,0,m,n,k,CAST(1),a,k,b,n,CAST(1),c,n);
+            gemm(0,0,m,n,k,1,a,k,b,n,1,c,n);
         }
     }
 
@@ -511,7 +511,7 @@ void backward_convolutional_layer(convolutional_layer l, network net)
                         l.size, l.stride, l.pad, b);
             }
 
-            gemm(0,1,m,n,k,CAST(1),a,k,b,k,CAST(1),c,n);
+            gemm(0,1,m,n,k,1,a,k,b,k,1,c,n);
 
             if (net.delta) {
                 a = l.weights + j*l.nweights/l.groups;
@@ -521,7 +521,7 @@ void backward_convolutional_layer(convolutional_layer l, network net)
                     c = imd;
                 }
 
-                gemm(1,0,n,k,m,CAST(1),a,n,b,k,CAST(0),c,k);
+                gemm(1,0,n,k,m,1,a,n,b,k,0,c,k);
 
                 if (l.size != 1) {
                     col2im_cpu(net.workspace, l.c/l.groups, l.h, l.w, l.size, l.stride, l.pad, imd);

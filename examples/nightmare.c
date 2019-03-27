@@ -271,7 +271,7 @@ void run_nightmare(int argc, char **argv)
             }else{
                 int layer = max_layer + rand()%range - range/2;
                 int octave = rand()%octaves;
-                optimize_picture(net, im, layer, CAST(1/pow(1.33333333, octave)), rate, thresh, norm);
+                optimize_picture(net, im, layer, 1/pow(1.33333333, octave), rate, thresh, norm);
             }
         }
         fprintf(stderr, "done\n");

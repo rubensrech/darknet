@@ -124,7 +124,7 @@ void forward_convolutional_layer_gpu(convolutional_layer l, network net)
 
 // time = what_time_is_it_now();
 
-            gemm_gpu(0,0,m,n,k,CAST(1),a,k,b,n,CAST(1),c,n);
+            gemm_gpu(0,0,m,n,k,1,a,k,b,n,1,c,n);
 
 // cudaDeviceSynchronize();
 // ttime += 1000*(what_time_is_it_now()-time);
@@ -257,7 +257,7 @@ void backward_convolutional_layer_gpu(convolutional_layer l, network net)
             real *imd = net.delta_gpu+(i*l.groups + j)*l.c/l.groups*l.h*l.w;
 
             im2col_gpu(im, l.c/l.groups, l.h, l.w, l.size, l.stride, l.pad, b);
-            gemm_gpu(0,1,m,n,k,CAST(1),a,k,b,k,CAST(1),c,n);
+            gemm_gpu(0,1,m,n,k,1,a,k,b,k,1,c,n);
 
             if (net.delta_gpu) {
                 if (l.binary || l.xnor) swap_binary(&l);
@@ -268,7 +268,7 @@ void backward_convolutional_layer_gpu(convolutional_layer l, network net)
                     c = imd;
                 }
 
-                gemm_gpu(1,0,n,k,m,CAST(1),a,n,b,k,CAST(0),c,k);
+                gemm_gpu(1,0,n,k,m,1,a,n,b,k,0,c,k);
 
                 if (l.size != 1) {
                     col2im_gpu(net.workspace, l.c/l.groups, l.h, l.w, l.size, l.stride, l.pad, imd);

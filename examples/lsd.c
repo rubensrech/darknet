@@ -180,7 +180,7 @@ void train_prog(char *cfg, char *weight, char *acfg, char *aweight, int clear, i
             int cb = get_current_batch(gnet);
             float alpha = (float)cb / (maxbatch/2);
             if(alpha > 1) alpha = 1;
-            float beta = CAST(1) - alpha;
+            float beta = 1 - alpha;
             printf("%f %f\n", (float)alpha, (float)beta);
             set_network_alpha_beta(gnet, alpha, beta);
             set_network_alpha_beta(anet, beta, alpha);

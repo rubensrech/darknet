@@ -207,14 +207,14 @@ void validate_yolo_recall(char *cfg, char *weights)
     int m = plist->size;
     int i=0;
 
-    float thresh = CAST(.001);
-    float iou_thresh = CAST(.5);
-    float nms = CAST(0);
+    float thresh = .001;
+    float iou_thresh = .5;
+    float nms = 0;
 
     int total = 0;
     int correct = 0;
     int proposals = 0;
-    float avg_iou = CAST(0);
+    float avg_iou = 0;
 
     for(i = 0; i < m; ++i){
         char *path = paths[i];
