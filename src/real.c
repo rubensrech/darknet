@@ -1,22 +1,18 @@
 #include "real.h"
 #include "darknet.h"
 
-#if REAL == HALF
-
-void float2real_array(float* src, real* dst, size_t n) {
+void float2real_array(float* src, real* dst, int n) {
     int i;
     for (i = 0; i < n; i++)
         dst[i] = src[i];
 }
 
 
-void real2float_array(real* src, float* dst, size_t n) {
+void real2float_array(real* src, float* dst, int n) {
     int i;
     for (i = 0; i < n; i++)
         dst[i] = src[i];
 }
-
-#endif
 
 float* cast_array_real2float(real *src, int n) {
     float *dst = (float*)malloc(n * sizeof(float));

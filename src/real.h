@@ -38,17 +38,13 @@
 #endif
 
 // > Aux functions
-#if REAL == HALF
-
-	#ifdef GPU
-		void float2real_array_gpu(float* src, real* dst, size_t n);
-		void real2float_array_gpu(real* src, float* dst, size_t n);
-	#endif
-
-	void float2real_array(float* src, real* dst, size_t n);
-	void real2float_array(real* src, float* dst, size_t n);
-
+#ifdef GPU
+	void float2real_array_gpu(float* src, real* dst, int n);
+	void real2float_array_gpu(real* src, float* dst, int n);
 #endif
+
+void float2real_array(float* src, real* dst, int n);
+void real2float_array(real* src, float* dst, int n);
 
 float* cast_array_real2float(real *src, int n);
 real* cast_array_float2real(float *src, int n);
