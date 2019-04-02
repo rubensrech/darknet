@@ -864,6 +864,7 @@ network *parse_network_cfg_custom(char *filename, int batch)
         l.dontloadscales = option_find_int_quiet(options, (char*)"dontloadscales", 0);
         l.learning_rate_scale = option_find_float_quiet(options, (char*)"learning_rate", 1);
         l.smooth = option_find_float_quiet(options, (char*)"smooth", 0);
+        l.real_type = option_find_int_quiet(options, (char*)"real", REAL);
         option_unused(options);
         net->layers[count] = l;
         if (l.workspace_size > workspace_size) workspace_size = l.workspace_size;

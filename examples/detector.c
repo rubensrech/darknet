@@ -673,7 +673,6 @@ double tmpTime, tTmpTime = 0;
             }
 
 tmpTime = what_time_is_it_now();
-            // Lots of HALF arithmetich on CPU! (box_iou,...)
             if (nms) do_nms_sort(dets, nboxes, l.classes, nms);
 tTmpTime += what_time_is_it_now() - tmpTime;
 
@@ -970,55 +969,6 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
     }
 }
 
-void test(char *filename) {
-    // char *datacfg = (char *)"../cfg/coco.data";
-    char *cfgfile = (char *)"cfg/yolov3-tiny.cfg";
-    char *weightfile = (char *)"../yolov3-tiny2.weights";
-
-double t1;
-
-    // Load neural network
-    network *net = load_network(cfgfile, weightfile, 0);
-    set_batch_network(net, 1);
-    srand(2222222);
-
-    char buff[256];
-    char *input = buff;
-    strncpy(input, filename, 256);
-
-    // Load input image
-    image im = load_image_color(input, 0, 0);
-    image sized = letterbox_image(im, net->w, net->h);
-
-    float *X = sized.data;
-
-    int size = sized.c*sized.h*sized.w;
-    printf("Sized img size: %d\n", size);
-
-    int i;
-    real *X_real;
-
-    X_real = (real*)calloc(size, sizeof(real));
-
-t1 = what_time_is_it_now();
-
-    for (i = 0; i < 5000; i++) {
-        float2real_array(X, X_real, size);
-    }
-
-printf("t1: %f secs.\n", what_time_is_it_now()-t1);
-
-t1 = what_time_is_it_now();
-
-    for (i = 0; i < 5000; i++) {
-        X_real = cast_array_float2real(X, size, NULL);
-    }
-
-printf("t1: %f secs.\n", what_time_is_it_now()-t1);
-
-}
-
-/*
 // Rubens Test 1
 // Purpose: Calculate time per layer
 // PS.: Uncomment lines on "forward_network_gpu()" (network.c:763)
@@ -1061,24 +1011,23 @@ void test(char *filename) {
     int nboxes = 0;
     detection *dets;
 
-    double ttime = what_time_is_it_now();
+double ttime = what_time_is_it_now();
+double t1;
 
-    int iteration = 0;
-    for (iteration = 0; iteration < 10; iteration++) {
+    int iteration;
+    for (iteration = 0; iteration < 1; iteration++) {
         // Run predictor
-        network_predict(net, X);
-        printf("\n");
+        network_predict_float(net, X);
 
+t1 = what_time_is_it_now();
         // Generate outputs
-
         int letterbox = 1;
         dets = get_network_boxes(net, im.w, im.h, thresh, hier_thresh, 0, 1, &nboxes, letterbox);
+printf("T1 (half): %f ms.\n", (what_time_is_it_now() - t1) * 1000);
     }
 
-    // > Time spent for prediction + probabilities calculation
-    printf("Total Time: %f ms.\n", (what_time_is_it_now() - ttime) * 1000);
+printf("Total Time: %f ms.\n", (what_time_is_it_now() - ttime) * 1000);
 
-    // printf("Detections: %d\n", nboxes);
     if (nms)
         do_nms_sort(dets, nboxes, l.classes, nms);
     draw_detections(im, dets, nboxes, thresh, names, alphabet, l.classes);
@@ -1088,8 +1037,6 @@ void test(char *filename) {
     free_image(im);
     free_image(sized);
 }
-*/
-
 
 void run_detector(int argc, char **argv)
 {

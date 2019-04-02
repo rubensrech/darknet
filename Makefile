@@ -1,4 +1,4 @@
-GPU=0
+GPU=1
 CUDNN=0
 OPENCV=0
 OPENMP=0
@@ -68,16 +68,16 @@ LDFLAGS+= -lcudnn
 endif
 
 ifeq ($(REAL), double)
-	COMMON+= -DREAL=1
-	CFLAGS+= -DREAL=1
+	COMMON+= -DREAL=64
+	CFLAGS+= -DREAL=64
 else
 	ifeq ($(REAL), half) 
-		COMMON+= -DREAL=2
-		CFLAGS+= -DREAL=2
+		COMMON+= -DREAL=16
+		CFLAGS+= -DREAL=16
 	else
 		# FLOAT
-		COMMON+= -DREAL=0
-		CFLAGS+= -DREAL=0
+		COMMON+= -DREAL=32
+		CFLAGS+= -DREAL=32
 	endif
 endif
 

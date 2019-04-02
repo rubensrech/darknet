@@ -799,6 +799,12 @@ void forward_network_gpu(network *netp, int push_input)
         net.index = i;
         layer l = net.layers[i];
 
+        if (i > 0) {
+            layer l_in = net.layers[i-1];
+            if (l_in.real_type != l.real_type)
+                printf("CAST needed on INPUT: (%d->%d) (%d->%d)\n", i-1, i, l_in.real_type, l.real_type);
+        }
+
 // time = what_time_is_it_now();
 
         if(l.delta_gpu){

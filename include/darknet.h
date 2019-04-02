@@ -208,6 +208,8 @@ struct layer{
     float probability;
     float scale;
 
+    int real_type;
+
     char  * cweights;
     int   * indexes;
     int   * input_layers;

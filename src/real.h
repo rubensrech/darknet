@@ -1,9 +1,9 @@
 #ifndef REAL_H
 #define REAL_H
 
-#define FLOAT       0
-#define DOUBLE      1
-#define HALF        2
+#define FLOAT       32
+#define DOUBLE      64
+#define HALF        16
 
 #define CAST(v)     real(v)
 #define CAST_DEV(v) real_device(v)
