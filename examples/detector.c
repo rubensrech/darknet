@@ -1036,6 +1036,7 @@ printf("Total Time: %f ms.\n", (what_time_is_it_now() - ttime) * 1000);
     save_image(im, "predictions");
     free_image(im);
     free_image(sized);
+    free_network(net);
 }
 
 void run_detector(int argc, char **argv)

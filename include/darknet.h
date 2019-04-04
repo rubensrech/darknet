@@ -208,8 +208,6 @@ struct layer{
     float probability;
     float scale;
 
-    int real_type;
-
     char  * cweights;
     int   * indexes;
     int   * input_layers;
@@ -290,6 +288,68 @@ struct layer{
     real *dc_cpu; 
 
     real * binary_input;
+
+/* --- Mixed precision --- */
+    int real_type;
+
+// #if REAL == HALF
+    // > Layers: Max Pool, Convolutional
+    float *output_float;
+    float *delta_float;
+    // > Convolutional Layer
+    float *weights_float;
+    float *weight_updates_float;
+    float *biases_float;
+    float *bias_updates_float;
+    float *binary_weights_float;
+    float *scales_float;
+    float *scale_updates_float;
+    float *binary_input_float;
+    float *mean_float;
+    float *mean_delta_float;
+    float *variance_float;
+    float *variance_delta_float;
+    float *rolling_mean_float;
+    float *rolling_variance_float;
+    float *x_float;
+    float *x_norm_float;
+    float *m_float;
+    float *v_float;
+    float *bias_m_float;
+    float *scale_m_float;
+    float *bias_v_float;
+    float *scale_v_float;
+
+    #ifdef GPU
+        // > Layers: Max Pool, Convolutional
+        float *delta_float_gpu;
+        float *output_float_gpu;
+        // > Convolutional Layer
+        float *m_float_gpu;
+        float *v_float_gpu;
+        float *bias_m_float_gpu;
+        float *bias_v_float_gpu;
+        float *scale_m_float_gpu;
+        float *scale_v_float_gpu;
+        float *weights_float_gpu;
+        float *weight_updates_float_gpu;
+        float *biases_float_gpu;
+        float *bias_updates_float_gpu;
+        float *binary_weights_float_gpu;
+        float *binary_input_float_gpu;
+        float *mean_float_gpu;
+        float *variance_float_gpu;
+        float *rolling_mean_float_gpu;
+        float *rolling_variance_float_gpu;
+        float *mean_delta_float_gpu;
+        float *variance_delta_float_gpu;
+        float *scales_float_gpu;
+        float *scale_updates_float_gpu;
+        float *x_float_gpu;
+        float *x_norm_float_gpu;
+    #endif
+// #endif
+/* ---------- x ---------- */
 
     struct layer *input_layer;
     struct layer *self_layer;
@@ -494,6 +554,15 @@ typedef struct network{
     real *delta_gpu;
     real *output_gpu;
 #endif
+
+/* --- Mixed precision --- */
+// #if REAL == HALF
+    float *input_float;
+    #ifdef GPU
+        float *input_float_gpu;
+    #endif
+// #endif
+/* ---------- x ---------- */
 } network;
 
 typedef struct {

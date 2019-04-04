@@ -208,8 +208,9 @@ convolutional_layer parse_convolutional(list *options, size_params params)
     int batch_normalize = option_find_int_quiet(options, (char*)"batch_normalize", 0);
     int binary = option_find_int_quiet(options, (char*)"binary", 0);
     int xnor = option_find_int_quiet(options, (char*)"xnor", 0);
+    int real_type = option_find_int_quiet(options, (char*)"real", REAL);
 
-    convolutional_layer layer = make_convolutional_layer(batch,h,w,c,n,groups,size,stride,padding,activation, batch_normalize, binary, xnor, params.net->adam);
+    convolutional_layer layer = make_convolutional_layer(batch,h,w,c,n,groups,size,stride,padding,activation, batch_normalize, binary, xnor, params.net->adam, real_type);
     layer.flipped = option_find_int_quiet(options, (char*)"flipped", 0);
     layer.dot = option_find_float_quiet(options, (char*)"dot", 0);
 
@@ -503,7 +504,9 @@ maxpool_layer parse_maxpool(list *options, size_params params)
     batch=params.batch;
     if(!(h && w && c)) error("Layer before maxpool layer must output image.");
 
-    maxpool_layer layer = make_maxpool_layer(batch,h,w,c,size,stride,padding);
+    int real_type = option_find_int_quiet(options, (char*)"real", REAL);
+
+    maxpool_layer layer = make_maxpool_layer(batch,h,w,c,size,stride,padding, real_type);
     return layer;
 }
 

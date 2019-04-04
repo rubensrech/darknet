@@ -18,7 +18,7 @@ image get_maxpool_delta(maxpool_layer l)
     return real_to_image(w,h,c,l.delta);
 }
 
-maxpool_layer make_maxpool_layer(int batch, int h, int w, int c, int size, int stride, int padding)
+maxpool_layer make_maxpool_layer(int batch, int h, int w, int c, int size, int stride, int padding, int real_type)
 {
     maxpool_layer l = {}; // zero init
     l.type = MAXPOOL;
@@ -34,18 +34,40 @@ maxpool_layer make_maxpool_layer(int batch, int h, int w, int c, int size, int s
     l.inputs = h*w*c;
     l.size = size;
     l.stride = stride;
+
+    l.real_type = real_type;
+
     int output_size = l.out_h * l.out_w * l.out_c * batch;
     l.indexes = (int*)calloc(output_size, sizeof(int));
+
     l.output = (real*)calloc(output_size, sizeof(real));
     l.delta = (real*)calloc(output_size, sizeof(real));
+
+    #if REAL == HALF
+        if (real_type == FLOAT) {
+            l.output_float = (float*)calloc(output_size, sizeof(float));
+            l.delta_float = (float*)calloc(output_size, sizeof(float));
+        }
+    #endif
+
     l.forward = forward_maxpool_layer;
     l.backward = backward_maxpool_layer;
+
     #ifdef GPU
-    l.forward_gpu = forward_maxpool_layer_gpu;
-    l.backward_gpu = backward_maxpool_layer_gpu;
-    l.indexes_gpu = cuda_make_int_array(0, output_size);
-    l.output_gpu  = cuda_make_array(l.output, output_size);
-    l.delta_gpu   = cuda_make_array(l.delta, output_size);
+        l.forward_gpu = forward_maxpool_layer_gpu;
+        l.backward_gpu = backward_maxpool_layer_gpu;
+
+        l.indexes_gpu = cuda_make_int_array(0, output_size);
+
+        l.output_gpu  = cuda_make_array(l.output, output_size);
+        l.delta_gpu   = cuda_make_array(l.delta, output_size);
+
+        #if REAL == HALF
+            if (real_type == FLOAT) {
+                l.output_float_gpu  = cuda_make_float_array(l.output_float, output_size);
+                l.delta_float_gpu   = cuda_make_float_array(l.delta_float, output_size);
+            }
+        #endif
     #endif
     fprintf(stderr, "max          %d x %d / %d  %4d x%4d x%4d   ->  %4d x%4d x%4d\n", size, size, stride, w, h, c, l.out_w, l.out_h, l.out_c);
     return l;
