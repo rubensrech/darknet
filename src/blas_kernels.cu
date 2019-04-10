@@ -671,7 +671,7 @@ extern "C" void fill_gpu(int N, float ALPHA, real *X, int INCX)
     check_error(cudaPeekAtLastError());
 }
 
-extern "C" void fill_gpu_float(int N, float ALPHA, float *X, int INCX)
+extern "C" void fill_float_gpu(int N, float ALPHA, float *X, int INCX)
 {
     fill_float_kernel<<<cuda_gridsize(N), BLOCK>>>(N, ALPHA, X, INCX);
     check_error(cudaPeekAtLastError());

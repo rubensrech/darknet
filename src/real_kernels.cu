@@ -3,8 +3,6 @@
 #include <cuda_fp16.h>
 #include <cuda.h>
 
-#if REAL == HALF
-
 __global__ void float2real_array_kernel(float* src, real_device* dst, int n) {
 	int i = (blockIdx.x + blockIdx.y * gridDim.x) * blockDim.x + threadIdx.x;
 	if (i < n) {
@@ -36,5 +34,3 @@ void real2float_array_gpu(real* src, float* dst, int n) {
 	real2float_array_kernel<<<cuda_gridsize(n), BLOCK>>>((real_device*)src, dst, n);
 	check_error(cudaPeekAtLastError());
 }
-
-#endif

@@ -13,6 +13,38 @@
 #include "cuda.h"
 // }
 
+/* ----- Float Kernels ----- */
+__global__ void binarize_weights_float_kernel(float *weights, int n, int size, float *binary) {
+    int f = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
+    if (f >= n) return;
+    int i = 0;
+    float mean = 0;
+    for(i = 0; i < size; ++i){
+        mean += fabsf(weights[f*size + i]);
+    }
+    mean = mean / size;
+    for(i = 0; i < size; ++i){
+        binary[f*size + i] = (weights[f*size + i] > 0) ? mean : -mean;
+    }
+}
+
+void binarize_weights_float_gpu(float *weights, int n, int size, float *binary) {
+    binarize_weights_float_kernel<<<cuda_gridsize(n), BLOCK>>>(weights, n, size, binary);
+    check_error(cudaPeekAtLastError());
+}
+
+__global__ void binarize_float_kernel(float *x, int n, float *binary) {
+    int i = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
+    if (i >= n) return;
+    binary[i] = (x[i] >= 0) ? 1 : -1;
+}
+
+void binarize_float_gpu(float *x, int n, float *binary) {
+    binarize_float_kernel<<<cuda_gridsize(n), BLOCK>>>(x, n, binary);
+    check_error(cudaPeekAtLastError());
+}
+/* ------------- x ------------- */
+
 __global__ void binarize_kernel(real_device *x, int n, real_device *binary)
 {
     int i = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;

@@ -903,8 +903,20 @@ network *parse_network_cfg_custom(char *filename, int batch)
         }else {
             net->workspace = (real*)calloc(1, workspace_size);
         }
+    #if REAL != FLOAT
+        if(gpu_index >= 0){
+            net->workspace_float = cuda_make_float_array(0, (workspace_size-1)/sizeof(float)+1);
+        } else {
+            net->workspace_float = (float*)calloc(1, workspace_size);
+        }
+    #endif
 #else
         net->workspace = (real*)calloc(1, workspace_size);
+
+    #if REAL != FLOAT
+        net->workspace_float = (float*)calloc(1, workspace_size);
+    #endif
+    
 #endif
     }
     return net;
@@ -1264,55 +1276,38 @@ void load_convolutional_weights(layer l, FILE *fp)
     int num = l.c/l.groups*l.n*l.size*l.size;
 
 
-#if (REAL != FLOAT) && defined(FLOAT_WEIGHTS) 
-    float *tmpBuffer0 = (float*)calloc(l.n, sizeof(float));
-    float *tmpBuffer1 = (float*)calloc(num, sizeof(float));
-    int j;
-
-    fread(tmpBuffer0, sizeof(float), l.n, fp);
-    for(j = 0; j < l.n; ++j) l.biases[j] = tmpBuffer0[j];
-
-    if (l.batch_normalize && (!l.dontloadscales)){
-        fread(tmpBuffer0, sizeof(float), l.n, fp);
-        for(j = 0; j < l.n; ++j) l.scales[j] = tmpBuffer0[j];
-        fread(tmpBuffer0, sizeof(float), l.n, fp);
-        for(j = 0; j < l.n; ++j) l.rolling_mean[j] = tmpBuffer0[j];
-        fread(tmpBuffer0, sizeof(float), l.n, fp);
-        for(j = 0; j < l.n; ++j) l.rolling_variance[j] = tmpBuffer0[j];
-
-        if(0){
-            int i;
-            for(i = 0; i < l.n; ++i){
-                printf("%g, ", (float)(l.rolling_mean[i]));
-            }
-            printf("\n");
-            for(i = 0; i < l.n; ++i){
-                printf("%g, ", (float)(l.rolling_variance[i]));
-            }
-            printf("\n");
+#if (REAL != FLOAT) && defined(FLOAT_WEIGHTS)
+    if (l.real_type == FLOAT) {
+        fread(l.biases_float, sizeof(float), l.n, fp);
+        if (l.batch_normalize && (!l.dontloadscales)){
+            fread(l.scales_float, sizeof(float), l.n, fp);
+            fread(l.rolling_mean_float, sizeof(float), l.n, fp);
+            fread(l.rolling_variance_float, sizeof(float), l.n, fp);
         }
-        if(0){
-            fill_cpu(l.n, 0, l.rolling_mean, 1);
-            fill_cpu(l.n, 0, l.rolling_variance, 1);
+        fread(l.weights_float, sizeof(float), num, fp);
+    } else {
+        float *tmpBuffer0 = (float*)calloc(l.n, sizeof(float));
+        float *tmpBuffer1 = (float*)calloc(num, sizeof(float));
+        int j;
+
+        fread(tmpBuffer0, sizeof(float), l.n, fp);
+            for(j = 0; j < l.n; ++j) l.biases[j] = tmpBuffer0[j];
+
+        if (l.batch_normalize && (!l.dontloadscales)){
+            fread(tmpBuffer0, sizeof(float), l.n, fp);
+            for(j = 0; j < l.n; ++j) l.scales[j] = tmpBuffer0[j];
+            fread(tmpBuffer0, sizeof(float), l.n, fp);
+            for(j = 0; j < l.n; ++j) l.rolling_mean[j] = tmpBuffer0[j];
+            fread(tmpBuffer0, sizeof(float), l.n, fp);
+            for(j = 0; j < l.n; ++j) l.rolling_variance[j] = tmpBuffer0[j];
         }
-        if(0){
-            int i;
-            for(i = 0; i < l.n; ++i){
-                printf("%g, ", (float)(l.rolling_mean[i]));
-            }
-            printf("\n");
-            for(i = 0; i < l.n; ++i){
-                printf("%g, ", (float)(l.rolling_variance[i]));
-            }
-            printf("\n");
-        }
+
+        fread(tmpBuffer1, sizeof(float), num, fp);
+        for(j = 0; j < num; ++j) l.weights[j] = tmpBuffer1[j];
+
+        free(tmpBuffer0);
+        free(tmpBuffer1);
     }
-
-    fread(tmpBuffer1, sizeof(float), num, fp);
-    for(j = 0; j < num; ++j) l.weights[j] = tmpBuffer1[j];
-
-    free(tmpBuffer0);
-    free(tmpBuffer1);
 #else
     fread(l.biases, sizeof(real), l.n, fp);
     if (l.batch_normalize && (!l.dontloadscales)){

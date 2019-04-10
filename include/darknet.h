@@ -292,7 +292,7 @@ struct layer{
 /* --- Mixed precision --- */
     int real_type;
 
-// #if REAL == HALF
+// #if REAL != FLOAT
     // > Layers: Max Pool, Convolutional
     float *output_float;
     float *delta_float;
@@ -556,8 +556,9 @@ typedef struct network{
 #endif
 
 /* --- Mixed precision --- */
-// #if REAL == HALF
+// #if REAL != FLOAT
     float *input_float;
+    float *workspace_float;
     #ifdef GPU
         float *input_float_gpu;
     #endif
@@ -702,7 +703,7 @@ int best_3d_shift_r(image a, image b, int min, int max);
 #ifdef GPU
 void axpy_gpu(int N, float ALPHA, real * X, int INCX, real * Y, int INCY);
 void fill_gpu(int N, float ALPHA, real * X, int INCX);
-void fill_gpu_float(int N, float ALPHA, float *X, int INCX);
+void fill_float_gpu(int N, float ALPHA, float *X, int INCX);
 void scal_gpu(int N, float ALPHA, real * X, int INCX);
 void copy_gpu(int N, real * X, int INCX, real * Y, int INCY);
 

@@ -25,6 +25,19 @@ void swap_binary(convolutional_layer *l)
 #endif
 }
 
+void swap_binary_float(convolutional_layer *l)
+{
+    float *swap = l->weights_float;
+    l->weights_float = l->binary_weights_float;
+    l->binary_weights_float = swap;
+
+#ifdef GPU
+    swap = l->weights_float_gpu;
+    l->weights_float_gpu = l->binary_weights_float_gpu;
+    l->binary_weights_float_gpu = swap;
+#endif
+}
+
 void binarize_weights(real *weights, int n, int size, real *binary)
 {
     int i, f;
@@ -115,34 +128,45 @@ static size_t get_workspace_size(layer l){
         return most;
     }
 #endif
-    return (size_t)l.out_h*l.out_w*l.size*l.size*l.c/l.groups*sizeof(real);
+    if (l.real_type == FLOAT)
+        return (size_t)l.out_h*l.out_w*l.size*l.size*l.c/l.groups*sizeof(float);
+    else
+        return (size_t)l.out_h*l.out_w*l.size*l.size*l.c/l.groups*sizeof(real);
 }
 
 #ifdef GPU
 #ifdef CUDNN
 void cudnn_convolutional_setup(layer *l)
 {
-    cudnnSetTensor4dDescriptor(l->dsrcTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_REAL, l->batch, l->c, l->h, l->w); 
-    cudnnSetTensor4dDescriptor(l->ddstTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_REAL, l->batch, l->out_c, l->out_h, l->out_w); 
+    cudnnDataType_t data_type;
+    switch (l.real_type) {
+        case FLOAT: data_type = CUDNN_DATA_FLOAT; break;
+        case DOUBLE: data_type = CUDNN_DATA_FLOAT; break;
+        case HALF: data_type = CUDNN_DATA_HALF; break;
+        default: data_type = CUDNN_DATA_REAL; break;
+    }
 
-    cudnnSetTensor4dDescriptor(l->srcTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_REAL, l->batch, l->c, l->h, l->w); 
-    cudnnSetTensor4dDescriptor(l->dstTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_REAL, l->batch, l->out_c, l->out_h, l->out_w); 
-    cudnnSetTensor4dDescriptor(l->normTensorDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_REAL, 1, l->out_c, 1, 1); 
+    cudnnSetTensor4dDescriptor(l->dsrcTensorDesc, CUDNN_TENSOR_NCHW, data_type, l->batch, l->c, l->h, l->w); 
+    cudnnSetTensor4dDescriptor(l->ddstTensorDesc, CUDNN_TENSOR_NCHW, data_type, l->batch, l->out_c, l->out_h, l->out_w); 
 
-    cudnnSetFilter4dDescriptor(l->dweightDesc, CUDNN_DATA_REAL, CUDNN_TENSOR_NCHW, l->n, l->c/l->groups, l->size, l->size); 
-    cudnnSetFilter4dDescriptor(l->weightDesc, CUDNN_DATA_REAL, CUDNN_TENSOR_NCHW, l->n, l->c/l->groups, l->size, l->size); 
+    cudnnSetTensor4dDescriptor(l->srcTensorDesc, CUDNN_TENSOR_NCHW, data_type, l->batch, l->c, l->h, l->w); 
+    cudnnSetTensor4dDescriptor(l->dstTensorDesc, CUDNN_TENSOR_NCHW, data_type, l->batch, l->out_c, l->out_h, l->out_w); 
+    cudnnSetTensor4dDescriptor(l->normTensorDesc, CUDNN_TENSOR_NCHW, data_type, 1, l->out_c, 1, 1); 
+
+    cudnnSetFilter4dDescriptor(l->dweightDesc, data_type, CUDNN_TENSOR_NCHW, l->n, l->c/l->groups, l->size, l->size); 
+    cudnnSetFilter4dDescriptor(l->weightDesc, data_type, CUDNN_TENSOR_NCHW, l->n, l->c/l->groups, l->size, l->size); 
     #if CUDNN_MAJOR >= 6
-    cudnnSetConvolution2dDescriptor(l->convDesc, l->pad, l->pad, l->stride, l->stride, 1, 1, CUDNN_CROSS_CORRELATION, CUDNN_DATA_REAL);
+        cudnnSetConvolution2dDescriptor(l->convDesc, l->pad, l->pad, l->stride, l->stride, 1, 1, CUDNN_CROSS_CORRELATION, data_type);
     #else
-    cudnnSetConvolution2dDescriptor(l->convDesc, l->pad, l->pad, l->stride, l->stride, 1, 1, CUDNN_CROSS_CORRELATION);
+        cudnnSetConvolution2dDescriptor(l->convDesc, l->pad, l->pad, l->stride, l->stride, 1, 1, CUDNN_CROSS_CORRELATION);
     #endif
 
     #if CUDNN_MAJOR >= 7
-    cudnnSetConvolutionGroupCount(l->convDesc, l->groups);
+        cudnnSetConvolutionGroupCount(l->convDesc, l->groups);
     #else
-    if(l->groups > 1){
-        error("CUDNN < 7 doesn't support groups, please upgrade!");
-    }
+        if(l->groups > 1){
+            error("CUDNN < 7 doesn't support groups, please upgrade!");
+        }
     #endif
 
     cudnnGetConvolutionForwardAlgorithm(cudnn_handle(),
@@ -200,7 +224,7 @@ convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int
     l.biases = (real*)calloc(n, sizeof(real));
     l.bias_updates = (real*)calloc(n, sizeof(real));
 
-    #if REAL == HALF
+    #if REAL != FLOAT
         if (real_type == FLOAT) {
             l.weights_float = (float*)calloc(c/groups*n*size*size, sizeof(float));
             l.weight_updates_float = (float*)calloc(c/groups*n*size*size, sizeof(float));
@@ -226,7 +250,7 @@ convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int
     l.output = (real*)calloc(l.batch*l.outputs, sizeof(real));
     l.delta  = (real*)calloc(l.batch*l.outputs, sizeof(real));
 
-    #if REAL == HALF
+    #if REAL != FLOAT
         if (real_type == FLOAT) {
             l.output_float = (float*)calloc(l.batch*l.outputs, sizeof(float));
             l.delta_float = (float*)calloc(l.batch*l.outputs, sizeof(float));
@@ -241,7 +265,7 @@ convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int
         l.cweights = (char*)calloc(l.nweights, sizeof(char));
         l.scales = (real*)calloc(n, sizeof(real));
 
-        #if REAL == HALF
+        #if REAL != FLOAT
             if (real_type == FLOAT) {
                 l.binary_weights_float = (float*)calloc(l.nweights, sizeof(float));
                 l.scales_float = (float*)calloc(n, sizeof(float));
@@ -252,7 +276,7 @@ convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int
         l.binary_weights = (real*)calloc(l.nweights, sizeof(real));
         l.binary_input = (real*)calloc(l.inputs*l.batch, sizeof(real));
 
-        #if REAL == HALF
+        #if REAL != FLOAT
             if (real_type == FLOAT) {
                 l.binary_weights_float = (float*)calloc(l.nweights, sizeof(float));
                 l.binary_input_float = (float*)calloc(l.inputs*l.batch, sizeof(float));
@@ -278,7 +302,7 @@ convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int
         l.x = (real*)calloc(l.batch*l.outputs, sizeof(real));
         l.x_norm = (real*)calloc(l.batch*l.outputs, sizeof(real));
 
-        #if REAL == HALF
+        #if REAL != FLOAT
             if (real_type == FLOAT) {
                 l.scales_float = (float*)calloc(n, sizeof(float));
                 l.scale_updates_float = (float*)calloc(n, sizeof(float));
@@ -304,7 +328,7 @@ convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int
         l.bias_v = (real*)calloc(n, sizeof(real));
         l.scale_v = (real*)calloc(n, sizeof(real));
 
-        #if REAL == HALF
+        #if REAL != FLOAT
             if (real_type == FLOAT) {
                 l.m_float = (float*)calloc(l.nweights, sizeof(float));
                 l.v_float = (float*)calloc(l.nweights, sizeof(float));
@@ -330,7 +354,7 @@ convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int
             l.scale_m_gpu = cuda_make_array(l.scale_m, n);
             l.scale_v_gpu = cuda_make_array(l.scale_v, n);
 
-            #if REAL == HALF
+            #if REAL != FLOAT
                 if (real_type == FLOAT) {
                     l.m_float_gpu = cuda_make_float_array(l.m_float, l.nweights);
                     l.v_float_gpu = cuda_make_float_array(l.v_float, l.nweights);
@@ -351,7 +375,7 @@ convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int
         l.delta_gpu = cuda_make_array(l.delta, l.batch*out_h*out_w*n);
         l.output_gpu = cuda_make_array(l.output, l.batch*out_h*out_w*n);
 
-        #if REAL == HALF
+        #if REAL != FLOAT
             if (real_type == FLOAT) {
                 l.weights_float_gpu = cuda_make_float_array(l.weights_float, l.nweights);
                 l.weight_updates_float_gpu = cuda_make_float_array(l.weight_updates_float, l.nweights);
@@ -366,7 +390,7 @@ convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int
 
         if(binary){
             l.binary_weights_gpu = cuda_make_array(l.weights, l.nweights);
-            #if REAL == HALF
+            #if REAL != FLOAT
                 if (real_type == FLOAT) {
                     l.binary_weights_float_gpu = cuda_make_float_array(l.weights_float, l.nweights);
                 }
@@ -376,7 +400,7 @@ convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int
             l.binary_weights_gpu = cuda_make_array(l.weights, l.nweights);
             l.binary_input_gpu = cuda_make_array(0, l.inputs*l.batch);
 
-            #if REAL == HALF
+            #if REAL != FLOAT
                 if (real_type == FLOAT) {
                     l.binary_weights_float_gpu = cuda_make_float_array(l.weights_float, l.nweights);
                     l.binary_input_float_gpu = cuda_make_float_array(0, l.inputs*l.batch);
@@ -400,7 +424,7 @@ convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int
             l.x_gpu = cuda_make_array(l.output, l.batch*out_h*out_w*n);
             l.x_norm_gpu = cuda_make_array(l.output, l.batch*out_h*out_w*n);
 
-            #if REAL == HALF
+            #if REAL != FLOAT
                 if (real_type == FLOAT) {
                     l.mean_float_gpu = cuda_make_float_array(l.mean_float, n);
                     l.variance_float_gpu = cuda_make_float_array(l.variance_float, n);

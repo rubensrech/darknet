@@ -43,7 +43,7 @@ maxpool_layer make_maxpool_layer(int batch, int h, int w, int c, int size, int s
     l.output = (real*)calloc(output_size, sizeof(real));
     l.delta = (real*)calloc(output_size, sizeof(real));
 
-    #if REAL == HALF
+    #if REAL != FLOAT
         if (real_type == FLOAT) {
             l.output_float = (float*)calloc(output_size, sizeof(float));
             l.delta_float = (float*)calloc(output_size, sizeof(float));
@@ -62,7 +62,7 @@ maxpool_layer make_maxpool_layer(int batch, int h, int w, int c, int size, int s
         l.output_gpu  = cuda_make_array(l.output, output_size);
         l.delta_gpu   = cuda_make_array(l.delta, output_size);
 
-        #if REAL == HALF
+        #if REAL != FLOAT
             if (real_type == FLOAT) {
                 l.output_float_gpu  = cuda_make_float_array(l.output_float, output_size);
                 l.delta_float_gpu   = cuda_make_float_array(l.delta_float, output_size);
