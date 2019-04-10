@@ -8,6 +8,8 @@
 #define CAST(v)     real(v)
 #define CAST_DEV(v) real_device(v)
 
+#define IS_MIX_PRECISION_FLOAT_LAYER(r)	REAL != FLOAT && r == FLOAT
+
 #if REAL == DOUBLE
     typedef double real;
     typedef double real_device;
