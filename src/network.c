@@ -413,14 +413,18 @@ int resize_network(network *net, int w, int h)
     if(net->layers[net->n-1].truths) net->truths = net->layers[net->n-1].truths;
     net->output = out.output;
     free(net->input);
+    free(net->input_float);
     free(net->truth);
     net->input = (real*)calloc(net->inputs*net->batch, sizeof(real));
+    net->input_float = (float*)calloc(net->inputs*net->batch, sizeof(float));
     net->truth = (real*)calloc(net->truths*net->batch, sizeof(real));
 #ifdef GPU
     if(gpu_index >= 0){
         cuda_free(net->input_gpu);
+        cudaFree(net->input_float_gpu);
         cuda_free(net->truth_gpu);
         net->input_gpu = cuda_make_array(net->input, net->inputs*net->batch);
+        net->input_float_gpu = cuda_make_float_array(net->input_float, net->inputs*net->batch);
         net->truth_gpu = cuda_make_array(net->truth, net->truths*net->batch);
         if(workspace_size){
             net->workspace = cuda_make_array(0, (workspace_size-1)/sizeof(real)+1);
@@ -550,6 +554,7 @@ detection *make_network_boxes(network *net, float thresh, int *num)
     layer l = net->layers[net->n - 1];
     int i;
     int nboxes = num_detections(net, thresh);
+    printf("NUMBER DETECTS: %d\n", nboxes);
     if(num) *num = nboxes;
     detection *dets = (detection*)calloc(nboxes, sizeof(detection));
     for(i = 0; i < nboxes; ++i){
@@ -744,9 +749,11 @@ void free_network(network *net)
     }
     free(net->layers);
     if(net->input) free(net->input);
+    if(net->input_float) free(net->input_float);
     if(net->truth) free(net->truth);
 #ifdef GPU
     if(net->input_gpu) cuda_free(net->input_gpu);
+    if(net->input_float_gpu) cudaFree(net->input_float_gpu);
     if(net->truth_gpu) cuda_free(net->truth_gpu);
 #endif
     free(net);
@@ -791,37 +798,64 @@ void forward_network_gpu(network *netp, int push_input)
     if(net.truth)
         cuda_push_array(net.truth_gpu, net.truth, net.truths*net.batch);
     
-
-// double time;
-
     int i;
     for(i = 0; i < net.n; ++i){
         net.index = i;
         layer l = net.layers[i];
 
-        if (i > 0) {
-            layer l_in = net.layers[i-1];
-            if (l_in.real_type != l.real_type)
-                printf("CAST needed on INPUT: (%d->%d) (%d->%d)\n", i-1, i, l_in.real_type, l.real_type);
+        // printf("layer %d\n", i);
+
+#if REAL != FLOAT // MIX PRECISION SUPPORT
+        layer *l_prev = (i > 0) ? &(net.layers[i-1]) : NULL;
+
+        if (l.real_type == FLOAT) {
+            if (l_prev && l_prev->real_type == REAL) {
+                real2float_array_gpu(net.input_gpu, net.input_float_gpu, l_prev->outputs * l_prev->batch);
+            }
+            
+            if (l.delta_float_gpu) 
+                fill_float_gpu(l.outputs * l.batch, 0, l.delta_float_gpu, 1);
+
+            l.forward_gpu(l, net);
+
+            net.input_float_gpu = l.output_float_gpu;
+            net.input_float = l.output_float;
+            if (l.truth) {
+                float2real_array_gpu(l.output_float_gpu, net.truth_gpu, l.outputs * l.batch);
+                float2real_array(l.output_float, net.truth, l.outputs * l.batch);
+            }
+        } 
+        
+        else if (l.real_type == REAL) {
+            if (l_prev && l_prev->real_type == FLOAT)
+                float2real_array_gpu(net.input_float_gpu, net.input_gpu, l_prev->outputs * l_prev->batch);
+            
+            if (l.delta_gpu) 
+                fill_gpu(l.outputs * l.batch, 0, l.delta_gpu, 1);
+            
+            l.forward_gpu(l, net);
+
+            net.input_gpu = l.output_gpu;
+            net.input = l.output;
+
+            if (l.truth) {
+                net.truth_gpu = l.output_gpu;
+                net.truth = l.output;
+            }
         }
-
-// time = what_time_is_it_now();
-
-        if(l.delta_gpu){
+#else // NO MIX PRECISION SUPPORT
+        if(l.delta_gpu)
             fill_gpu(l.outputs * l.batch, 0, l.delta_gpu, 1);
-        }
+        
         l.forward_gpu(l, net);
-
-// cudaDeviceSynchronize();
-// > Time spent per layer
-// printf("Layer: %2d, type: %15s, time: %3.7f ms.\n", i, get_layer_string(l.type), 1000*(what_time_is_it_now()-time));
 
         net.input_gpu = l.output_gpu;
         net.input = l.output;
-        if(l.truth) {
+        if (l.truth) {
             net.truth_gpu = l.output_gpu;
             net.truth = l.output;
         }
+#endif
     }
     pull_network_output(netp);
     calc_network_cost(netp);

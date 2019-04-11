@@ -970,8 +970,7 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
 }
 
 // Rubens Test 1
-// Purpose: Calculate time per layer
-// PS.: Uncomment lines on "forward_network_gpu()" (network.c:763)
+// Purpose: Test mixed-precision
 void test(char *filename) {
     char *datacfg = (char *)"cfg/coco.data";
     char *cfgfile = (char *)"cfg/yolov3-tiny.cfg";
@@ -989,8 +988,13 @@ void test(char *filename) {
     // Load alphabet letters images
     image **alphabet = load_alphabet();
 
+double tl = what_time_is_it_now();
+
     // Load neural network
     network *net = load_network(cfgfile, weightfile, 0);
+
+printf("Load net time: %f ms.\n", (what_time_is_it_now() - tl) * 1000);
+
     set_batch_network(net, 1);
     srand(2222222);
 
@@ -1012,18 +1016,16 @@ void test(char *filename) {
     detection *dets;
 
 double ttime = what_time_is_it_now();
-double t1;
 
+    // Run predictor
     int iteration;
     for (iteration = 0; iteration < 1; iteration++) {
         // Run predictor
         network_predict_float(net, X);
 
-t1 = what_time_is_it_now();
         // Generate outputs
         int letterbox = 1;
         dets = get_network_boxes(net, im.w, im.h, thresh, hier_thresh, 0, 1, &nboxes, letterbox);
-printf("T1 (half): %f ms.\n", (what_time_is_it_now() - t1) * 1000);
     }
 
 printf("Total Time: %f ms.\n", (what_time_is_it_now() - ttime) * 1000);
