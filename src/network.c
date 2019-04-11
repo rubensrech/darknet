@@ -524,8 +524,8 @@ real *network_predict_float(network *net, float *input_float)
         cast_array_float2real(input_float, N, net->input_gpu);
         forward_network(net, 0);
     #else
-        cast_array_float2real(input_float, N, net->input);
-        forward_network(net, 1);
+        net->input = cast_array_float2real(input_float, N, NULL);
+        forward_network(net, 0);
     #endif
     
     real *out = net->output;
