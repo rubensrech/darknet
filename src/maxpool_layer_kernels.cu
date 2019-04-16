@@ -136,11 +136,6 @@ void forward_maxpool_layer_float_gpu(maxpool_layer layer, network net) {
 
 void forward_maxpool_layer_gpu(maxpool_layer layer, network net)
 {
-    if (IS_MIX_PRECISION_FLOAT_LAYER(layer.real_type)) {
-        forward_maxpool_layer_float_gpu(layer, net);
-        return;
-    }
-
     int h = layer.out_h;
     int w = layer.out_w;
     int c = layer.c;

@@ -52,7 +52,11 @@ maxpool_layer make_maxpool_layer(int batch, int h, int w, int c, int size, int s
     l.backward = backward_maxpool_layer;
 
     #ifdef GPU
-        l.forward_gpu = forward_maxpool_layer_gpu;
+        if (IS_MIX_PRECISION_FLOAT_LAYER(real_type)) {
+            l.forward_gpu = forward_maxpool_layer_float_gpu;
+        } else {
+            l.forward_gpu = forward_maxpool_layer_gpu;
+        }
         l.backward_gpu = backward_maxpool_layer_gpu;
 
         l.indexes_gpu = cuda_make_int_array(0, output_size);
