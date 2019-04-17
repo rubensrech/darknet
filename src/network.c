@@ -554,7 +554,6 @@ detection *make_network_boxes(network *net, float thresh, int *num)
     layer l = net->layers[net->n - 1];
     int i;
     int nboxes = num_detections(net, thresh);
-    printf("NUMBER DETECTS: %d\n", nboxes);
     if(num) *num = nboxes;
     detection *dets = (detection*)calloc(nboxes, sizeof(detection));
     for(i = 0; i < nboxes; ++i){
@@ -798,6 +797,8 @@ void forward_network_gpu(network *netp, int push_input)
     if(net.truth)
         cuda_push_array(net.truth_gpu, net.truth, net.truths*net.batch);
     
+double t = what_time_is_it_now();
+
     int i;
     for(i = 0; i < net.n; ++i){
         net.index = i;
@@ -857,6 +858,10 @@ void forward_network_gpu(network *netp, int push_input)
         }
 #endif
     }
+
+cudaDeviceSynchronize();
+printf("%f\n", (what_time_is_it_now()-t)*1000);
+
     pull_network_output(netp);
     calc_network_cost(netp);
 }

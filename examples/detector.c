@@ -993,7 +993,7 @@ double tl = what_time_is_it_now();
     // Load neural network
     network *net = load_network(cfgfile, weightfile, 0);
 
-printf("Load net time: %f ms.\n", (what_time_is_it_now() - tl) * 1000);
+printf("Load net time: %f ms.\n\n", (what_time_is_it_now() - tl) * 1000);
 
     set_batch_network(net, 1);
     srand(2222222);
@@ -1019,16 +1019,16 @@ double ttime = what_time_is_it_now();
 
     // Run predictor
     int iteration;
-    for (iteration = 0; iteration < 1; iteration++) {
+    for (iteration = 0; iteration < 10; iteration++) {
         // Run predictor
         network_predict_float(net, X);
-
-        // Generate outputs
-        int letterbox = 1;
-        dets = get_network_boxes(net, im.w, im.h, thresh, hier_thresh, 0, 1, &nboxes, letterbox);
     }
 
-printf("Total Time: %f ms.\n", (what_time_is_it_now() - ttime) * 1000);
+printf("\nTotal Time: %f ms.\n", (what_time_is_it_now() - ttime) * 1000);
+
+    // Generate outputs
+    int letterbox = 1;
+    dets = get_network_boxes(net, im.w, im.h, thresh, hier_thresh, 0, 1, &nboxes, letterbox);
 
     if (nms)
         do_nms_sort(dets, nboxes, l.classes, nms);
