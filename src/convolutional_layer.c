@@ -329,7 +329,11 @@ convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int
     }
 
 #ifdef GPU
-    l.forward_gpu = forward_convolutional_layer_gpu;
+    if (IS_MIX_PRECISION_FLOAT_LAYER(real_type)) {
+        l.forward_gpu = forward_convolutional_layer_float_gpu;
+    } else {
+        l.forward_gpu = forward_convolutional_layer_gpu;
+    }
     l.backward_gpu = backward_convolutional_layer_gpu;
     l.update_gpu = update_convolutional_layer_gpu;
 
@@ -498,9 +502,20 @@ void resize_convolutional_layer(convolutional_layer *l, int w, int h)
 
     l->output = (real*)realloc(l->output, l->batch*l->outputs*sizeof(real));
     l->delta  = (real*)realloc(l->delta,  l->batch*l->outputs*sizeof(real));
+
+    if (IS_MIX_PRECISION_FLOAT_LAYER(l->real_type)) {
+        l->output_float = (float*)realloc(l->output_float, l->batch*l->outputs*sizeof(float));
+        l->delta_float  = (float*)realloc(l->delta_float,  l->batch*l->outputs*sizeof(float));
+    }
+
     if(l->batch_normalize){
         l->x = (real*)realloc(l->x, l->batch*l->outputs*sizeof(real));
         l->x_norm  = (real*)realloc(l->x_norm, l->batch*l->outputs*sizeof(real));
+
+        if (IS_MIX_PRECISION_FLOAT_LAYER(l->real_type)) {
+            l->x_float = (float*)realloc(l->x_float, l->batch*l->outputs*sizeof(float));
+            l->x_norm_float  = (float*)realloc(l->x_norm_float, l->batch*l->outputs*sizeof(float));
+        }
     }
 
 #ifdef GPU
@@ -510,12 +525,28 @@ void resize_convolutional_layer(convolutional_layer *l, int w, int h)
     l->delta_gpu =  cuda_make_array(l->delta,  l->batch*l->outputs);
     l->output_gpu = cuda_make_array(l->output, l->batch*l->outputs);
 
+    if (IS_MIX_PRECISION_FLOAT_LAYER(l->real_type)) {
+        cudaFree(l->delta_float_gpu);
+        cudaFree(l->output_float_gpu);
+
+        l->delta_float_gpu =  cuda_make_float_array(l->delta_float,  l->batch*l->outputs);
+        l->output_float_gpu = cuda_make_float_array(l->output_float, l->batch*l->outputs);
+    }
+
     if(l->batch_normalize){
         cuda_free(l->x_gpu);
         cuda_free(l->x_norm_gpu);
 
         l->x_gpu = cuda_make_array(l->output, l->batch*l->outputs);
         l->x_norm_gpu = cuda_make_array(l->output, l->batch*l->outputs);
+
+        if (IS_MIX_PRECISION_FLOAT_LAYER(l->real_type)) {
+            cudaFree(l->x_float_gpu);
+            cudaFree(l->x_norm_float_gpu);
+
+            l->x_float_gpu = cuda_make_float_array(l->output_float, l->batch*l->outputs);
+            l->x_norm_float_gpu = cuda_make_float_array(l->output_float, l->batch*l->outputs);
+        }
     }
 #ifdef CUDNN
     cudnn_convolutional_setup(l);

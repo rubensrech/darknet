@@ -49,9 +49,13 @@ void upsample_cpu(real *in, int w, int h, int c, int batch, int stride, int forw
 #include "tree.h"
 
 void axpy_gpu(int N, float ALPHA, real * X, int INCX, real * Y, int INCY);
+void axpy_float_gpu(int N, float ALPHA, float * X, int INCX, float * Y, int INCY);
 void axpy_gpu_offset(int N, float ALPHA, real * X, int OFFX, int INCX, real * Y, int OFFY, int INCY);
+void axpy_float_gpu_offset(int N, float ALPHA, float * X, int OFFX, int INCX, float * Y, int OFFY, int INCY);
 void copy_gpu(int N, real * X, int INCX, real * Y, int INCY);
+void copy_float_gpu(int N, float * X, int INCX, float * Y, int INCY);
 void copy_gpu_offset(int N, real * X, int OFFX, int INCX, real * Y, int OFFY, int INCY);
+void copy_float_gpu_offset(int N, float * X, int OFFX, int INCX, float * Y, int OFFY, int INCY);
 void add_gpu(int N, float ALPHA, real * X, int INCX);
 void supp_gpu(int N, float ALPHA, real * X, int INCX);
 void mask_gpu(int N, real * X, float mask_num, real * mask, float val);
@@ -63,6 +67,7 @@ void mul_gpu(int N, real *X, int INCX, real *Y, int INCY);
 void mean_gpu(real *x, int batch, int filters, int spatial, real *mean);
 void variance_gpu(real *x, real *mean, int batch, int filters, int spatial, real *variance);
 void normalize_gpu(real *x, real *mean, real *variance, int batch, int filters, int spatial);
+void normalize_float_gpu(float *x, float *mean, float *variance, int batch, int filters, int spatial);
 void l2normalize_gpu(real *x, real *dx, int batch, int filters, int spatial);
 
 void normalize_delta_gpu(real *x, real *mean, real *variance, real *mean_delta, real *variance_delta, int batch, int filters, int spatial, real *delta);
@@ -71,12 +76,15 @@ void fast_mean_delta_gpu(real *delta, real *variance, int batch, int filters, in
 void fast_variance_delta_gpu(real *x, real *delta, real *mean, real *variance, int batch, int filters, int spatial, real *variance_delta);
 
 void fast_variance_gpu(real *x, real *mean, int batch, int filters, int spatial, real *variance);
+void fast_variance_float_gpu(float *x, float *mean, int batch, int filters, int spatial, float *variance);
 void fast_mean_gpu(real *x, int batch, int filters, int spatial, real *mean);
+void fast_mean_float_gpu(float *x, int batch, int filters, int spatial, float *mean);
 void shortcut_gpu(int batch, int w1, int h1, int c1, real *add, int w2, int h2, int c2, float s1, float s2, real *out);
 void scale_bias_gpu(real *output, real *biases, int batch, int n, int size);
+void scale_bias_float_gpu(float *output, float *biases, int batch, int n, int size);
 void backward_scale_gpu(real *x_norm, real *delta, int batch, int n, int size, real *scale_updates);
-void scale_bias_gpu(real *output, real *biases, int batch, int n, int size);
 void add_bias_gpu(real *output, real *biases, int batch, int n, int size);
+void add_bias_float_gpu(float *output, float *biases, int batch, int n, int size);
 void backward_bias_gpu(real *bias_updates, real *delta, int batch, int n, int size);
 
 void logistic_x_ent_gpu(int n, real *pred, real *truth, real *delta, real *error);
