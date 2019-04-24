@@ -362,7 +362,7 @@ int resize_network(network *net, int w, int h)
     cuda_free(net->workspace);
 
     #if REAL != FLOAT
-        cudaFree(net->workspace_float);
+        cuda_free_float(net->workspace_float);
     #endif
 #endif
     int i;
@@ -425,7 +425,7 @@ int resize_network(network *net, int w, int h)
 #ifdef GPU
     if(gpu_index >= 0){
         cuda_free(net->input_gpu);
-        cudaFree(net->input_float_gpu);
+        cuda_free_float(net->input_float_gpu);
         cuda_free(net->truth_gpu);
         net->input_gpu = cuda_make_array(net->input, net->inputs*net->batch);
         net->input_float_gpu = cuda_make_float_array(net->input_float, net->inputs*net->batch);
@@ -771,7 +771,7 @@ void free_network(network *net)
     if(net->truth) free(net->truth);
 #ifdef GPU
     if(net->input_gpu) cuda_free(net->input_gpu);
-    if(net->input_float_gpu) cudaFree(net->input_float_gpu);
+    if(net->input_float_gpu) cuda_free_float(net->input_float_gpu);
     if(net->truth_gpu) cuda_free(net->truth_gpu);
 #endif
     free(net);

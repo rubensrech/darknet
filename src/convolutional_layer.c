@@ -536,8 +536,8 @@ void resize_convolutional_layer(convolutional_layer *l, int w, int h)
     l->output_gpu = cuda_make_array(l->output, l->batch*l->outputs);
 
     if (IS_MIX_PRECISION_FLOAT_LAYER(l->real_type)) {
-        cudaFree(l->delta_float_gpu);
-        cudaFree(l->output_float_gpu);
+        cuda_free_float(l->delta_float_gpu);
+        cuda_free_float(l->output_float_gpu);
 
         l->delta_float_gpu =  cuda_make_float_array(l->delta_float,  l->batch*l->outputs);
         l->output_float_gpu = cuda_make_float_array(l->output_float, l->batch*l->outputs);
@@ -545,8 +545,8 @@ void resize_convolutional_layer(convolutional_layer *l, int w, int h)
 
     if(l->batch_normalize){
         if (IS_MIX_PRECISION_FLOAT_LAYER(l->real_type)) {
-            cudaFree(l->x_float_gpu);
-            cudaFree(l->x_norm_float_gpu);
+            cuda_free_float(l->x_float_gpu);
+            cuda_free_float(l->x_norm_float_gpu);
 
             l->x_float_gpu = cuda_make_float_array(l->output_float, l->batch*l->outputs);
             l->x_norm_float_gpu = cuda_make_float_array(l->output_float, l->batch*l->outputs);

@@ -37,15 +37,15 @@ float* cast_array_real2float(real *src, int n, float *dst_gpu) {
             real *src_gpu = cuda_make_array(src, n);
             if (dst_gpu) {
                 real2float_array_gpu(src_gpu, dst_gpu, n);
-                cudaFree(src_gpu);
+                cuda_free(src_gpu);
                 return dst_gpu;
             } else {
                 dst_gpu = cuda_make_float_array(NULL, n);
                 float *dst = (float*)calloc(n, sizeof(float));
                 real2float_array_gpu(src_gpu, dst_gpu, n);
                 cuda_pull_float_array(dst_gpu, dst, n);
-                cudaFree(src_gpu);
-                cudaFree(dst_gpu);
+                cuda_free(src_gpu);
+                cuda_free_float(dst_gpu);
                 return dst;
             }
         #else
@@ -80,15 +80,15 @@ real* cast_array_float2real(float *src, int n, real *dst_gpu) {
             float *src_gpu = cuda_make_float_array(src, n);
             if (dst_gpu) {
                 float2real_array_gpu(src_gpu, dst_gpu, n);
-                cudaFree(src_gpu);
+                cuda_free_float(src_gpu);
                 return dst_gpu;
             } else {
                 dst_gpu = cuda_make_array(NULL, n);
                 real *dst = (real*)calloc(n, sizeof(real));
                 float2real_array_gpu(src_gpu, dst_gpu, n);
                 cuda_pull_array(dst_gpu, dst, n);
-                cudaFree(src_gpu);
-                cudaFree(dst_gpu);
+                cuda_free_float(src_gpu);
+                cuda_free(dst_gpu);
                 return dst;
             }
         #else

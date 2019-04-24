@@ -189,6 +189,12 @@ void cuda_free(real *x_gpu)
     check_error(status);
 }
 
+void cuda_free_float(float *x_gpu)
+{
+    cudaError_t status = cudaFree(x_gpu);
+    check_error(status);
+}
+
 void cuda_push_array(real *x_gpu, real *x, size_t n)
 {
     size_t size = sizeof(real)*n;

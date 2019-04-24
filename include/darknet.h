@@ -712,6 +712,7 @@ void copy_float_gpu(int N, float * X, int INCX, float * Y, int INCY);
 
 void cuda_set_device(int n);
 void cuda_free(real *x_gpu);
+void cuda_free_float(float *x_gpu);
 real *cuda_make_array(real *x, size_t n);
 float *cuda_make_float_array(float *x, size_t n);
 void cuda_pull_array(real *x_gpu, real *x, size_t n);

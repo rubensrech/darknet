@@ -102,8 +102,8 @@ void resize_maxpool_layer(maxpool_layer *l, int w, int h)
         l->delta_gpu   = cuda_make_array(l->delta,  output_size);
 
         if (IS_MIX_PRECISION_FLOAT_LAYER(l->real_type)) {
-            cudaFree(l->output_float_gpu);
-            cudaFree(l->delta_float_gpu);
+            cuda_free_float(l->output_float_gpu);
+            cuda_free_float(l->delta_float_gpu);
             l->output_float_gpu  = cuda_make_float_array(l->output_float, output_size);
             l->delta_float_gpu   = cuda_make_float_array(l->delta_float, output_size);
         }
