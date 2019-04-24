@@ -69,7 +69,8 @@ maxpool_layer make_maxpool_layer(int batch, int h, int w, int c, int size, int s
             l.delta_float_gpu   = cuda_make_float_array(l.delta_float, output_size);
         }
     #endif
-    fprintf(stderr, "max          %d x %d / %d  %4d x%4d x%4d   ->  %4d x%4d x%4d%14s%s\n", size, size, stride, w, h, c, l.out_w, l.out_h, l.out_c, "", IS_MIX_PRECISION_FLOAT_LAYER(real_type) ? " - FLOAT" : "");
+    fprintf(stderr, "max          %d x %d / %d  %4d x%4d x%4d   ->  %4d x%4d x%4d", size, size, stride, w, h, c, l.out_w, l.out_h, l.out_c);
+    fprintf(stderr, "%14s - %s\n", "", get_real_string(real_type));
     return l;
 }
 

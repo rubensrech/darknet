@@ -16,8 +16,8 @@ void real2float_array(real* src, float* dst, int n) {
 
 /*
  *  @param src - CPU array
- *  @param dst_gpu - if NULL, 'src' will be converted to float and the output array will be available in CPU,
- *                   otherwise, if GPU && dst != NULL, the output array will be will be kept in GPU.
+ *  @param dst_gpu - if NULL    -> 'src' will be converted to float and the output array will be available in CPU,
+ *                   otherwise  -> if GPU && dst != NULL, the output array will be will be kept in GPU.
  */
 float* cast_array_real2float(real *src, int n, float *dst_gpu) {
     #if REAL == FLOAT
@@ -59,8 +59,8 @@ float* cast_array_real2float(real *src, int n, float *dst_gpu) {
 
 /*
  *  @param src - CPU array
- *  @param dst_gpu - if NULL, 'src' will be converted to 'real' and the output array will be available in CPU,
- *                   otherwise, if GPU && dst != NULL, the output array will be will be kept in GPU.
+ *  @param dst_gpu - if NULL    -> 'src' will be converted to 'real' and the output array will be available in CPU
+ *                   otherwise  -> if GPU && dst != NULL, the output array will be will be kept in GPU
  */
 real* cast_array_float2real(float *src, int n, real *dst_gpu) {
     #if REAL == FLOAT
@@ -97,4 +97,22 @@ real* cast_array_float2real(float *src, int n, real *dst_gpu) {
             return dst;
         #endif
     #endif
+}
+
+const char *get_default_real_string() {
+    switch (REAL) {
+        case HALF: return "HALF";
+        case FLOAT: return "FLOAT";
+        case DOUBLE: return "DOUBLE";
+    }
+    return "";
+}
+
+const char *get_real_string(int real) {
+    switch (real) {
+        case HALF: return "HALF";
+        case FLOAT: return "FLOAT";
+        case DOUBLE: return "DOUBLE";
+    }
+    return "";
 }
