@@ -992,10 +992,9 @@ void print_detections(image im, detection *dets, int num, float thresh, char **n
 
 // Rubens Test 1
 // Purpose: Test exec time
-void test(char *filename) {
-    char *datacfg = (char *)"cfg/coco.data";
-    char *cfgfile = (char *)"cfg/yolov3.cfg";
-    char *weightfile = (char *)"../yolov3.weights";
+void test(char *cfgfile, char *filename) {
+    char *datacfg = (char*)"cfg/coco.data";
+    char *weightfile = (char*)"../yolov3.weights";
     float thresh = 0.3;
     float hier_thresh = 0.5;
 
@@ -1122,9 +1121,10 @@ void run_detector(int argc, char **argv)
     else if(0==strcmp(argv[2], "recall")) validate_detector_recall(cfg, weights);
     else if(0==strcmp(argv[2], "map")) validate_detector_map(datacfg, cfg, weights, thresh, iou_thresh, NULL);
     else if(0 == strcmp(argv[2], "rubens")) {
-        // ./darknet detector rubens <filename>
-        filename = datacfg;
-        test(filename);
+        // ./darknet detector rubens <cfgfile> <filename>
+        filename = argv[4];
+        cfg = argv[3];
+        test(cfg, filename);
     } else if(0==strcmp(argv[2], "demo")) {
         list *options = read_data_cfg(datacfg);
         int classes = option_find_int(options, (char*)"classes", 20);
