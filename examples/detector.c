@@ -1053,7 +1053,7 @@ void test(char *cfgfile, char *filename) {
             do_nms_sort(dets, nboxes, l.classes, nms);
         print_detections(im, dets, nboxes, thresh, names, alphabet, l.classes);
 
-        if (iteration <= 6) printf("discard - ");
+        if (iteration < 6) printf("discard - ");
         printf("%f\n", (what_time_is_it_now() - t) * 1000);   
     }
 
