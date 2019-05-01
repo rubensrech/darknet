@@ -702,19 +702,24 @@ void softmax(real *input, int n, float temp, int stride, real *output);
 int best_3d_shift_r(image a, image b, int min, int max);
 #ifdef GPU
 void axpy_gpu(int N, float ALPHA, real * X, int INCX, real * Y, int INCY);
+void axpy_float_gpu(int N, float ALPHA, float * X, int INCX, float * Y, int INCY);
 void fill_gpu(int N, float ALPHA, real * X, int INCX);
 void fill_float_gpu(int N, float ALPHA, float *X, int INCX);
 void scal_gpu(int N, float ALPHA, real * X, int INCX);
+void scal_float_gpu(int N, float ALPHA, float * X, int INCX);
 void copy_gpu(int N, real * X, int INCX, real * Y, int INCY);
+void copy_float_gpu(int N, float * X, int INCX, float * Y, int INCY);
 
 void cuda_set_device(int n);
 void cuda_free(real *x_gpu);
+void cuda_free_float(float *x_gpu);
 real *cuda_make_array(real *x, size_t n);
 float *cuda_make_float_array(float *x, size_t n);
 void cuda_pull_array(real *x_gpu, real *x, size_t n);
 void cuda_pull_float_array(float *x_gpu, float *x, size_t n);
 float cuda_mag_array(real *x_gpu, size_t n);
 void cuda_push_array(real *x_gpu, real *x, size_t n);
+void cuda_push_float_array(float *x_gpu, float *x, size_t n);
 
 void forward_network_gpu(network *net, int push_input);
 void backward_network_gpu(network *net);

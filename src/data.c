@@ -618,15 +618,7 @@ matrix load_regression_labels_paths(char **paths, int n, int k)
         FILE *file = fopen(labelpath, "r");
         
         for(j = 0; j < k; ++j){
-#if REAL == DOUBLE
-            fscanf(file, "%lf", &(y.vals[i][j]));
-#elif REAL == FLOAT
             fscanf(file, "%f", &(y.vals[i][j]));
-#elif REAL == HALF
-            float tmp;
-            fscanf(file, "%f", &tmp);
-            y.vals[i][j] = tmp;
-#endif
         }
         fclose(file);
     }

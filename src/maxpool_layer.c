@@ -69,7 +69,8 @@ maxpool_layer make_maxpool_layer(int batch, int h, int w, int c, int size, int s
             l.delta_float_gpu   = cuda_make_float_array(l.delta_float, output_size);
         }
     #endif
-    fprintf(stderr, "max          %d x %d / %d  %4d x%4d x%4d   ->  %4d x%4d x%4d%s\n", size, size, stride, w, h, c, l.out_w, l.out_h, l.out_c, IS_MIX_PRECISION_FLOAT_LAYER(real_type) ? " - FLOAT" : "");
+    fprintf(stderr, "max          %d x %d / %d  %4d x%4d x%4d   ->  %4d x%4d x%4d", size, size, stride, w, h, c, l.out_w, l.out_h, l.out_c);
+    fprintf(stderr, "%14s - %s\n", "", get_real_string(real_type));
     return l;
 }
 
@@ -102,8 +103,8 @@ void resize_maxpool_layer(maxpool_layer *l, int w, int h)
         l->delta_gpu   = cuda_make_array(l->delta,  output_size);
 
         if (IS_MIX_PRECISION_FLOAT_LAYER(l->real_type)) {
-            cudaFree(l->output_float_gpu);
-            cudaFree(l->delta_float_gpu);
+            cuda_free_float(l->output_float_gpu);
+            cuda_free_float(l->delta_float_gpu);
             l->output_float_gpu  = cuda_make_float_array(l->output_float, output_size);
             l->delta_float_gpu   = cuda_make_float_array(l->delta_float, output_size);
         }

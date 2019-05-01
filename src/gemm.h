@@ -27,10 +27,10 @@ void gemm_gpu(int TA, int TB, int M, int N, int K, float ALPHA,
         float BETA,
         real *C_gpu, int ldc);
 
-void gemm_gpu(int TA, int TB, int M, int N, int K, float ALPHA, 
-        real *A, int lda, 
-        real *B, int ldb,
+void gemm_float_gpu(int TA, int TB, int M, int N, int K, float ALPHA, 
+        float *A_gpu, int lda, 
+        float *B_gpu, int ldb,
         float BETA,
-        real *C, int ldc);
+        float *C_gpu, int ldc);
 #endif
 #endif

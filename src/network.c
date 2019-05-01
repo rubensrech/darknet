@@ -360,6 +360,10 @@ int resize_network(network *net, int w, int h)
 #ifdef GPU
     cuda_set_device(net->gpu_index);
     cuda_free(net->workspace);
+
+    #if REAL != FLOAT
+        cuda_free_float(net->workspace_float);
+    #endif
 #endif
     int i;
     //if(w == net->w && h == net->h) return 0;
@@ -421,21 +425,35 @@ int resize_network(network *net, int w, int h)
 #ifdef GPU
     if(gpu_index >= 0){
         cuda_free(net->input_gpu);
-        cudaFree(net->input_float_gpu);
+        cuda_free_float(net->input_float_gpu);
         cuda_free(net->truth_gpu);
         net->input_gpu = cuda_make_array(net->input, net->inputs*net->batch);
         net->input_float_gpu = cuda_make_float_array(net->input_float, net->inputs*net->batch);
         net->truth_gpu = cuda_make_array(net->truth, net->truths*net->batch);
         if(workspace_size){
             net->workspace = cuda_make_array(0, (workspace_size-1)/sizeof(real)+1);
+        
+            #if REAL != FLOAT
+                net->workspace_float = cuda_make_float_array(0, (workspace_size-1)/sizeof(float)+1);
+            #endif
         }
     }else {
         free(net->workspace);
         net->workspace = (real*)calloc(1, workspace_size);
+
+        #if REAL != FLOAT
+            free(net->workspace_float);
+            net->workspace_float = (float*)calloc(1, workspace_size);
+        #endif
     }
 #else
     free(net->workspace);
     net->workspace = (real*)calloc(1, workspace_size);
+
+    #if REAL != FLOAT
+        free(net->workspace_float);
+        net->workspace_float = (float*)calloc(1, workspace_size);
+    #endif
 #endif
     //fprintf(stderr, " Done!\n");
     return 0;
@@ -752,7 +770,7 @@ void free_network(network *net)
     if(net->truth) free(net->truth);
 #ifdef GPU
     if(net->input_gpu) cuda_free(net->input_gpu);
-    if(net->input_float_gpu) cudaFree(net->input_float_gpu);
+    if(net->input_float_gpu) cuda_free_float(net->input_float_gpu);
     if(net->truth_gpu) cuda_free(net->truth_gpu);
 #endif
     free(net);
