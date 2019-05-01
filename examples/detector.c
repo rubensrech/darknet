@@ -1033,7 +1033,7 @@ void test(char *cfgfile, char *filename) {
     double ttime = what_time_is_it_now();
 
     int iteration;
-    for (iteration = 0; iteration < 10; iteration++) {
+    for (iteration = 0; iteration < 11; iteration++) {
         double t = what_time_is_it_now();
 
         // Load input image
