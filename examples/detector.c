@@ -1033,7 +1033,7 @@ void test(char *cfgfile, char *filename) {
     double ttime = what_time_is_it_now();
 
     int iteration;
-    for (iteration = 0; iteration < 11; iteration++) {
+    for (iteration = 0; iteration < 15; iteration++) {
         double t = what_time_is_it_now();
 
         // Load input image
@@ -1053,6 +1053,7 @@ void test(char *cfgfile, char *filename) {
             do_nms_sort(dets, nboxes, l.classes, nms);
         print_detections(im, dets, nboxes, thresh, names, alphabet, l.classes);
 
+        if (iteration <= 6) printf("discard - ");
         printf("%f\n", (what_time_is_it_now() - t) * 1000);   
     }
 
