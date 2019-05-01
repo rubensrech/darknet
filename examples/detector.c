@@ -994,7 +994,7 @@ void print_detections(image im, detection *dets, int num, float thresh, char **n
 // Purpose: Test exec time
 void test(char *cfgfile, char *filename) {
     char *datacfg = (char*)"cfg/coco.data";
-    char *weightfile = (char*)"../yolov3-tiny2.weights";
+    char *weightfile = (char*)"../yolov3.weights";
     float thresh = 0.3;
     float hier_thresh = 0.5;
 
