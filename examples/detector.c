@@ -969,12 +969,32 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
     }
 }
 
+void print_detections(image im, detection *dets, int num, float thresh, char **names, image **alphabet, int classes) {
+    int i,j;
+
+    for(i = 0; i < num; ++i){
+        char labelstr[4096] = {0};
+        int _class = -1;
+        for(j = 0; j < classes; ++j){
+            if (dets[i].prob[j] > thresh){
+                if (_class < 0) {
+                    strcat(labelstr, names[j]);
+                    _class = j;
+                } else {
+                    strcat(labelstr, ", ");
+                    strcat(labelstr, names[j]);
+                }
+                // printf("%s: %.0f%%\n", names[j], dets[i].prob[j]*100);
+            }
+        }
+    }
+}
+
 // Rubens Test 1
-// Purpose: Test mixed-precision
-void test(char *filename) {
-    char *datacfg = (char *)"cfg/coco.data";
-    char *cfgfile = (char *)"cfg/yolov3-tiny.cfg";
-    char *weightfile = (char *)"../yolov3-tiny2.weights";
+// Purpose: Test exec time
+void test(char *cfgfile, char *filename) {
+    char *datacfg = (char*)"cfg/coco.data";
+    char *weightfile = (char*)"../yolov3.weights";
     float thresh = 0.3;
     float hier_thresh = 0.5;
 
@@ -988,12 +1008,12 @@ void test(char *filename) {
     // Load alphabet letters images
     image **alphabet = load_alphabet();
 
-double tl = what_time_is_it_now();
+    double tl = what_time_is_it_now();
 
     // Load neural network
     network *net = load_network(cfgfile, weightfile, 0);
 
-printf("Load net time: %f ms.\n", (what_time_is_it_now() - tl) * 1000);
+    printf("Load net time: %f ms.\n\n", (what_time_is_it_now() - tl) * 1000);
 
     set_batch_network(net, 1);
     srand(2222222);
@@ -1004,35 +1024,41 @@ printf("Load net time: %f ms.\n", (what_time_is_it_now() - tl) * 1000);
 
     strncpy(input, filename, 256);
 
-    // Load input image
-    image im = load_image_color(input, 0, 0);
-    image sized = letterbox_image(im, net->w, net->h);
-
     layer l = net->layers[net->n - 1];
 
-    float *X = sized.data;
-
+    image im, sized;
     int nboxes = 0;
     detection *dets;
 
-double ttime = what_time_is_it_now();
+    double ttime = what_time_is_it_now();
 
-    // Run predictor
     int iteration;
-    for (iteration = 0; iteration < 1; iteration++) {
+    for (iteration = 0; iteration < 15; iteration++) {
+        double t = what_time_is_it_now();
+
+        // Load input image
+        im = load_image_color(input, 0, 0);
+        sized = letterbox_image(im, net->w, net->h);
+
+        float *X = sized.data;
+
         // Run predictor
         network_predict_float(net, X);
 
         // Generate outputs
         int letterbox = 1;
         dets = get_network_boxes(net, im.w, im.h, thresh, hier_thresh, 0, 1, &nboxes, letterbox);
+
+        if (nms)
+            do_nms_sort(dets, nboxes, l.classes, nms);
+        print_detections(im, dets, nboxes, thresh, names, alphabet, l.classes);
+
+        if (iteration < 6) printf("discard - ");
+        printf("%f\n", (what_time_is_it_now() - t) * 1000);   
     }
 
-printf("Total Time: %f ms.\n", (what_time_is_it_now() - ttime) * 1000);
-
-    if (nms)
-        do_nms_sort(dets, nboxes, l.classes, nms);
-    draw_detections(im, dets, nboxes, thresh, names, alphabet, l.classes);
+    printf("\nTotal Time: %f ms.\n", (what_time_is_it_now() - ttime) * 1000);
+    
     free_detections(dets, nboxes);
 
     save_image(im, "predictions");
@@ -1096,9 +1122,10 @@ void run_detector(int argc, char **argv)
     else if(0==strcmp(argv[2], "recall")) validate_detector_recall(cfg, weights);
     else if(0==strcmp(argv[2], "map")) validate_detector_map(datacfg, cfg, weights, thresh, iou_thresh, NULL);
     else if(0 == strcmp(argv[2], "rubens")) {
-        // ./darknet detector rubens <filename>
-        filename = datacfg;
-        test(filename);
+        // ./darknet detector rubens <cfgfile> <filename>
+        filename = argv[4];
+        cfg = argv[3];
+        test(cfg, filename);
     } else if(0==strcmp(argv[2], "demo")) {
         list *options = read_data_cfg(datacfg);
         int classes = option_find_int(options, (char*)"classes", 20);
