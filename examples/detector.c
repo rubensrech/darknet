@@ -994,7 +994,7 @@ void print_detections(image im, detection *dets, int num, float thresh, char **n
 // Purpose: Test exec time
 void test(char *cfgfile, char *filename) {
     char *datacfg = (char*)"cfg/coco.data";
-    char *weightfile = (char*)"../yolov3.weights";
+    char *weightfile = (char*)"../yolov3-tiny2.weights";
     float thresh = 0.3;
     float hier_thresh = 0.5;
 
@@ -1033,7 +1033,7 @@ void test(char *cfgfile, char *filename) {
     double ttime = what_time_is_it_now();
 
     int iteration;
-    for (iteration = 0; iteration < 15; iteration++) {
+    for (iteration = 0; iteration < 1; iteration++) {
         double t = what_time_is_it_now();
 
         // Load input image
