@@ -984,7 +984,7 @@ void print_detections(image im, detection *dets, int num, float thresh, char **n
                     strcat(labelstr, ", ");
                     strcat(labelstr, names[j]);
                 }
-                // printf("%s: %.0f%%\n", names[j], dets[i].prob[j]*100);
+                printf("%s: %.0f%%\n", names[j], dets[i].prob[j]*100);
             }
         }
     }

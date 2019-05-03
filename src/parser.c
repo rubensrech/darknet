@@ -888,13 +888,16 @@ network *parse_network_cfg_custom(char *filename, int batch)
     net->truths = out.outputs;
     if(net->layers[net->n-1].truths) net->truths = net->layers[net->n-1].truths;
     net->output = out.output;
-    net->input = (real*)calloc(net->inputs*net->batch, sizeof(real));
-    net->input_float = (float*)calloc(net->inputs*net->batch, sizeof(float));
+
+    int max_input_size = 692224; // layer 1 -> outputs ??
+
+    net->input = (real*)calloc(max_input_size, sizeof(real));
+    net->input_float = (float*)calloc(max_input_size, sizeof(float));
     net->truth = (real*)calloc(net->truths*net->batch, sizeof(real));
 #ifdef GPU
     net->output_gpu = out.output_gpu;
-    net->input_gpu = cuda_make_array(net->input, net->inputs*net->batch);
-    net->input_float_gpu = cuda_make_float_array(net->input_float, net->inputs*net->batch);
+    net->input_gpu = cuda_make_array(net->input, max_input_size);
+    net->input_float_gpu = cuda_make_float_array(net->input_float, max_input_size);
     net->truth_gpu = cuda_make_array(net->truth, net->truths*net->batch);
 #endif
     if(workspace_size){
