@@ -1034,8 +1034,6 @@ void test(char *cfgfile, char *filename) {
 
     int iteration;
     for (iteration = 0; iteration < 1; iteration++) {
-        double t = what_time_is_it_now();
-
         // Load input image
         im = load_image_color(input, 0, 0);
         sized = letterbox_image(im, net->w, net->h);
@@ -1052,9 +1050,6 @@ void test(char *cfgfile, char *filename) {
         if (nms)
             do_nms_sort(dets, nboxes, l.classes, nms);
         print_detections(im, dets, nboxes, thresh, names, alphabet, l.classes);
-
-        if (iteration < 6) printf("discard - ");
-        printf("%f\n", (what_time_is_it_now() - t) * 1000);   
     }
 
     printf("\nTotal Time: %f ms.\n", (what_time_is_it_now() - ttime) * 1000);

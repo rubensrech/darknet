@@ -108,8 +108,16 @@ void forward_route_layer_gpu(const route_layer l, network net)
     int offset = 0;
     for(i = 0; i < l.n; ++i){
         int index = l.input_layers[i];
-        real *input = net.layers[index].output_gpu;
+
+        layer inputLayer = net.layers[index];
         int input_size = l.input_sizes[i];
+
+        if (inputLayer.real_type != REAL && l.real_type == REAL) {
+            float2real_array_gpu(inputLayer.output_float_gpu, inputLayer.output_gpu, input_size);
+        }
+
+        real *input = inputLayer.output_gpu;
+        
         for(j = 0; j < l.batch; ++j){
             copy_gpu(input_size, input + j*input_size, 1, l.output_gpu + offset + j*l.outputs, 1);
         }
