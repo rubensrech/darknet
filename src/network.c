@@ -607,6 +607,10 @@ void fill_network_boxes(network *net, int w, int h, float thresh, float hier, in
 detection *get_network_boxes(network *net, int w, int h, float thresh, float hier, int *map, int relative, int *num, int letter)
 {
     detection *dets = make_network_boxes(net, thresh, num);
+
+    if (*num == 0)
+        fprintf(stderr, "> DETECTS: %d - calling 'fill_network_boxes()' might cause segmentation fault\n", *num);
+
     fill_network_boxes(net, w, h, thresh, hier, map, relative, dets, letter);
     return dets;
 }
@@ -827,7 +831,8 @@ void forward_network_gpu(network *netp, int push_input)
 
         if (l.real_type == FLOAT) {
             if (l_prev && l_prev->real_type == REAL) {
-                real2float_array_gpu(net.input_gpu, net.input_float_gpu, l_prev->outputs * l_prev->batch);
+                real2float_array_gpu(net.input_gpu, net.hold_input_float_gpu, l_prev->outputs * l_prev->batch);
+                net.input_float_gpu = net.hold_input_float_gpu;
             }
             
             if (l.delta_float_gpu) 
@@ -844,8 +849,10 @@ void forward_network_gpu(network *netp, int push_input)
         } 
         
         else if (l.real_type == REAL) {
-            if (l_prev && l_prev->real_type == FLOAT)
-                float2real_array_gpu(net.input_float_gpu, net.input_gpu, l_prev->outputs * l_prev->batch);
+            if (l_prev && l_prev->real_type == FLOAT) {
+                float2real_array_gpu(net.input_float_gpu, net.hold_input_gpu, l_prev->outputs * l_prev->batch);
+                net.input_gpu = net.hold_input_gpu;
+            }
             
             if (l.delta_gpu) 
                 fill_gpu(l.outputs * l.batch, 0, l.delta_gpu, 1);

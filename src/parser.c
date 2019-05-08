@@ -897,7 +897,9 @@ network *parse_network_cfg_custom(char *filename, int batch)
 #ifdef GPU
     net->output_gpu = out.output_gpu;
     net->input_gpu = cuda_make_array(net->input, max_input_size);
+    net->fix_input_gpu = net->input_gpu;
     net->input_float_gpu = cuda_make_float_array(net->input_float, max_input_size);
+    net->fix_input_float_gpu = net->input_float_gpu;
     net->truth_gpu = cuda_make_array(net->truth, net->truths*net->batch);
 #endif
     if(workspace_size){

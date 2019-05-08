@@ -990,6 +990,39 @@ void print_detections(image im, detection *dets, int num, float thresh, char **n
     }
 }
 
+void exportNetInOut(network *net) {
+    int i, j;
+    layer l;
+
+    for (i = 0; i < net->n; i++) {
+        l = net->layers[i];
+        if (l.real_type == FLOAT)
+            cuda_pull_float_array(l.output_float_gpu, l.output_float, l.outputs);
+        else if (l.real_type == REAL)
+            cuda_pull_array(l.output_gpu, l.output, l.outputs);
+    }
+
+    for (i = 0; i < net->n; i++) {
+        char filename[40];
+        snprintf(filename, sizeof(filename), "_tmp_/l%d-out.txt", i);
+        FILE *f = fopen(filename, "w");
+
+        l = net->layers[i];    
+    
+        for (j = 0; j < l.outputs; j++) {
+            if (l.real_type == FLOAT)
+                fprintf(f, "%f\t", l.output_float[j]);
+            else if (l.real_type == REAL)
+                fprintf(f, "%f\t", (float)(l.output[j]));
+
+            if (j % 4 == 0)
+                fprintf(f, "\n");
+        }
+
+        fclose(f);
+    }
+}
+
 // Rubens Test 1
 // Purpose: Test exec time
 void test(char *cfgfile, char *filename) {
@@ -1033,7 +1066,7 @@ void test(char *cfgfile, char *filename) {
     double ttime = what_time_is_it_now();
 
     int iteration;
-    for (iteration = 0; iteration < 1; iteration++) {
+    for (iteration = 0; iteration < 2; iteration++) {
         // Load input image
         im = load_image_color(input, 0, 0);
         sized = letterbox_image(im, net->w, net->h);
@@ -1050,11 +1083,11 @@ void test(char *cfgfile, char *filename) {
         if (nms)
             do_nms_sort(dets, nboxes, l.classes, nms);
         print_detections(im, dets, nboxes, thresh, names, alphabet, l.classes);
+
+        free_detections(dets, nboxes);
     }
 
     printf("\nTotal Time: %f ms.\n", (what_time_is_it_now() - ttime) * 1000);
-    
-    free_detections(dets, nboxes);
 
     save_image(im, "predictions");
     free_image(im);

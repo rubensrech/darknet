@@ -561,6 +561,9 @@ typedef struct network{
     float *workspace_float;
     #ifdef GPU
         float *input_float_gpu;
+
+        real *hold_input_gpu;
+        float *hold_input_float_gpu;
     #endif
 // #endif
 /* ---------- x ---------- */
