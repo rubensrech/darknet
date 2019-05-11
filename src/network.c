@@ -842,6 +842,9 @@ void forward_network_gpu(network *netp, int push_input)
 
             net.input_float_gpu = l.output_float_gpu;
             net.input_float = l.output_float;
+            net.input_gpu = l.output_gpu;
+            net.input = l.output;
+
             if (l.truth) {
                 float2real_array_gpu(l.output_float_gpu, net.truth_gpu, l.outputs * l.batch);
                 float2real_array(l.output_float, net.truth, l.outputs * l.batch);
@@ -861,6 +864,8 @@ void forward_network_gpu(network *netp, int push_input)
 
             net.input_gpu = l.output_gpu;
             net.input = l.output;
+            net.input_float_gpu = l.output_float_gpu;
+            net.input_float = l.output_float;
 
             if (l.truth) {
                 net.truth_gpu = l.output_gpu;
