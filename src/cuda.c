@@ -17,6 +17,74 @@ extern "C" {
 
 #include "real.h"
 
+// > Mixed precision functions
+
+#if REAL != FLOAT
+
+    float *cuda_make_float_array(float *x, size_t n) {
+        float *x_gpu;
+        size_t size = sizeof(float)*n;
+        cudaError_t status = cudaMalloc((void **)&x_gpu, size);
+        check_error(status);
+        if(x){
+            status = cudaMemcpy(x_gpu, x, size, cudaMemcpyHostToDevice);
+            check_error(status);
+        } else {
+            fill_float_gpu(n, 0, x_gpu, 1);
+        }
+        if(!x_gpu) error("Cuda malloc failed\n");
+        return x_gpu;
+    }
+
+    void cuda_push_float_array(float *x_gpu, float *x, size_t n) {
+        size_t size = sizeof(float)*n;
+        cudaError_t status = cudaMemcpy(x_gpu, x, size, cudaMemcpyHostToDevice);
+        check_error(status);
+    }
+
+    void cuda_free_float(float *x_gpu) {
+        cudaError_t status = cudaFree(x_gpu);
+        check_error(status);
+    }
+
+    void cuda_pull_float_array(float *x_gpu, float *x, size_t n) {
+        size_t size = sizeof(float)*n;
+        cudaError_t status = cudaMemcpy(x, x_gpu, size, cudaMemcpyDeviceToHost);
+        check_error(status);
+    }
+
+#elif REAL != HALF
+
+    half *cuda_make_half_array(half *x, size_t n) {
+        half *x_gpu;
+        size_t size = sizeof(half)*n;
+        cudaError_t status = cudaMalloc((void **)&x_gpu, size);
+        check_error(status);
+        if(x){
+            status = cudaMemcpy(x_gpu, x, size, cudaMemcpyHostToDevice);
+            check_error(status);
+        } else {
+            fill_half_gpu(n, 0, x_gpu, 1);
+        }
+        if(!x_gpu) error("Cuda malloc failed\n");
+        return x_gpu;
+    }
+
+    void cuda_push_half_array(half *x_gpu, half *x, size_t n) {
+        size_t size = sizeof(half)*n;
+        cudaError_t status = cudaMemcpy(x_gpu, x, size, cudaMemcpyHostToDevice);
+        check_error(status);
+    }
+
+    void cuda_free_half(half *x_gpu) {
+        cudaError_t status = cudaFree(x_gpu);
+        check_error(status);
+    }
+
+#endif
+
+// > General functions
+
 void cuda_set_device(int n)
 {
     gpu_index = n;
@@ -111,23 +179,6 @@ real *cuda_make_array(real *x, size_t n)
     return x_gpu;
 }
 
-float *cuda_make_float_array(float *x, size_t n)
-{
-    float *x_gpu;
-    size_t size = sizeof(float)*n;
-    cudaError_t status = cudaMalloc((void **)&x_gpu, size);
-    check_error(status);
-    if(x){
-        status = cudaMemcpy(x_gpu, x, size, cudaMemcpyHostToDevice);
-        check_error(status);
-    } else {
-        fill_float_gpu(n, 0, x_gpu, 1);
-    }
-    if(!x_gpu) error("Cuda malloc failed\n");
-    return x_gpu;
-}
-
-
 void cuda_random(real *x_gpu, size_t n)
 {
     static curandGenerator_t gen[16];
@@ -189,22 +240,9 @@ void cuda_free(real *x_gpu)
     check_error(status);
 }
 
-void cuda_free_float(float *x_gpu)
-{
-    cudaError_t status = cudaFree(x_gpu);
-    check_error(status);
-}
-
 void cuda_push_array(real *x_gpu, real *x, size_t n)
 {
     size_t size = sizeof(real)*n;
-    cudaError_t status = cudaMemcpy(x_gpu, x, size, cudaMemcpyHostToDevice);
-    check_error(status);
-}
-
-void cuda_push_float_array(float *x_gpu, float *x, size_t n)
-{
-    size_t size = sizeof(float)*n;
     cudaError_t status = cudaMemcpy(x_gpu, x, size, cudaMemcpyHostToDevice);
     check_error(status);
 }
@@ -215,14 +253,6 @@ void cuda_pull_array(real *x_gpu, real *x, size_t n)
     cudaError_t status = cudaMemcpy(x, x_gpu, size, cudaMemcpyDeviceToHost);
     check_error(status);
 }
-
-void cuda_pull_float_array(float *x_gpu, float *x, size_t n)
-{
-    size_t size = sizeof(float)*n;
-    cudaError_t status = cudaMemcpy(x, x_gpu, size, cudaMemcpyDeviceToHost);
-    check_error(status);
-}
-
 
 float cuda_mag_array(real *x_gpu, size_t n)
 {
