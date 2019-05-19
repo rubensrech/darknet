@@ -17,5 +17,9 @@ void im2col_float_gpu(float *im,
          int channels, int height, int width,
          int ksize, int stride, int pad, float *data_col);
 
+void im2col_half_gpu(half *im,
+         int channels, int height, int width,
+         int ksize, int stride, int pad, half *data_col);
+
 #endif
 #endif

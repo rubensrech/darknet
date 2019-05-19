@@ -32,5 +32,11 @@ void gemm_float_gpu(int TA, int TB, int M, int N, int K, float ALPHA,
         float *B_gpu, int ldb,
         float BETA,
         float *C_gpu, int ldc);
+
+void gemm_half_gpu(int TA, int TB, int M, int N, int K, float ALPHA, 
+        half *A_gpu, int lda, 
+        half *B_gpu, int ldb,
+        float BETA,
+        half *C_gpu, int ldc);
 #endif
 #endif
