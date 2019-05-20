@@ -163,7 +163,7 @@ void forward_convolutional_layer_float_gpu(convolutional_layer l, network net) {
         add_bias_float_gpu(l.output_float_gpu, l.biases_float_gpu, l.batch, l.n, l.out_w*l.out_h);
     }
 
-    activate_array_float_gpu(l.output_float_gpu, l.outputs*l.batch, l.activation);
+    activate_array_gpu(l.output_float_gpu, l.outputs*l.batch, l.activation);
     if(l.binary || l.xnor) swap_binary_float(&l);
 }
 
