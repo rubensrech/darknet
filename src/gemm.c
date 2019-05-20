@@ -5,6 +5,37 @@
 #include <stdio.h>
 #include <math.h>
 
+// > Mixed precision functions
+
+#if REAL != FLOAT
+    void gemm_float_gpu(int TA, int TB, int M, int N, int K, float ALPHA, 
+        float *A_gpu, int lda, 
+        float *B_gpu, int ldb,
+        float BETA,
+        float *C_gpu, int ldc) {
+            cublasHandle_t handle = blas_handle();
+            cudaError_t status = (cudaError_t)cublasSgemm(handle, (TB ? CUBLAS_OP_T : CUBLAS_OP_N), 
+                    (TA ? CUBLAS_OP_T : CUBLAS_OP_N), N, M, K, &ALPHA, B_gpu, ldb, A_gpu, lda, &BETA, C_gpu, ldc);
+            check_error(status);
+    }
+#elif REAL != HALF
+    void gemm_half_gpu(int TA, int TB, int M, int N, int K, float ALPHA, 
+        half *A_gpu, int lda, 
+        half *B_gpu, int ldb,
+        float BETA,
+        half *C_gpu, int ldc) {
+            cublasHandle_t handle = blas_handle();
+            half alpha = half(ALPHA);
+            half beta = half(BETA);
+            cudaError_t status = (cudaError_t)cublasHgemm(handle, (TB ? CUBLAS_OP_T : CUBLAS_OP_N), 
+                    (TA ? CUBLAS_OP_T : CUBLAS_OP_N), N, M, K, (half_device*)(&alpha),
+                    (half_device*)B_gpu, ldb, (half_device*)A_gpu, lda, (half_device*)(&beta), (half_device*)C_gpu, ldc);
+            check_error(status);
+    }
+#endif
+
+// > General functions
+
 void gemm_bin(int M, int N, int K, float ALPHA, 
         char  *A, int lda, 
         real *B, int ldb,
@@ -191,18 +222,6 @@ void gemm_gpu(int TA, int TB, int M, int N, int K, float ALPHA,
             (TA ? CUBLAS_OP_T : CUBLAS_OP_N), N, M, K, (real_device*)(&alpha),
             (real_device*)B_gpu, ldb, (real_device*)A_gpu, lda, (real_device*)(&beta), (real_device*)C_gpu, ldc);
 #endif
-    check_error(status);
-}
-
-void gemm_float_gpu(int TA, int TB, int M, int N, int K, float ALPHA, 
-        float *A_gpu, int lda, 
-        float *B_gpu, int ldb,
-        float BETA,
-        float *C_gpu, int ldc)
-{
-    cublasHandle_t handle = blas_handle();
-    cudaError_t status = (cudaError_t)cublasSgemm(handle, (TB ? CUBLAS_OP_T : CUBLAS_OP_N), 
-            (TA ? CUBLAS_OP_T : CUBLAS_OP_N), N, M, K, &ALPHA, B_gpu, ldb, A_gpu, lda, &BETA, C_gpu, ldc);
     check_error(status);
 }
 

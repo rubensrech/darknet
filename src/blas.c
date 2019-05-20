@@ -6,6 +6,47 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+// > Mixed precision functions
+
+    // Float
+
+    void normalize_float_cpu(float *x, float *mean, float *variance, int batch, int filters, int spatial) {
+        int b, f, i;
+        for(b = 0; b < batch; ++b){
+            for(f = 0; f < filters; ++f){
+                for(i = 0; i < spatial; ++i){
+                    int index = b*filters*spatial + f*spatial + i;
+                    x[index] = (x[index] - mean[f])/(sqrt(variance[f]) + .000001f);
+                }
+            }
+        }
+    }
+
+    void axpy_float_cpu(int N, float ALPHA, float *X, int INCX, float *Y, int INCY) {
+        int i;
+        for(i = 0; i < N; ++i) Y[i*INCY] += ALPHA*X[i*INCX];
+    }
+
+    void scal_float_cpu(int N, float ALPHA, float *X, int INCX) {
+        int i;
+        for(i = 0; i < N; ++i) X[i*INCX] *= ALPHA;
+    }
+
+    void fill_float_cpu(int N, float ALPHA, float *X, int INCX) {
+        int i;
+        for(i = 0; i < N; ++i) X[i*INCX] = ALPHA;
+    }
+
+    void copy_float_cpu(int N, float *X, int INCX, float *Y, int INCY) {
+        int i;
+        for(i = 0; i < N; ++i) Y[i*INCY] = X[i*INCX];
+    }
+
+    // Half
+
+// > General functions
+
 void reorg_cpu(real *x, int w, int h, int c, int batch, int stride, int forward, real *out)
 {
     int b,i,j,k;
@@ -157,19 +198,6 @@ void normalize_cpu(real *x, real *mean, real *variance, int batch, int filters, 
     }
 }
 
-void normalize_float_cpu(float *x, float *mean, float *variance, int batch, int filters, int spatial)
-{
-    int b, f, i;
-    for(b = 0; b < batch; ++b){
-        for(f = 0; f < filters; ++f){
-            for(i = 0; i < spatial; ++i){
-                int index = b*filters*spatial + f*spatial + i;
-                x[index] = (x[index] - mean[f])/(sqrt(variance[f]) + .000001f);
-            }
-        }
-    }
-}
-
 void const_cpu(int N, float ALPHA, real *X, int INCX)
 {
     int i;
@@ -194,31 +222,13 @@ void axpy_cpu(int N, float ALPHA, real *X, int INCX, real *Y, int INCY)
     for(i = 0; i < N; ++i) Y[i*INCY] += ALPHA*X[i*INCX];
 }
 
-void axpy_float_cpu(int N, float ALPHA, float *X, int INCX, float *Y, int INCY)
-{
-    int i;
-    for(i = 0; i < N; ++i) Y[i*INCY] += ALPHA*X[i*INCX];
-}
-
 void scal_cpu(int N, float ALPHA, real *X, int INCX)
 {
     int i;
     for(i = 0; i < N; ++i) X[i*INCX] *= ALPHA;
 }
 
-void scal_float_cpu(int N, float ALPHA, float *X, int INCX)
-{
-    int i;
-    for(i = 0; i < N; ++i) X[i*INCX] *= ALPHA;
-}
-
 void fill_cpu(int N, float ALPHA, real *X, int INCX)
-{
-    int i;
-    for(i = 0; i < N; ++i) X[i*INCX] = ALPHA;
-}
-
-void fill_float_cpu(int N, float ALPHA, float *X, int INCX)
 {
     int i;
     for(i = 0; i < N; ++i) X[i*INCX] = ALPHA;
@@ -255,12 +265,6 @@ void inter_cpu(int NX, real *X, int NY, real *Y, int B, real *OUT)
 }
 
 void copy_cpu(int N, real *X, int INCX, real *Y, int INCY)
-{
-    int i;
-    for(i = 0; i < N; ++i) Y[i*INCY] = X[i*INCX];
-}
-
-void copy_float_cpu(int N, float *X, int INCX, float *Y, int INCY)
 {
     int i;
     for(i = 0; i < N; ++i) Y[i*INCY] = X[i*INCX];

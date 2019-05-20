@@ -12,6 +12,40 @@
 #include "xnor_layer.h"
 #endif
 
+// > Mixed precision functions
+
+#if REAL != FLOAT
+
+void swap_binary_float(convolutional_layer *l) {
+    float *swap = l->weights_float;
+    l->weights_float = l->binary_weights_float;
+    l->binary_weights_float = swap;
+
+    #ifdef GPU
+        swap = l->weights_float_gpu;
+        l->weights_float_gpu = l->binary_weights_float_gpu;
+        l->binary_weights_float_gpu = swap;
+    #endif
+}
+
+#elif REAL != HALF
+
+void swap_binary_half(convolutional_layer *l) {
+    half *swap = l->weights_half;
+    l->weights_half = l->binary_weights_half;
+    l->binary_weights_half = swap;
+
+    #ifdef GPU
+        swap = l->weights_half_gpu;
+        l->weights_half_gpu = l->binary_weights_half_gpu;
+        l->binary_weights_half_gpu = swap;
+    #endif
+}
+
+#endif
+
+// > General functions
+
 void swap_binary(convolutional_layer *l)
 {
     real *swap = l->weights;
@@ -22,19 +56,6 @@ void swap_binary(convolutional_layer *l)
     swap = l->weights_gpu;
     l->weights_gpu = l->binary_weights_gpu;
     l->binary_weights_gpu = swap;
-#endif
-}
-
-void swap_binary_float(convolutional_layer *l)
-{
-    float *swap = l->weights_float;
-    l->weights_float = l->binary_weights_float;
-    l->binary_weights_float = swap;
-
-#ifdef GPU
-    swap = l->weights_float_gpu;
-    l->weights_float_gpu = l->binary_weights_float_gpu;
-    l->binary_weights_float_gpu = swap;
 #endif
 }
 
@@ -130,6 +151,8 @@ static size_t get_workspace_size(layer l){
 #endif
     if (l.real_type == FLOAT)
         return (size_t)l.out_h*l.out_w*l.size*l.size*l.c/l.groups*sizeof(float);
+    else if (l.real_type == HALF)
+        return (size_t)l.out_h*l.out_w*l.size*l.size*l.c/l.groups*sizeof(half);
     else
         return (size_t)l.out_h*l.out_w*l.size*l.size*l.c/l.groups*sizeof(real);
 }
@@ -224,6 +247,12 @@ convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int
 
         l.biases_float = (float*)calloc(n, sizeof(float));
         l.bias_updates_float = (float*)calloc(n, sizeof(float));
+    } else if (IS_MIX_PRECISION_HALF_LAYER(real_type)) {
+        l.weights_half = (half*)calloc(c/groups*n*size*size, sizeof(half));
+        l.weight_updates_half = (half*)calloc(c/groups*n*size*size, sizeof(half));
+
+        l.biases_half = (half*)calloc(n, sizeof(half));
+        l.bias_updates_half = (half*)calloc(n, sizeof(half));
     } else {
         l.weights = (real*)calloc(c/groups*n*size*size, sizeof(real));
         l.weight_updates = (real*)calloc(c/groups*n*size*size, sizeof(real));
@@ -239,6 +268,8 @@ convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int
 
     if (IS_MIX_PRECISION_FLOAT_LAYER(real_type)) {
         for(i = 0; i < l.nweights; ++i) l.weights_float[i] = scale*rand_normal();
+    } else if (IS_MIX_PRECISION_HALF_LAYER(real_type)) {
+        for(i = 0; i < l.nweights; ++i) l.weights_half[i] = scale*rand_normal();
     } else {
         for(i = 0; i < l.nweights; ++i) l.weights[i] = scale*rand_normal();
     }
@@ -257,6 +288,9 @@ convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int
     if (IS_MIX_PRECISION_FLOAT_LAYER(real_type)) {
         l.output_float = (float*)calloc(l.batch*l.outputs, sizeof(float));
         l.delta_float = (float*)calloc(l.batch*l.outputs, sizeof(float));
+    } else if (IS_MIX_PRECISION_HALF_LAYER(real_type)) {
+        l.output_half = (half*)calloc(l.batch*l.outputs, sizeof(half));
+        l.delta_half = (half*)calloc(l.batch*l.outputs, sizeof(half));
     }
 
     l.forward = forward_convolutional_layer;
@@ -268,6 +302,9 @@ convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int
         if (IS_MIX_PRECISION_FLOAT_LAYER(real_type)) {
             l.binary_weights_float = (float*)calloc(l.nweights, sizeof(float));
             l.scales_float = (float*)calloc(n, sizeof(float));
+        } else if (IS_MIX_PRECISION_HALF_LAYER(real_type)) {
+            l.binary_weights_half = (half*)calloc(l.nweights, sizeof(half));
+            l.scales_half = (half*)calloc(n, sizeof(half));
         } else {
             l.binary_weights = (real*)calloc(l.nweights, sizeof(real));
             l.scales = (real*)calloc(n, sizeof(real));
@@ -277,6 +314,9 @@ convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int
         if (IS_MIX_PRECISION_FLOAT_LAYER(real_type)) {
             l.binary_weights_float = (float*)calloc(l.nweights, sizeof(float));
             l.binary_input_float = (float*)calloc(l.inputs*l.batch, sizeof(float));
+        } else if (IS_MIX_PRECISION_HALF_LAYER(real_type)) {
+            l.binary_weights_half = (half*)calloc(l.nweights, sizeof(half));
+            l.binary_input_half = (half*)calloc(l.inputs*l.batch, sizeof(half));
         } else {
             l.binary_weights = (real*)calloc(l.nweights, sizeof(real));
             l.binary_input = (real*)calloc(l.inputs*l.batch, sizeof(real));
@@ -301,6 +341,23 @@ convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int
             l.rolling_variance_float = (float*)calloc(n, sizeof(float));
             l.x_float = (float*)calloc(l.batch*l.outputs, sizeof(float));
             l.x_norm_float = (float*)calloc(l.batch*l.outputs, sizeof(float));
+        } else if (IS_MIX_PRECISION_HALF_LAYER(real_type)) {
+            l.scales_half = (half*)calloc(n, sizeof(half));
+            l.scale_updates_half = (half*)calloc(n, sizeof(half));
+            for(i = 0; i < n; ++i){
+                l.scales_half[i] = 1.0_h;
+            }
+
+            l.mean_half = (half*)calloc(n, sizeof(half));
+            l.variance_half = (half*)calloc(n, sizeof(half));
+
+            l.mean_delta_half = (half*)calloc(n, sizeof(half));
+            l.variance_delta_half = (half*)calloc(n, sizeof(half));
+
+            l.rolling_mean_half = (half*)calloc(n, sizeof(half));
+            l.rolling_variance_half = (half*)calloc(n, sizeof(half));
+            l.x_half = (half*)calloc(l.batch*l.outputs, sizeof(half));
+            l.x_norm_half = (half*)calloc(l.batch*l.outputs, sizeof(half));
         } else {
             l.scales = (real*)calloc(n, sizeof(real));
             l.scale_updates = (real*)calloc(n, sizeof(real));
@@ -328,6 +385,13 @@ convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int
             l.scale_m_float = (float*)calloc(n, sizeof(float));
             l.bias_v_float = (float*)calloc(n, sizeof(float));
             l.scale_v_float = (float*)calloc(n, sizeof(float));
+        } else if (IS_MIX_PRECISION_HALF_LAYER(real_type)) {
+            l.m_half = (half*)calloc(l.nweights, sizeof(half));
+            l.v_half = (half*)calloc(l.nweights, sizeof(half));
+            l.bias_m_half = (half*)calloc(n, sizeof(half));
+            l.scale_m_half = (half*)calloc(n, sizeof(half));
+            l.bias_v_half = (half*)calloc(n, sizeof(half));
+            l.scale_v_half = (half*)calloc(n, sizeof(half));
         } else {
             l.m = (real*)calloc(l.nweights, sizeof(real));
             l.v = (real*)calloc(l.nweights, sizeof(real));
@@ -341,6 +405,8 @@ convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int
 #ifdef GPU
     if (IS_MIX_PRECISION_FLOAT_LAYER(real_type)) {
         l.forward_gpu = forward_convolutional_layer_float_gpu;
+    } else if (IS_MIX_PRECISION_HALF_LAYER(real_type)) {
+        l.forward_gpu = forward_convolutional_layer_half_gpu;
     } else {
         l.forward_gpu = forward_convolutional_layer_gpu;
     }
@@ -356,6 +422,13 @@ convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int
                 l.bias_v_float_gpu = cuda_make_float_array(l.bias_v_float, n);
                 l.scale_m_float_gpu = cuda_make_float_array(l.scale_m_float, n);
                 l.scale_v_float_gpu = cuda_make_float_array(l.scale_v_float, n);
+            } if (IS_MIX_PRECISION_HALF_LAYER(real_type)) {
+                l.m_half_gpu = cuda_make_half_array(l.m_half, l.nweights);
+                l.v_half_gpu = cuda_make_half_array(l.v_half, l.nweights);
+                l.bias_m_half_gpu = cuda_make_half_array(l.bias_m_half, n);
+                l.bias_v_half_gpu = cuda_make_half_array(l.bias_v_half, n);
+                l.scale_m_half_gpu = cuda_make_half_array(l.scale_m_half, n);
+                l.scale_v_half_gpu = cuda_make_half_array(l.scale_v_half, n);
             } else {
                 l.m_gpu = cuda_make_array(l.m, l.nweights);
                 l.v_gpu = cuda_make_array(l.v, l.nweights);
@@ -378,6 +451,15 @@ convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int
 
             l.delta_float_gpu = cuda_make_float_array(l.delta_float, l.batch*out_h*out_w*n);
             l.output_float_gpu = cuda_make_float_array(l.output_float, l.batch*out_h*out_w*n);
+        } else if (IS_MIX_PRECISION_HALF_LAYER(real_type)) {
+            l.weights_half_gpu = cuda_make_half_array(l.weights_half, l.nweights);
+            l.weight_updates_half_gpu = cuda_make_half_array(l.weight_updates_half, l.nweights);
+
+            l.biases_half_gpu = cuda_make_half_array(l.biases_half, n);
+            l.bias_updates_half_gpu = cuda_make_half_array(l.bias_updates_half, n);
+
+            l.delta_half_gpu = cuda_make_half_array(l.delta_half, l.batch*out_h*out_w*n);
+            l.output_half_gpu = cuda_make_half_array(l.output_half, l.batch*out_h*out_w*n);
         } else {
             l.weights_gpu = cuda_make_array(l.weights, l.nweights);
             l.weight_updates_gpu = cuda_make_array(l.weight_updates, l.nweights);
@@ -389,6 +471,8 @@ convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int
         if(binary){
             if (IS_MIX_PRECISION_FLOAT_LAYER(real_type)) {
                 l.binary_weights_float_gpu = cuda_make_float_array(l.weights_float, l.nweights);
+            } else if (IS_MIX_PRECISION_HALF_LAYER(real_type)) {
+                l.binary_weights_half_gpu = cuda_make_half_array(l.weights_half, l.nweights);
             } else {
                 l.binary_weights_gpu = cuda_make_array(l.weights, l.nweights);
             }
@@ -397,6 +481,9 @@ convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int
             if (IS_MIX_PRECISION_FLOAT_LAYER(real_type)) {
                 l.binary_weights_float_gpu = cuda_make_float_array(l.weights_float, l.nweights);
                 l.binary_input_float_gpu = cuda_make_float_array(0, l.inputs*l.batch);
+            } else if (IS_MIX_PRECISION_HALF_LAYER(real_type)) {
+                l.binary_weights_half_gpu = cuda_make_half_array(l.weights_half, l.nweights);
+                l.binary_input_half_gpu = cuda_make_half_array(0, l.inputs*l.batch);
             } else {
                 l.binary_weights_gpu = cuda_make_array(l.weights, l.nweights);
                 l.binary_input_gpu = cuda_make_array(0, l.inputs*l.batch);
@@ -419,6 +506,21 @@ convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int
 
                 l.x_float_gpu = cuda_make_float_array(l.output_float, l.batch*out_h*out_w*n);
                 l.x_norm_float_gpu = cuda_make_float_array(l.output_float, l.batch*out_h*out_w*n);
+            } else if (IS_MIX_PRECISION_HALF_LAYER(real_type)) {
+                l.mean_half_gpu = cuda_make_half_array(l.mean_half, n);
+                l.variance_half_gpu = cuda_make_half_array(l.variance_half, n);
+
+                l.rolling_mean_half_gpu = cuda_make_half_array(l.mean_half, n);
+                l.rolling_variance_half_gpu = cuda_make_half_array(l.variance_half, n);
+
+                l.mean_delta_half_gpu = cuda_make_half_array(l.mean_half, n);
+                l.variance_delta_half_gpu = cuda_make_half_array(l.variance_half, n);
+
+                l.scales_half_gpu = cuda_make_half_array(l.scales_half, n);
+                l.scale_updates_half_gpu = cuda_make_half_array(l.scale_updates_half, n);
+
+                l.x_half_gpu = cuda_make_half_array(l.output_half, l.batch*out_h*out_w*n);
+                l.x_norm_half_gpu = cuda_make_half_array(l.output_half, l.batch*out_h*out_w*n);
             } else {
                 l.mean_gpu = cuda_make_array(l.mean, n);
                 l.variance_gpu = cuda_make_array(l.variance, n);
@@ -516,12 +618,18 @@ void resize_convolutional_layer(convolutional_layer *l, int w, int h)
     if (IS_MIX_PRECISION_FLOAT_LAYER(l->real_type)) {
         l->output_float = (float*)realloc(l->output_float, l->batch*l->outputs*sizeof(float));
         l->delta_float  = (float*)realloc(l->delta_float,  l->batch*l->outputs*sizeof(float));
+    } else if (IS_MIX_PRECISION_HALF_LAYER(l->real_type)) {
+        l->output_half = (half*)realloc(l->output_half, l->batch*l->outputs*sizeof(half));
+        l->delta_half  = (half*)realloc(l->delta_half,  l->batch*l->outputs*sizeof(half));
     }
 
     if(l->batch_normalize){
         if (IS_MIX_PRECISION_FLOAT_LAYER(l->real_type)) {
             l->x_float = (float*)realloc(l->x_float, l->batch*l->outputs*sizeof(float));
             l->x_norm_float  = (float*)realloc(l->x_norm_float, l->batch*l->outputs*sizeof(float));
+        } else if (IS_MIX_PRECISION_HALF_LAYER(l->real_type)) {
+            l->x_half = (half*)realloc(l->x_half, l->batch*l->outputs*sizeof(half));
+            l->x_norm_half  = (half*)realloc(l->x_norm_half, l->batch*l->outputs*sizeof(half));
         } else {
             l->x = (real*)realloc(l->x, l->batch*l->outputs*sizeof(real));
             l->x_norm  = (real*)realloc(l->x_norm, l->batch*l->outputs*sizeof(real));
@@ -541,6 +649,12 @@ void resize_convolutional_layer(convolutional_layer *l, int w, int h)
 
         l->delta_float_gpu =  cuda_make_float_array(l->delta_float,  l->batch*l->outputs);
         l->output_float_gpu = cuda_make_float_array(l->output_float, l->batch*l->outputs);
+    } else if (IS_MIX_PRECISION_HALF_LAYER(l->real_type)) {
+        cuda_free_half(l->delta_half_gpu);
+        cuda_free_half(l->output_half_gpu);
+
+        l->delta_half_gpu =  cuda_make_half_array(l->delta_half,  l->batch*l->outputs);
+        l->output_half_gpu = cuda_make_half_array(l->output_half, l->batch*l->outputs);
     }
 
     if(l->batch_normalize){
@@ -550,6 +664,12 @@ void resize_convolutional_layer(convolutional_layer *l, int w, int h)
 
             l->x_float_gpu = cuda_make_float_array(l->output_float, l->batch*l->outputs);
             l->x_norm_float_gpu = cuda_make_float_array(l->output_float, l->batch*l->outputs);
+        } else if (IS_MIX_PRECISION_FLOAT_LAYER(l->real_type)) {
+            cuda_free_half(l->x_half_gpu);
+            cuda_free_half(l->x_norm_half_gpu);
+
+            l->x_half_gpu = cuda_make_half_array(l->output_half, l->batch*l->outputs);
+            l->x_norm_half_gpu = cuda_make_half_array(l->output_half, l->batch*l->outputs);
         } else {
             cuda_free(l->x_gpu);
             cuda_free(l->x_norm_gpu);

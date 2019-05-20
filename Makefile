@@ -6,11 +6,9 @@ DEBUG=0
 
 # Choose data type precision: float, double, half
 # Default data type precision: float
-REAL=half
-# Set FLOAT_WEIGHTS to 1, if REAL = 'double' or 'half' and
-# the network weights are FLOAT
-# PS.: The weights will be loaded as float and
-# casted to the right data type
+REAL=float
+# Set FLOAT_WEIGHTS to 1, so the weights will be
+# loaded as float and casted to the right data type
 FLOAT_WEIGHTS=1
 
 ARCH= -gencode arch=compute_60,code=sm_60 \

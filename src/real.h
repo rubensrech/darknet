@@ -8,38 +8,42 @@
 #define CAST(v)     real(v)
 #define CAST_DEV(v) real_device(v)
 
-#define IS_MIX_PRECISION_FLOAT_LAYER(r)	REAL != FLOAT && r == FLOAT
+#define IS_MIX_PRECISION_FLOAT_LAYER(r)		REAL != FLOAT && r == FLOAT
+#define IS_MIX_PRECISION_HALF_LAYER(r)		REAL != HALF && r == HALF
+
+// > Half for mixed precision
+
+#ifdef GPU
+	#include <cuda_fp16.h>
+#endif
+
+#define HALF_ROUND_STYLE 1  // 1: nearest, -1: truncate (fastest, default)
+#include "half.hpp"
+using half_float::half;
+using namespace half_float::literal;
+typedef __half half_device;
+
+// > Real type definitions
 
 #if REAL == DOUBLE
     typedef double real;
     typedef double real_device;
     #define REAL_MAX __DBL_MAX__
     #define CUDNN_DATA_REAL CUDNN_DATA_DOUBLE
-
 #elif REAL == HALF
-    #ifdef GPU
-        #include <cuda_fp16.h>
-        typedef __half real_device;
-    #endif
-
-    #define HALF_ROUND_STYLE 1  // 1: nearest, -1: truncate (fastest, default)
-    #include "half.hpp"
-    using half_float::half;
-    using namespace half_float::literal;
-    typedef half_float::half real;
-    
+	typedef half_float::half real;
+	typedef __half real_device;
     #define REAL_MAX CAST(65504)
     #define CUDNN_DATA_REAL CUDNN_DATA_HALF
-
-#else
+#else // REAL == FLOAT
     typedef float real;
     typedef float real_device;
     #define REAL_MAX __FLT_MAX__
     #define CUDNN_DATA_REAL CUDNN_DATA_FLOAT
-
 #endif
 
-// > Aux functions
+// > Real type conversions
+
 #ifdef GPU
 	void float2real_array_gpu(float* src, real* dst, int n);
 	void real2float_array_gpu(real* src, float* dst, int n);
@@ -50,6 +54,8 @@ void real2float_array(real* src, float* dst, int n);
 
 float* cast_array_real2float(real *src, int n, float *dst_gpu);
 real* cast_array_float2real(float *src, int n, real *dst_gpu);
+
+// > Real type functions
 
 const char *get_default_real_string();
 const char *get_real_string(int real);
