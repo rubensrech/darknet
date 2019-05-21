@@ -11,53 +11,68 @@
 #include "utils.h"
 #include "cuda.h"
 
+// > Mixed precision kernels (templated)
+
+template<typename T>
+__global__ void binarize_weights_kernel(T *weights, int n, int size, T *binary) {
+    int f = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
+    if (f >= n) return;
+    int i = 0;
+    T mean = 0;
+    for(i = 0; i < size; ++i){
+        mean += fabsf(weights[f*size + i]);
+    }
+    mean = mean / T(size);
+    for(i = 0; i < size; ++i){
+        binary[f*size + i] = (weights[f*size + i] > T(0)) ? mean : -mean;
+    }
+}
+
+template<typename T>
+__global__ void binarize_kernel(T *x, int n, T *binary) {
+    int i = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
+    if (i >= n) return;
+    binary[i] = (x[i] >= T(0)) ? 1 : -1;
+}
+
+// > Mixed precision kernels callers (templated)
+
+template<typename T>
+void binarize_weights_gpu(T *weights, int n, int size, T *binary) {
+    binarize_weights_kernel<<<cuda_gridsize(n), BLOCK>>>(weights, n, size, binary);
+    check_error(cudaPeekAtLastError());
+}
+void binarize_weights_gpu(half_host *weights, int n, int size, half_host *binary) {
+    binarize_weights_kernel<<<cuda_gridsize(n), BLOCK>>>((half_device*)weights, n, size, (half_device*)binary);
+    check_error(cudaPeekAtLastError());
+}
+
+template<typename T>
+void binarize_gpu(T *x, int n, T *binary) {
+    binarize_kernel<<<cuda_gridsize(n), BLOCK>>>(x, n, binary);
+    check_error(cudaPeekAtLastError());
+}
+void binarize_gpu(half_host *x, int n, half_host *binary) {
+    binarize_kernel<<<cuda_gridsize(n), BLOCK>>>((half_device*)x, n, (half_device*)binary);
+    check_error(cudaPeekAtLastError());
+}
+
 // > Mixed precision functions
 
-#ifdef GPU
-
-// #if REAL != FLOAT
-    __global__ void binarize_weights_float_kernel(float *weights, int n, int size, float *binary) {
-        int f = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
-        if (f >= n) return;
-        int i = 0;
-        float mean = 0;
-        for(i = 0; i < size; ++i){
-            mean += fabsf(weights[f*size + i]);
-        }
-        mean = mean / size;
-        for(i = 0; i < size; ++i){
-            binary[f*size + i] = (weights[f*size + i] > 0) ? mean : -mean;
-        }
-    }
-
-    void binarize_weights_float_gpu(float *weights, int n, int size, float *binary) {
-        binarize_weights_float_kernel<<<cuda_gridsize(n), BLOCK>>>(weights, n, size, binary);
-        check_error(cudaPeekAtLastError());
-    }
-
-    __global__ void binarize_float_kernel(float *x, int n, float *binary) {
-        int i = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
-        if (i >= n) return;
-        binary[i] = (x[i] >= 0) ? 1 : -1;
-    }
-
-    void binarize_float_gpu(float *x, int n, float *binary) {
-        binarize_float_kernel<<<cuda_gridsize(n), BLOCK>>>(x, n, binary);
-        check_error(cudaPeekAtLastError());
-    }
+// Float
 
     void forward_convolutional_layer_float_gpu(convolutional_layer l, network net) {
         fill_gpu(l.outputs*l.batch, 0, l.output_float_gpu, 1);
 
         if (l.binary) {
-            binarize_weights_float_gpu(l.weights_float_gpu, l.n, l.c/l.groups*l.size*l.size, l.binary_weights_float_gpu);
+            binarize_weights_gpu(l.weights_float_gpu, l.n, l.c/l.groups*l.size*l.size, l.binary_weights_float_gpu);
             swap_binary_float(&l);
         }
 
         if(l.xnor){
-            binarize_weights_float_gpu(l.weights_float_gpu, l.n, l.c/l.groups*l.size*l.size, l.binary_weights_float_gpu);
+            binarize_weights_gpu(l.weights_float_gpu, l.n, l.c/l.groups*l.size*l.size, l.binary_weights_float_gpu);
             swap_binary(&l);
-            binarize_float_gpu(net.input_float_gpu, l.c*l.h*l.w*l.batch, l.binary_input_float_gpu);
+            binarize_gpu(net.input_float_gpu, l.c*l.h*l.w*l.batch, l.binary_input_float_gpu);
             net.input_float_gpu = l.binary_input_float_gpu;
         }
 
@@ -123,51 +138,21 @@
         }
     }
 
-// #elif REAL != HALF
-
-    __global__ void binarize_weights_half_kernel(half_device *weights, int n, int size, half_device *binary) {
-        int f = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
-        if (f >= n) return;
-        int i = 0;
-        half_device mean = 0;
-        for(i = 0; i < size; ++i){
-            mean += fabsf(weights[f*size + i]);
-        }
-        mean = mean / half_device(size);
-        for(i = 0; i < size; ++i){
-            binary[f*size + i] = (weights[f*size + i] > half_device(0)) ? mean : -mean;
-        }
-    }
-
-    void binarize_weights_half_gpu(half_host *weights, int n, int size, half_host *binary) {
-        binarize_weights_half_kernel<<<cuda_gridsize(n), BLOCK>>>((half_device*)weights, n, size, (half_device*)binary);
-        check_error(cudaPeekAtLastError());
-    }
-
-    __global__ void binarize_half_kernel(half_device *x, int n, half_device *binary) {
-        int i = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
-        if (i >= n) return;
-        binary[i] = (x[i] >= half_device(0)) ? 1 : -1;
-    }
-
-    void binarize_half_gpu(half_host *x, int n, half_host *binary) {
-        binarize_half_kernel<<<cuda_gridsize(n), BLOCK>>>((half_device*)x, n, (half_device*)binary);
-        check_error(cudaPeekAtLastError());
-    }
+// Half
 
     void forward_convolutional_layer_half_gpu(convolutional_layer l, network net) {
         /*
         fill_gpu(l.outputs*l.batch, 0, l.output_half_gpu, 1);
 
         if (l.binary) {
-            binarize_weights_half_gpu(l.weights_half_gpu, l.n, l.c/l.groups*l.size*l.size, l.binary_weights_half_gpu);
+            binarize_weights_gpu(l.weights_half_gpu, l.n, l.c/l.groups*l.size*l.size, l.binary_weights_half_gpu);
             swap_binary_half(&l);
         }
 
         if(l.xnor){
-            binarize_weights_half_gpu(l.weights_half_gpu, l.n, l.c/l.groups*l.size*l.size, l.binary_weights_half_gpu);
+            binarize_weights_gpu(l.weights_half_gpu, l.n, l.c/l.groups*l.size*l.size, l.binary_weights_half_gpu);
             swap_binary(&l);
-            binarize_half_gpu(net.input_half_gpu, l.c*l.h*l.w*l.batch, l.binary_input_half_gpu);
+            binarize_gpu(net.input_half_gpu, l.c*l.h*l.w*l.batch, l.binary_input_half_gpu);
             net.input_half_gpu = l.binary_input_half_gpu;
         }
 
@@ -234,10 +219,6 @@
         }
     }
 
-// #endif
-
-#endif
-
 // > General functions
 
 __global__ void binarize_kernel(real_device *x, int n, real_device *binary)
@@ -245,12 +226,6 @@ __global__ void binarize_kernel(real_device *x, int n, real_device *binary)
     int i = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
     if (i >= n) return;
     binary[i] = (x[i] >= CAST_DEV(0)) ? 1 : -1;
-}
-
-void binarize_gpu(real *x, int n, real *binary)
-{
-    binarize_kernel<<<cuda_gridsize(n), BLOCK>>>((real_device*)x, n, (real_device*)binary);
-    check_error(cudaPeekAtLastError());
 }
 
 __global__ void binarize_input_kernel(real_device *input, int n, int size, real_device *binary)
@@ -271,29 +246,6 @@ __global__ void binarize_input_kernel(real_device *input, int n, int size, real_
 void binarize_input_gpu(real *input, int n, int size, real *binary)
 {
     binarize_input_kernel<<<cuda_gridsize(size), BLOCK>>>((real_device*)input, n, size, (real_device*)binary);
-    check_error(cudaPeekAtLastError());
-}
-
-
-__global__ void binarize_weights_kernel(real_device *weights, int n, int size, real_device *binary)
-{
-    int f = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
-    if (f >= n) return;
-    int i = 0;
-    real_device mean = 0;
-    for(i = 0; i < size; ++i){
-        mean += fabsf(weights[f*size + i]);
-    }
-    mean = mean / CAST_DEV(size);
-    for(i = 0; i < size; ++i){
-        binary[f*size + i] = (weights[f*size + i] > CAST_DEV(0)) ? mean : -mean;
-        //binary[f*size + i] = weights[f*size + i];
-    }
-}
-
-void binarize_weights_gpu(real *weights, int n, int size, real *binary)
-{
-    binarize_weights_kernel<<<cuda_gridsize(n), BLOCK>>>((real_device*)weights, n, size, (real_device*)binary);
     check_error(cudaPeekAtLastError());
 }
 
