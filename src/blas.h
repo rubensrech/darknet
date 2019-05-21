@@ -55,27 +55,19 @@ void upsample_cpu(real *in, int w, int h, int c, int batch, int stride, int forw
     void axpy_float_gpu_offset(int N, float ALPHA, float * X, int OFFX, int INCX, float * Y, int OFFY, int INCY);
     void copy_float_gpu(int N, float * X, int INCX, float * Y, int INCY);
     void copy_float_gpu_offset(int N, float * X, int OFFX, int INCX, float * Y, int OFFY, int INCY);
-    void normalize_float_gpu(float *x, float *mean, float *variance, int batch, int filters, int spatial);
     void fast_variance_float_gpu(float *x, float *mean, int batch, int filters, int spatial, float *variance);
     void fast_mean_float_gpu(float *x, int batch, int filters, int spatial, float *mean);
-    void scale_bias_float_gpu(float *output, float *biases, int batch, int n, int size);
-    void add_bias_float_gpu(float *output, float *biases, int batch, int n, int size);
     // Half
     void axpy_half_gpu(int N, float ALPHA, half_host *X, int INCX, half_host *Y, int INCY);
     void axpy_half_gpu_offset(int N, float ALPHA, half_host *X, int OFFX, int INCX, half_host *Y, int OFFY, int INCY);
     void copy_half_gpu(int N, half_host *X, int INCX, half_host *Y, int INCY);
     void copy_half_gpu_offset(int N, half_host *X, int OFFX, int INCX, half_host *Y, int OFFY, int INCY);
-    void normalize_half_gpu(half_host *x, half_host *mean, half_host *variance, int batch, int filters, int spatial);
     void fast_variance_half_gpu(half_host *x, half_host *mean, int batch, int filters, int spatial, half_host *variance);
     void fast_mean_half_gpu(half_host *x, int batch, int filters, int spatial, half_host *mean);
-    void scale_bias_half_gpu(half_host *output, half_host *biases, int batch, int n, int size);
-    void add_bias_half_gpu(half_host *output, half_host *biases, int batch, int n, int size);
 
 // > General functions
 
-void axpy_gpu(int N, float ALPHA, real * X, int INCX, real * Y, int INCY);
 void axpy_gpu_offset(int N, float ALPHA, real * X, int OFFX, int INCX, real * Y, int OFFY, int INCY);
-void copy_gpu(int N, real * X, int INCX, real * Y, int INCY);
 void copy_gpu_offset(int N, real * X, int OFFX, int INCX, real * Y, int OFFY, int INCY);
 void add_gpu(int N, float ALPHA, real * X, int INCX);
 void supp_gpu(int N, float ALPHA, real * X, int INCX);
@@ -87,7 +79,11 @@ void mul_gpu(int N, real *X, int INCX, real *Y, int INCY);
 
 void mean_gpu(real *x, int batch, int filters, int spatial, real *mean);
 void variance_gpu(real *x, real *mean, int batch, int filters, int spatial, real *variance);
-void normalize_gpu(real *x, real *mean, real *variance, int batch, int filters, int spatial);
+
+void normalize_gpu(float *x, float *mean, float *variance, int batch, int filters, int spatial);
+void normalize_gpu(double *x, double *mean, double *variance, int batch, int filters, int spatial);
+void normalize_gpu(half_host *x, half_host *mean, half_host *variance, int batch, int filters, int spatial);
+
 void l2normalize_gpu(real *x, real *dx, int batch, int filters, int spatial);
 
 void normalize_delta_gpu(real *x, real *mean, real *variance, real *mean_delta, real *variance_delta, int batch, int filters, int spatial, real *delta);
@@ -98,9 +94,17 @@ void fast_variance_delta_gpu(real *x, real *delta, real *mean, real *variance, i
 void fast_variance_gpu(real *x, real *mean, int batch, int filters, int spatial, real *variance);
 void fast_mean_gpu(real *x, int batch, int filters, int spatial, real *mean);
 void shortcut_gpu(int batch, int w1, int h1, int c1, real *add, int w2, int h2, int c2, float s1, float s2, real *out);
-void scale_bias_gpu(real *output, real *biases, int batch, int n, int size);
+
+void scale_bias_gpu(float *output, float *biases, int batch, int n, int size);
+void scale_bias_gpu(double *output, double *biases, int batch, int n, int size);
+void scale_bias_gpu(half_host *output, half_host *biases, int batch, int n, int size);
+
 void backward_scale_gpu(real *x_norm, real *delta, int batch, int n, int size, real *scale_updates);
-void add_bias_gpu(real *output, real *biases, int batch, int n, int size);
+
+void add_bias_gpu(float *output, float *biases, int batch, int n, int size);
+void add_bias_gpu(double *output, double *biases, int batch, int n, int size);
+void add_bias_gpu(half_host *output, half_host *biases, int batch, int n, int size);
+
 void backward_bias_gpu(real *bias_updates, real *delta, int batch, int n, int size);
 
 void logistic_x_ent_gpu(int n, real *pred, real *truth, real *delta, real *error);

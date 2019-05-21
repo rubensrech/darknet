@@ -19,10 +19,6 @@
     #endif
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define SECRET_NUM -1234
 extern int gpu_index;
 
@@ -766,9 +762,11 @@ void axpy_float_gpu(int N, float ALPHA, float * X, int INCX, float * Y, int INCY
 void fill_gpu(int N, float ALPHA, real * X, int INCX);
 void fill_float_gpu(int N, float ALPHA, float *X, int INCX);
 void fill_half_gpu(int N, float ALPHA, half_host *X, int INCX);
-void scal_gpu(int N, float ALPHA, real * X, int INCX);
-void scal_float_gpu(int N, float ALPHA, float * X, int INCX);
-void scal_half_gpu(int N, float ALPHA, half_host *X, int INCX);
+
+void scal_gpu(int N, float ALPHA, float *X, int INCX);
+void scal_gpu(int N, float ALPHA, double *X, int INCX);
+void scal_gpu(int N, float ALPHA, half_host *X, int INCX);
+
 void copy_gpu(int N, real * X, int INCX, real * Y, int INCY);
 void copy_float_gpu(int N, float * X, int INCX, float * Y, int INCY);
 
@@ -964,7 +962,4 @@ size_t rand_size_t();
 float rand_normal();
 float rand_uniform(float min, float max);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

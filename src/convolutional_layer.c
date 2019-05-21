@@ -14,35 +14,35 @@
 
 // > Mixed precision functions
 
-#if REAL != FLOAT
+// #if REAL != FLOAT
 
-void swap_binary_float(convolutional_layer *l) {
-    float *swap = l->weights_float;
-    l->weights_float = l->binary_weights_float;
-    l->binary_weights_float = swap;
+    void swap_binary_float(convolutional_layer *l) {
+        float *swap = l->weights_float;
+        l->weights_float = l->binary_weights_float;
+        l->binary_weights_float = swap;
 
-    #ifdef GPU
-        swap = l->weights_float_gpu;
-        l->weights_float_gpu = l->binary_weights_float_gpu;
-        l->binary_weights_float_gpu = swap;
-    #endif
-}
+        #ifdef GPU
+            swap = l->weights_float_gpu;
+            l->weights_float_gpu = l->binary_weights_float_gpu;
+            l->binary_weights_float_gpu = swap;
+        #endif
+    }
 
-#elif REAL != HALF
+// #elif REAL != HALF
 
-void swap_binary_half(convolutional_layer *l) {
-    half_host *swap = l->weights_half;
-    l->weights_half = l->binary_weights_half;
-    l->binary_weights_half = swap;
+    void swap_binary_half(convolutional_layer *l) {
+        half_host *swap = l->weights_half;
+        l->weights_half = l->binary_weights_half;
+        l->binary_weights_half = swap;
 
-    #ifdef GPU
-        swap = l->weights_half_gpu;
-        l->weights_half_gpu = l->binary_weights_half_gpu;
-        l->binary_weights_half_gpu = swap;
-    #endif
-}
+        #ifdef GPU
+            swap = l->weights_half_gpu;
+            l->weights_half_gpu = l->binary_weights_half_gpu;
+            l->binary_weights_half_gpu = swap;
+        #endif
+    }
 
-#endif
+// #endif
 
 // > General functions
 
@@ -156,6 +156,8 @@ static size_t get_workspace_size(layer l){
         default: fprintf(stderr, "Unexpected data type (convolutional_layer.c:%d)\n", __LINE__);
             break;
     }
+    
+    return (size_t)l.out_h*l.out_w*l.size*l.size*l.c/l.groups*sizeof(real);
 }
 
 #ifdef GPU

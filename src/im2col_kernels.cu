@@ -10,7 +10,7 @@
 
 // > Mixed precision functions
 
-#if REAL != FLOAT
+// #if REAL != FLOAT
     __global__ void im2col_gpu_float_kernel(const int n, const float* data_im,
             const int height, const int width, const int ksize,
             const int pad,
@@ -58,7 +58,7 @@
                     stride, height_col,
                     width_col, data_col);
     }
-#elif REAL != HALF
+// #elif REAL != HALF
     __global__ void im2col_gpu_half_kernel(const int n, const half_device* data_im,
             const int height, const int width, const int ksize,
             const int pad,
@@ -84,7 +84,7 @@
                     int w = w_in + j;
 
                     *data_col_ptr = (h >= 0 && w >= 0 && h < height && w < width) ?
-                        data_im_ptr[i * width + j] : 0;
+                        data_im_ptr[i * width + j] : half_device(0);
 
                     data_col_ptr += height_col * width_col;
                 }
@@ -106,7 +106,7 @@
                     stride, height_col,
                     width_col, data_col);
     }
-#endif
+// #endif
 
 
 // > General functions

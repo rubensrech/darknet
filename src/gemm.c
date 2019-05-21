@@ -8,7 +8,7 @@
 // > Mixed precision functions
 
 #ifdef GPU
-#if REAL != FLOAT
+// #if REAL != FLOAT
     void gemm_float_gpu(int TA, int TB, int M, int N, int K, float ALPHA, 
         float *A_gpu, int lda, 
         float *B_gpu, int ldb,
@@ -19,7 +19,7 @@
                     (TA ? CUBLAS_OP_T : CUBLAS_OP_N), N, M, K, &ALPHA, B_gpu, ldb, A_gpu, lda, &BETA, C_gpu, ldc);
             check_error(status);
     }
-#elif REAL != HALF
+// #elif REAL != HALF
     void gemm_half_gpu(int TA, int TB, int M, int N, int K, float ALPHA, 
         half_host *A_gpu, int lda, 
         half_host *B_gpu, int ldb,
@@ -33,7 +33,7 @@
                     (half_device*)B_gpu, ldb, (half_device*)A_gpu, lda, (half_device*)(&beta), (half_device*)C_gpu, ldc);
             check_error(status);
     }
-#endif
+// #endif
 #endif
 
 // > General functions

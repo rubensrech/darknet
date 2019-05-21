@@ -19,7 +19,7 @@ extern "C" {
 
 // > Mixed precision functions
 
-#if REAL != FLOAT
+// #if REAL != FLOAT
 
     float *cuda_make_float_array(float *x, size_t n) {
         float *x_gpu;
@@ -53,7 +53,7 @@ extern "C" {
         check_error(status);
     }
 
-#elif REAL != HALF
+// #elif REAL != HALF
 
     half_host *cuda_make_half_array(half_host *x, size_t n) {
         half_host *x_gpu;
@@ -81,7 +81,7 @@ extern "C" {
         check_error(status);
     }
 
-#endif
+// #endif
 
 // > General functions
 

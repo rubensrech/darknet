@@ -104,7 +104,7 @@
         if (l.batch_normalize) {
             forward_batchnorm_layer_float_gpu(l, net);
         } else {
-            add_bias_float_gpu(l.output_float_gpu, l.biases_float_gpu, l.batch, l.n, l.out_w*l.out_h);
+            add_bias_gpu(l.output_float_gpu, l.biases_float_gpu, l.batch, l.n, l.out_w*l.out_h);
         }
 
         activate_array_gpu(l.output_float_gpu, l.outputs*l.batch, l.activation);
@@ -156,6 +156,7 @@
     }
 
     void forward_convolutional_layer_half_gpu(convolutional_layer l, network net) {
+        /*
         fill_half_gpu(l.outputs*l.batch, 0, l.output_half_gpu, 1);
 
         if (l.binary) {
@@ -218,6 +219,7 @@
 
         activate_array_gpu(l.output_half_gpu, l.outputs*l.batch, l.activation);
         if(l.binary || l.xnor) swap_binary_half(&l);
+        */
     }
 
     void push_convolutional_half_layer(layer l) {
