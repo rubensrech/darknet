@@ -55,9 +55,9 @@ extern "C" {
 
 #elif REAL != HALF
 
-    half *cuda_make_half_array(half *x, size_t n) {
-        half *x_gpu;
-        size_t size = sizeof(half)*n;
+    half_host *cuda_make_half_array(half_host *x, size_t n) {
+        half_host *x_gpu;
+        size_t size = sizeof(half_host)*n;
         cudaError_t status = cudaMalloc((void **)&x_gpu, size);
         check_error(status);
         if(x){
@@ -70,13 +70,13 @@ extern "C" {
         return x_gpu;
     }
 
-    void cuda_push_half_array(half *x_gpu, half *x, size_t n) {
-        size_t size = sizeof(half)*n;
+    void cuda_push_half_array(half_host *x_gpu, half_host *x, size_t n) {
+        size_t size = sizeof(half_host)*n;
         cudaError_t status = cudaMemcpy(x_gpu, x, size, cudaMemcpyHostToDevice);
         check_error(status);
     }
 
-    void cuda_free_half(half *x_gpu) {
+    void cuda_free_half(half_host *x_gpu) {
         cudaError_t status = cudaFree(x_gpu);
         check_error(status);
     }

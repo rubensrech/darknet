@@ -294,59 +294,59 @@ struct layer{
 
 // #if REAL != HALF
     // > Layers: Max Pool, Convolutional
-    half *output_half;
-    half *delta_half;
+    half_host *output_half;
+    half_host *delta_half;
     // > Convolutional Layer
-    half *weights_half;
-    half *weight_updates_half;
-    half *biases_half;
-    half *bias_updates_half;
-    half *binary_weights_half;
-    half *scales_half;
-    half *scale_updates_half;
-    half *binary_input_half;
-    half *mean_half;
-    half *mean_delta_half;
-    half *variance_half;
-    half *variance_delta_half;
-    half *rolling_mean_half;
-    half *rolling_variance_half;
-    half *x_half;
-    half *x_norm_half;
-    half *m_half;
-    half *v_half;
-    half *bias_m_half;
-    half *scale_m_half;
-    half *bias_v_half;
-    half *scale_v_half;
+    half_host *weights_half;
+    half_host *weight_updates_half;
+    half_host *biases_half;
+    half_host *bias_updates_half;
+    half_host *binary_weights_half;
+    half_host *scales_half;
+    half_host *scale_updates_half;
+    half_host *binary_input_half;
+    half_host *mean_half;
+    half_host *mean_delta_half;
+    half_host *variance_half;
+    half_host *variance_delta_half;
+    half_host *rolling_mean_half;
+    half_host *rolling_variance_half;
+    half_host *x_half;
+    half_host *x_norm_half;
+    half_host *m_half;
+    half_host *v_half;
+    half_host *bias_m_half;
+    half_host *scale_m_half;
+    half_host *bias_v_half;
+    half_host *scale_v_half;
 
     #ifdef GPU
         // > Layers: Max Pool, Convolutional
-        half_device *delta_half_gpu;
-        half_device *output_half_gpu;
+        half_host *delta_half_gpu;
+        half_host *output_half_gpu;
         // > Convolutional Layer
-        half_device *m_half_gpu;
-        half_device *v_half_gpu;
-        half_device *bias_m_half_gpu;
-        half_device *bias_v_half_gpu;
-        half_device *scale_m_half_gpu;
-        half_device *scale_v_half_gpu;
-        half_device *weights_half_gpu;
-        half_device *weight_updates_half_gpu;
-        half_device *biases_half_gpu;
-        half_device *bias_updates_half_gpu;
-        half_device *binary_weights_half_gpu;
-        half_device *binary_input_half_gpu;
-        half_device *mean_half_gpu;
-        half_device *variance_half_gpu;
-        half_device *rolling_mean_half_gpu;
-        half_device *rolling_variance_half_gpu;
-        half_device *mean_delta_half_gpu;
-        half_device *variance_delta_half_gpu;
-        half_device *scales_half_gpu;
-        half_device *scale_updates_half_gpu;
-        half_device *x_half_gpu;
-        half_device *x_norm_half_gpu;
+        half_host *m_half_gpu;
+        half_host *v_half_gpu;
+        half_host *bias_m_half_gpu;
+        half_host *bias_v_half_gpu;
+        half_host *scale_m_half_gpu;
+        half_host *scale_v_half_gpu;
+        half_host *weights_half_gpu;
+        half_host *weight_updates_half_gpu;
+        half_host *biases_half_gpu;
+        half_host *bias_updates_half_gpu;
+        half_host *binary_weights_half_gpu;
+        half_host *binary_input_half_gpu;
+        half_host *mean_half_gpu;
+        half_host *variance_half_gpu;
+        half_host *rolling_mean_half_gpu;
+        half_host *rolling_variance_half_gpu;
+        half_host *mean_delta_half_gpu;
+        half_host *variance_delta_half_gpu;
+        half_host *scales_half_gpu;
+        half_host *scale_updates_half_gpu;
+        half_host *x_half_gpu;
+        half_host *x_norm_half_gpu;
     #endif
 
 // #elif REAL != FLOAT
@@ -765,26 +765,26 @@ void axpy_gpu(int N, float ALPHA, real * X, int INCX, real * Y, int INCY);
 void axpy_float_gpu(int N, float ALPHA, float * X, int INCX, float * Y, int INCY);
 void fill_gpu(int N, float ALPHA, real * X, int INCX);
 void fill_float_gpu(int N, float ALPHA, float *X, int INCX);
-void fill_half_gpu(int N, float ALPHA, half *X, int INCX);
+void fill_half_gpu(int N, float ALPHA, half_host *X, int INCX);
 void scal_gpu(int N, float ALPHA, real * X, int INCX);
 void scal_float_gpu(int N, float ALPHA, float * X, int INCX);
-void scal_half_gpu(int N, float ALPHA, half *X, int INCX);
+void scal_half_gpu(int N, float ALPHA, half_host *X, int INCX);
 void copy_gpu(int N, real * X, int INCX, real * Y, int INCY);
 void copy_float_gpu(int N, float * X, int INCX, float * Y, int INCY);
 
 void cuda_set_device(int n);
 void cuda_free(real *x_gpu);
 void cuda_free_float(float *x_gpu);
-void cuda_free_half(half *x_gpu);
+void cuda_free_half(half_host *x_gpu);
 real *cuda_make_array(real *x, size_t n);
 float *cuda_make_float_array(float *x, size_t n);
-half *cuda_make_half_array(half *x, size_t n);
+half_host *cuda_make_half_array(half_host *x, size_t n);
 void cuda_pull_array(real *x_gpu, real *x, size_t n);
 void cuda_pull_float_array(float *x_gpu, float *x, size_t n);
 float cuda_mag_array(real *x_gpu, size_t n);
 void cuda_push_array(real *x_gpu, real *x, size_t n);
 void cuda_push_float_array(float *x_gpu, float *x, size_t n);
-void cuda_push_half_array(half *x_gpu, half *x, size_t n);
+void cuda_push_half_array(half_host *x_gpu, half_host *x, size_t n);
 
 void forward_network_gpu(network *net, int push_input);
 void backward_network_gpu(network *net);

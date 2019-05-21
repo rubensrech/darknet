@@ -61,15 +61,15 @@ void upsample_cpu(real *in, int w, int h, int c, int batch, int stride, int forw
     void scale_bias_float_gpu(float *output, float *biases, int batch, int n, int size);
     void add_bias_float_gpu(float *output, float *biases, int batch, int n, int size);
     // Half
-    void axpy_half_gpu(int N, float ALPHA, half *X, int INCX, half *Y, int INCY);
-    void axpy_half_gpu_offset(int N, float ALPHA, half *X, int OFFX, int INCX, half *Y, int OFFY, int INCY);
-    void copy_half_gpu(int N, half *X, int INCX, half *Y, int INCY);
-    void copy_half_gpu_offset(int N, half *X, int OFFX, int INCX, half *Y, int OFFY, int INCY);
-    void normalize_half_gpu(half *x, half *mean, half *variance, int batch, int filters, int spatial);
-    void fast_variance_half_gpu(half *x, half *mean, int batch, int filters, int spatial, half *variance);
-    void fast_mean_half_gpu(half *x, int batch, int filters, int spatial, half *mean);
-    void scale_bias_half_gpu(half *output, half *biases, int batch, int n, int size);
-    void add_bias_half_gpu(half *output, half *biases, int batch, int n, int size);
+    void axpy_half_gpu(int N, float ALPHA, half_host *X, int INCX, half_host *Y, int INCY);
+    void axpy_half_gpu_offset(int N, float ALPHA, half_host *X, int OFFX, int INCX, half_host *Y, int OFFY, int INCY);
+    void copy_half_gpu(int N, half_host *X, int INCX, half_host *Y, int INCY);
+    void copy_half_gpu_offset(int N, half_host *X, int OFFX, int INCX, half_host *Y, int OFFY, int INCY);
+    void normalize_half_gpu(half_host *x, half_host *mean, half_host *variance, int batch, int filters, int spatial);
+    void fast_variance_half_gpu(half_host *x, half_host *mean, int batch, int filters, int spatial, half_host *variance);
+    void fast_mean_half_gpu(half_host *x, int batch, int filters, int spatial, half_host *mean);
+    void scale_bias_half_gpu(half_host *output, half_host *biases, int batch, int n, int size);
+    void add_bias_half_gpu(half_host *output, half_host *biases, int batch, int n, int size);
 
 // > General functions
 

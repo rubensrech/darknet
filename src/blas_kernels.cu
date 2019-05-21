@@ -184,7 +184,7 @@
         if(offset < size) output[(batch*n+filter)*size + offset] *= biases[filter];
     }
 
-    void scale_bias_half_gpu(half *output, half *biases, int batch, int n, int size) {
+    void scale_bias_half_gpu(half_host *output, half_host *biases, int batch, int n, int size) {
         dim3 dimGrid((size-1)/BLOCK + 1, n, batch);
         dim3 dimBlock(BLOCK, 1, 1);
 
@@ -204,7 +204,7 @@
         output[(k*n+j)*size + i] += biases[j];
     }
 
-    void add_bias_half_gpu(half *output, half *biases, int batch, int n, int size) {
+    void add_bias_half_gpu(half_host *output, half_host *biases, int batch, int n, int size) {
         int num = n*size*batch;
 
         add_bias_half_kernel<<<cuda_gridsize(num), BLOCK>>>(output, biases, batch, n, size);
@@ -219,7 +219,7 @@
         x[index] = (x[index] - mean[f]) / (sqrt(variance[f] + .00001f));
     }
 
-    void normalize_half_gpu(half *x, half *mean, half *variance, int batch, int filters, int spatial) {
+    void normalize_half_gpu(half_host *x, half_host *mean, half_host *variance, int batch, int filters, int spatial) {
         size_t N = batch*filters*spatial;
         normalize_half_kernel<<<cuda_gridsize(N), BLOCK>>>(N, x, mean, variance, batch, filters, spatial);
         check_error(cudaPeekAtLastError());
@@ -230,7 +230,7 @@
         if(i < N) X[i*INCX] *= ALPHA;
     }
 
-    void scal_half_gpu(int N, float ALPHA, half *X, int INCX) {
+    void scal_half_gpu(int N, float ALPHA, half_host *X, int INCX) {
         scal_half_kernel<<<cuda_gridsize(N), BLOCK>>>(N, ALPHA, X, INCX);
         check_error(cudaPeekAtLastError());
     }
@@ -240,7 +240,7 @@
         if(i < N) X[i*INCX] = ALPHA;
     }
 
-    void fill_half_gpu(int N, float ALPHA, half *X, int INCX) {
+    void fill_half_gpu(int N, float ALPHA, half_host *X, int INCX) {
         fill_half_kernel<<<cuda_gridsize(N), BLOCK>>>(N, ALPHA, X, INCX);
         check_error(cudaPeekAtLastError());
     }
@@ -250,12 +250,12 @@
         if(i < N) Y[i*INCY + OFFY] = X[i*INCX + OFFX];
     }
 
-    void copy_half_gpu_offset(int N, half *X, int OFFX, int INCX, half *Y, int OFFY, int INCY) {
+    void copy_half_gpu_offset(int N, half_host *X, int OFFX, int INCX, half_host *Y, int OFFY, int INCY) {
         copy_half_kernel<<<cuda_gridsize(N), BLOCK>>>(N, X, OFFX, INCX, Y, OFFY, INCY);
         check_error(cudaPeekAtLastError());
     }
 
-    void copy_half_gpu(int N, half *X, int INCX, half *Y, int INCY) {
+    void copy_half_gpu(int N, half_host *X, int INCX, half_host *Y, int INCY) {
         copy_half_gpu_offset(N, X, 0, INCX, Y, 0, INCY);
     }
 
@@ -264,12 +264,12 @@
         if(i < N) Y[OFFY+i*INCY] += ALPHA*X[OFFX+i*INCX];
     }
 
-    void axpy_half_gpu_offset(int N, float ALPHA, half *X, int OFFX, int INCX, half *Y, int OFFY, int INCY) {
+    void axpy_half_gpu_offset(int N, float ALPHA, half_host *X, int OFFX, int INCX, half_host *Y, int OFFY, int INCY) {
         axpy_half_kernel<<<cuda_gridsize(N), BLOCK>>>(N, ALPHA, X, OFFX, INCX, Y, OFFY, INCY);
         check_error(cudaPeekAtLastError());
     }
 
-    void axpy_half_gpu(int N, float ALPHA, half *X, int INCX, half *Y, int INCY) {
+    void axpy_half_gpu(int N, float ALPHA, half_host *X, int INCX, half_host *Y, int INCY) {
         axpy_half_gpu_offset(N, ALPHA, X, 0, INCX, Y, 0, INCY);
     }
 
@@ -301,7 +301,7 @@
         }
     }
 
-    void fast_mean_half_gpu(half *x, int batch, int filters, int spatial, half *mean) {
+    void fast_mean_half_gpu(half_host *x, int batch, int filters, int spatial, half_host *mean) {
         fast_mean_half_kernel<<<filters, BLOCK>>>(x, batch, filters, spatial, mean);
         check_error(cudaPeekAtLastError());
     }
@@ -335,7 +335,7 @@
         }
     }
 
-    void fast_variance_half_gpu(half *x, half *mean, int batch, int filters, int spatial, half *variance) {
+    void fast_variance_half_gpu(half_host *x, half_host *mean, int batch, int filters, int spatial, half_host *variance) {
         fast_variance_half_kernel<<<filters, BLOCK>>>(x, mean, batch, filters, spatial, variance);
         check_error(cudaPeekAtLastError());
     }

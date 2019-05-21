@@ -7,6 +7,7 @@
 
 // > Mixed precision functions
 
+#ifdef GPU
 #if REAL != FLOAT
     void gemm_float_gpu(int TA, int TB, int M, int N, int K, float ALPHA, 
         float *A_gpu, int lda, 
@@ -20,18 +21,19 @@
     }
 #elif REAL != HALF
     void gemm_half_gpu(int TA, int TB, int M, int N, int K, float ALPHA, 
-        half *A_gpu, int lda, 
-        half *B_gpu, int ldb,
+        half_host *A_gpu, int lda, 
+        half_host *B_gpu, int ldb,
         float BETA,
-        half *C_gpu, int ldc) {
+        half_host *C_gpu, int ldc) {
             cublasHandle_t handle = blas_handle();
-            half alpha = half(ALPHA);
-            half beta = half(BETA);
+            half_host alpha = half_host(ALPHA);
+            half_host beta = half_host(BETA);
             cudaError_t status = (cudaError_t)cublasHgemm(handle, (TB ? CUBLAS_OP_T : CUBLAS_OP_N), 
                     (TA ? CUBLAS_OP_T : CUBLAS_OP_N), N, M, K, (half_device*)(&alpha),
                     (half_device*)B_gpu, ldb, (half_device*)A_gpu, lda, (half_device*)(&beta), (half_device*)C_gpu, ldc);
             check_error(status);
     }
+#endif
 #endif
 
 // > General functions
