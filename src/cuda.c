@@ -30,7 +30,7 @@ extern "C" {
             status = cudaMemcpy(x_gpu, x, size, cudaMemcpyHostToDevice);
             check_error(status);
         } else {
-            fill_float_gpu(n, 0, x_gpu, 1);
+            fill_gpu(n, 0, x_gpu, 1);
         }
         if(!x_gpu) error("Cuda malloc failed\n");
         return x_gpu;
@@ -64,7 +64,7 @@ extern "C" {
             status = cudaMemcpy(x_gpu, x, size, cudaMemcpyHostToDevice);
             check_error(status);
         } else {
-            fill_half_gpu(n, 0, x_gpu, 1);
+            fill_gpu(n, 0, x_gpu, 1);
         }
         if(!x_gpu) error("Cuda malloc failed\n");
         return x_gpu;

@@ -10,8 +10,8 @@
 // #if REAL != FLOAT
 
     void forward_batchnorm_layer_float_gpu(layer l, network net) {
-        if(l.type == BATCHNORM) copy_float_gpu(l.outputs*l.batch, net.input_float_gpu, 1, l.output_float_gpu, 1);
-        copy_float_gpu(l.outputs*l.batch, l.output_float_gpu, 1, l.x_float_gpu, 1);
+        if(l.type == BATCHNORM) copy_gpu(l.outputs*l.batch, net.input_float_gpu, 1, l.output_float_gpu, 1);
+        copy_gpu(l.outputs*l.batch, l.output_float_gpu, 1, l.x_float_gpu, 1);
         if (net.train) {
 
             #ifdef CUDNN
@@ -35,17 +35,17 @@
                         l.mean_float_gpu,
                         l.variance_float_gpu);
             #else
-                fast_mean_float_gpu(l.output_float_gpu, l.batch, l.out_c, l.out_h*l.out_w, l.mean_float_gpu);
-                fast_variance_float_gpu(l.output_float_gpu, l.mean_float_gpu, l.batch, l.out_c, l.out_h*l.out_w, l.variance_float_gpu);
+                fast_mean_gpu(l.output_float_gpu, l.batch, l.out_c, l.out_h*l.out_w, l.mean_float_gpu);
+                fast_variance_gpu(l.output_float_gpu, l.mean_float_gpu, l.batch, l.out_c, l.out_h*l.out_w, l.variance_float_gpu);
 
                 scal_gpu(l.out_c, .99, l.rolling_mean_float_gpu, 1);
-                axpy_float_gpu(l.out_c, .01, l.mean_float_gpu, 1, l.rolling_mean_float_gpu, 1);
+                axpy_gpu(l.out_c, .01, l.mean_float_gpu, 1, l.rolling_mean_float_gpu, 1);
                 scal_gpu(l.out_c, .99, l.rolling_variance_float_gpu, 1);
-                axpy_float_gpu(l.out_c, .01, l.variance_float_gpu, 1, l.rolling_variance_float_gpu, 1);
+                axpy_gpu(l.out_c, .01, l.variance_float_gpu, 1, l.rolling_variance_float_gpu, 1);
 
-                copy_float_gpu(l.outputs*l.batch, l.output_float_gpu, 1, l.x_float_gpu, 1);
+                copy_gpu(l.outputs*l.batch, l.output_float_gpu, 1, l.x_float_gpu, 1);
                 normalize_gpu(l.output_float_gpu, l.mean_float_gpu, l.variance_float_gpu, l.batch, l.out_c, l.out_h*l.out_w);
-                copy_float_gpu(l.outputs*l.batch, l.output_float_gpu, 1, l.x_norm_float_gpu, 1);
+                copy_gpu(l.outputs*l.batch, l.output_float_gpu, 1, l.x_norm_float_gpu, 1);
 
                 scale_bias_gpu(l.output_float_gpu, l.scales_float_gpu, l.batch, l.out_c, l.out_h*l.out_w);
                 add_bias_gpu(l.output_float_gpu, l.biases_float_gpu, l.batch, l.out_c, l.out_w*l.out_h);
@@ -60,8 +60,8 @@
 // #elif REAL != HALF
 
     void forward_batchnorm_layer_half_gpu(layer l, network net) {
-        if(l.type == BATCHNORM) copy_float_gpu(l.outputs*l.batch, net.input_float_gpu, 1, l.output_float_gpu, 1);
-        copy_float_gpu(l.outputs*l.batch, l.output_float_gpu, 1, l.x_float_gpu, 1);
+        if(l.type == BATCHNORM) copy_gpu(l.outputs*l.batch, net.input_float_gpu, 1, l.output_float_gpu, 1);
+        copy_gpu(l.outputs*l.batch, l.output_float_gpu, 1, l.x_float_gpu, 1);
         if (net.train) {
 
             #ifdef CUDNN
@@ -85,17 +85,17 @@
                         l.mean_float_gpu,
                         l.variance_float_gpu);
             #else
-                fast_mean_float_gpu(l.output_float_gpu, l.batch, l.out_c, l.out_h*l.out_w, l.mean_float_gpu);
-                fast_variance_float_gpu(l.output_float_gpu, l.mean_float_gpu, l.batch, l.out_c, l.out_h*l.out_w, l.variance_float_gpu);
+                fast_mean_gpu(l.output_float_gpu, l.batch, l.out_c, l.out_h*l.out_w, l.mean_float_gpu);
+                fast_variance_gpu(l.output_float_gpu, l.mean_float_gpu, l.batch, l.out_c, l.out_h*l.out_w, l.variance_float_gpu);
 
                 scal_gpu(l.out_c, .99, l.rolling_mean_float_gpu, 1);
-                axpy_float_gpu(l.out_c, .01, l.mean_float_gpu, 1, l.rolling_mean_float_gpu, 1);
+                axpy_gpu(l.out_c, .01, l.mean_float_gpu, 1, l.rolling_mean_float_gpu, 1);
                 scal_gpu(l.out_c, .99, l.rolling_variance_float_gpu, 1);
-                axpy_float_gpu(l.out_c, .01, l.variance_float_gpu, 1, l.rolling_variance_float_gpu, 1);
+                axpy_gpu(l.out_c, .01, l.variance_float_gpu, 1, l.rolling_variance_float_gpu, 1);
 
-                copy_float_gpu(l.outputs*l.batch, l.output_float_gpu, 1, l.x_float_gpu, 1);
+                copy_gpu(l.outputs*l.batch, l.output_float_gpu, 1, l.x_float_gpu, 1);
                 normalize_gpu(l.output_float_gpu, l.mean_float_gpu, l.variance_float_gpu, l.batch, l.out_c, l.out_h*l.out_w);
-                copy_float_gpu(l.outputs*l.batch, l.output_float_gpu, 1, l.x_norm_float_gpu, 1);
+                copy_gpu(l.outputs*l.batch, l.output_float_gpu, 1, l.x_norm_float_gpu, 1);
 
                 scale_bias_gpu(l.output_float_gpu, l.scales_float_gpu, l.batch, l.out_c, l.out_h*l.out_w);
                 add_bias_gpu(l.output_float_gpu, l.biases_float_gpu, l.batch, l.out_c, l.out_w*l.out_h);

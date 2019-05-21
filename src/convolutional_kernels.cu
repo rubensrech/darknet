@@ -47,7 +47,7 @@
     }
 
     void forward_convolutional_layer_float_gpu(convolutional_layer l, network net) {
-        fill_float_gpu(l.outputs*l.batch, 0, l.output_float_gpu, 1);
+        fill_gpu(l.outputs*l.batch, 0, l.output_float_gpu, 1);
 
         if (l.binary) {
             binarize_weights_float_gpu(l.weights_float_gpu, l.n, l.c/l.groups*l.size*l.size, l.binary_weights_float_gpu);
@@ -157,7 +157,7 @@
 
     void forward_convolutional_layer_half_gpu(convolutional_layer l, network net) {
         /*
-        fill_half_gpu(l.outputs*l.batch, 0, l.output_half_gpu, 1);
+        fill_gpu(l.outputs*l.batch, 0, l.output_half_gpu, 1);
 
         if (l.binary) {
             binarize_weights_half_gpu(l.weights_half_gpu, l.n, l.c/l.groups*l.size*l.size, l.binary_weights_half_gpu);

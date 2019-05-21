@@ -836,7 +836,7 @@ void forward_network_gpu(network *netp, int push_input)
             }
             
             if (l.delta_float_gpu) 
-                fill_float_gpu(l.outputs * l.batch, 0, l.delta_float_gpu, 1);
+                fill_gpu(l.outputs * l.batch, 0, l.delta_float_gpu, 1);
 
             l.forward_gpu(l, net);
 
