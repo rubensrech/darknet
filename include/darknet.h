@@ -774,19 +774,20 @@ void copy_gpu(int N, double *X, int INCX, double *Y, int INCY);
 void copy_gpu(int N, half_host *X, int INCX, half_host *Y, int INCY);
 
 void cuda_set_device(int n);
-void cuda_free(real *x_gpu);
-void cuda_free_float(float *x_gpu);
-void cuda_free_half(half_host *x_gpu);
+
+template<typename T>
+void cuda_push_array(T *x_gpu, T *x, size_t n);
+template<typename T>
+void cuda_free(T *x_gpu);
+template<typename T>
+void cuda_pull_array(T *x_gpu, T *x, size_t n);
+
+
 real *cuda_make_array(real *x, size_t n);
 float *cuda_make_float_array(float *x, size_t n);
 half_host *cuda_make_half_array(half_host *x, size_t n);
-void cuda_pull_array(real *x_gpu, real *x, size_t n);
-void cuda_pull_float_array(float *x_gpu, float *x, size_t n);
-float cuda_mag_array(real *x_gpu, size_t n);
-void cuda_push_array(real *x_gpu, real *x, size_t n);
-void cuda_push_float_array(float *x_gpu, float *x, size_t n);
-void cuda_push_half_array(half_host *x_gpu, half_host *x, size_t n);
 
+float cuda_mag_array(real *x_gpu, size_t n);
 void forward_network_gpu(network *net, int push_input);
 void backward_network_gpu(network *net);
 void update_network_gpu(network *net);

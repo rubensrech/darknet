@@ -122,30 +122,30 @@ void free_layer(layer l)
     if(l.norms_gpu)               cuda_free(l.norms_gpu);
 
     #if REAL != FLOAT
-        if(l.delta_float_gpu)               cuda_free_float(l.delta_float_gpu);
-        if(l.output_float_gpu)              cuda_free_float(l.output_float_gpu);
-        if(l.m_float_gpu)                   cuda_free_float(l.m_float_gpu);
-        if(l.v_float_gpu)                   cuda_free_float(l.v_float_gpu);
-        if(l.bias_m_float_gpu)              cuda_free_float(l.bias_m_float_gpu);
-        if(l.bias_v_float_gpu)              cuda_free_float(l.bias_v_float_gpu);
-        if(l.scale_m_float_gpu)             cuda_free_float(l.scale_m_float_gpu);
-        if(l.scale_v_float_gpu)             cuda_free_float(l.scale_v_float_gpu);
-        if(l.weights_float_gpu)             cuda_free_float(l.weights_float_gpu);
-        if(l.weight_updates_float_gpu)      cuda_free_float(l.weight_updates_float_gpu);
-        if(l.biases_float_gpu)              cuda_free_float(l.biases_float_gpu);
-        if(l.bias_updates_float_gpu)        cuda_free_float(l.bias_updates_float_gpu);
-        if(l.binary_weights_float_gpu)      cuda_free_float(l.binary_weights_float_gpu);
-        if(l.binary_input_float_gpu)        cuda_free_float(l.binary_input_float_gpu);
-        if(l.mean_float_gpu)                cuda_free_float(l.mean_float_gpu);
-        if(l.variance_float_gpu)            cuda_free_float(l.variance_float_gpu);
-        if(l.rolling_mean_float_gpu)        cuda_free_float(l.rolling_mean_float_gpu);
-        if(l.rolling_variance_float_gpu)    cuda_free_float(l.rolling_variance_float_gpu);
-        if(l.mean_delta_float_gpu)          cuda_free_float(l.mean_delta_float_gpu);
-        if(l.variance_delta_float_gpu)      cuda_free_float(l.variance_delta_float_gpu);
-        if(l.scales_float_gpu)              cuda_free_float(l.scales_float_gpu);
-        if(l.scale_updates_float_gpu)       cuda_free_float(l.scale_updates_float_gpu);
-        if(l.x_float_gpu)                   cuda_free_float(l.x_float_gpu);
-        if(l.x_norm_float_gpu)              cuda_free_float(l.x_norm_float_gpu);
+        if(l.delta_float_gpu)               cuda_free(l.delta_float_gpu);
+        if(l.output_float_gpu)              cuda_free(l.output_float_gpu);
+        if(l.m_float_gpu)                   cuda_free(l.m_float_gpu);
+        if(l.v_float_gpu)                   cuda_free(l.v_float_gpu);
+        if(l.bias_m_float_gpu)              cuda_free(l.bias_m_float_gpu);
+        if(l.bias_v_float_gpu)              cuda_free(l.bias_v_float_gpu);
+        if(l.scale_m_float_gpu)             cuda_free(l.scale_m_float_gpu);
+        if(l.scale_v_float_gpu)             cuda_free(l.scale_v_float_gpu);
+        if(l.weights_float_gpu)             cuda_free(l.weights_float_gpu);
+        if(l.weight_updates_float_gpu)      cuda_free(l.weight_updates_float_gpu);
+        if(l.biases_float_gpu)              cuda_free(l.biases_float_gpu);
+        if(l.bias_updates_float_gpu)        cuda_free(l.bias_updates_float_gpu);
+        if(l.binary_weights_float_gpu)      cuda_free(l.binary_weights_float_gpu);
+        if(l.binary_input_float_gpu)        cuda_free(l.binary_input_float_gpu);
+        if(l.mean_float_gpu)                cuda_free(l.mean_float_gpu);
+        if(l.variance_float_gpu)            cuda_free(l.variance_float_gpu);
+        if(l.rolling_mean_float_gpu)        cuda_free(l.rolling_mean_float_gpu);
+        if(l.rolling_variance_float_gpu)    cuda_free(l.rolling_variance_float_gpu);
+        if(l.mean_delta_float_gpu)          cuda_free(l.mean_delta_float_gpu);
+        if(l.variance_delta_float_gpu)      cuda_free(l.variance_delta_float_gpu);
+        if(l.scales_float_gpu)              cuda_free(l.scales_float_gpu);
+        if(l.scale_updates_float_gpu)       cuda_free(l.scale_updates_float_gpu);
+        if(l.x_float_gpu)                   cuda_free(l.x_float_gpu);
+        if(l.x_norm_float_gpu)              cuda_free(l.x_norm_float_gpu);
     #endif
 #endif
 }

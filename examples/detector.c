@@ -997,7 +997,7 @@ void exportNetInOut(network *net) {
     for (i = 0; i < net->n; i++) {
         l = net->layers[i];
         if (l.real_type == FLOAT)
-            cuda_pull_float_array(l.output_float_gpu, l.output_float, l.outputs);
+            cuda_pull_array(l.output_float_gpu, l.output_float, l.outputs);
         else if (l.real_type == REAL)
             cuda_pull_array(l.output_gpu, l.output, l.outputs);
     }
