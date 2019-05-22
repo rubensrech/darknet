@@ -781,10 +781,18 @@ void free_network(network *net)
     if(net->input) free(net->input);
     if(net->input_float) free(net->input_float);
     if(net->truth) free(net->truth);
+
+    #if MIX_PRECISION_SUPPORT == HALF
+        if(net->input_half) free(net->input_half);
+    #endif
+
 #ifdef GPU
     if(net->input_gpu) cuda_free(net->input_gpu);
     if(net->input_float_gpu) cuda_free(net->input_float_gpu);
     if(net->truth_gpu) cuda_free(net->truth_gpu);
+    #if MIX_PRECISION_SUPPORT == HALF
+        if(net->input_half_gpu) cuda_free(net->input_half_gpu);
+    #endif
 #endif
     free(net);
 }
