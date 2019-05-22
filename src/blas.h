@@ -49,32 +49,32 @@ void upsample_cpu(real *in, int w, int h, int c, int batch, int stride, int forw
 #include "tree.h"
 
 // > Mixed precision functions
-template<typename T>
-void scale_bias_gpu(T *output, T *biases, int batch, int n, int size);
+void scale_bias_gpu(float *output, float *biases, int batch, int n, int size);
+void scale_bias_gpu(double *output, double *biases, int batch, int n, int size);
 void scale_bias_gpu(half_host *output, half_host *biases, int batch, int n, int size);
 
-template<typename T>
-void add_bias_gpu(T *output, T *biases, int batch, int n, int size);
+void add_bias_gpu(float *output, float *biases, int batch, int n, int size);
+void add_bias_gpu(double *output, double *biases, int batch, int n, int size);
 void add_bias_gpu(half_host *output, half_host *biases, int batch, int n, int size);
 
-template<typename T>
-void normalize_gpu(T *x, T *mean, T *variance, int batch, int filters, int spatial);
+void normalize_gpu(float *x, float *mean, float *variance, int batch, int filters, int spatial);
+void normalize_gpu(double *x, double *mean, double *variance, int batch, int filters, int spatial);
 void normalize_gpu(half_host *x, half_host *mean, half_host *variance, int batch, int filters, int spatial);
 
-template<typename T>
-void copy_gpu_offset(int N, T *X, int OFFX, int INCX, T *Y, int OFFY, int INCY);
+void copy_gpu_offset(int N, float *X, int OFFX, int INCX, float *Y, int OFFY, int INCY);
+void copy_gpu_offset(int N, double *X, int OFFX, int INCX, double *Y, int OFFY, int INCY);
 void copy_gpu_offset(int N, half_host *X, int OFFX, int INCX, half_host *Y, int OFFY, int INCY);
 
-template<typename T>
-void axpy_gpu_offset(int N, float ALPHA, T *X, int OFFX, int INCX, T *Y, int OFFY, int INCY);
+void axpy_gpu_offset(int N, float ALPHA, float *X, int OFFX, int INCX, float *Y, int OFFY, int INCY);
+void axpy_gpu_offset(int N, float ALPHA, double *X, int OFFX, int INCX, double *Y, int OFFY, int INCY);
 void axpy_gpu_offset(int N, float ALPHA, half_host *X, int OFFX, int INCX, half_host *Y, int OFFY, int INCY);
 
-template<typename T>
-void fast_mean_gpu(T *x, int batch, int filters, int spatial, T *mean);
+void fast_mean_gpu(float *x, int batch, int filters, int spatial, float *mean);
+void fast_mean_gpu(double *x, int batch, int filters, int spatial, double *mean);
 void fast_mean_gpu(half_host *x, int batch, int filters, int spatial, half_host *mean);
 
-template<typename T>
-void fast_variance_gpu(T *x, T *mean, int batch, int filters, int spatial, T *variance);
+void fast_variance_gpu(float *x, float *mean, int batch, int filters, int spatial, float *variance);
+void fast_variance_gpu(double *x, double *mean, int batch, int filters, int spatial, double *variance);
 void fast_variance_gpu(half_host *x, half_host *mean, int batch, int filters, int spatial, half_host *variance);
 
 // > General functions
