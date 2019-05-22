@@ -910,7 +910,7 @@ network *parse_network_cfg_custom(char *filename, int batch)
         }else {
             net->workspace = (real*)calloc(1, workspace_size);
         }
-    #if MIX_PRECISION_FLOAT_SUPPORT
+    #if MIX_PRECISION_SUPPORT == FLOAT
         if(gpu_index >= 0){
             net->workspace_float = cuda_make_float_array(0, (workspace_size-1)/sizeof(float)+1);
         } else {
@@ -920,7 +920,7 @@ network *parse_network_cfg_custom(char *filename, int batch)
 #else
         net->workspace = (real*)calloc(1, workspace_size);
 
-    #if MIX_PRECISION_FLOAT_SUPPORT
+    #if MIX_PRECISION_SUPPORT == FLOAT
         net->workspace_float = (float*)calloc(1, workspace_size);
     #endif
     

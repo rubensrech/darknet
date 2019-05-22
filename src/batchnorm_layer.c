@@ -7,7 +7,7 @@
 
 #ifdef GPU
 
-// #if MIX_PRECISION_FLOAT_SUPPORT
+// #if MIX_PRECISION_SUPPORT == FLOAT
 
     void forward_batchnorm_layer_float_gpu(layer l, network net) {
         if(l.type == BATCHNORM) copy_gpu(l.outputs*l.batch, net.input_float_gpu, 1, l.output_float_gpu, 1);
@@ -57,7 +57,7 @@
         }
     }
 
-// #elif MIX_PRECISION_HALF_SUPPORT
+// #elif MIX_PRECISION_SUPPORT == HALF
 
     void forward_batchnorm_layer_half_gpu(layer l, network net) {
         if(l.type == BATCHNORM) copy_gpu(l.outputs*l.batch, net.input_float_gpu, 1, l.output_float_gpu, 1);

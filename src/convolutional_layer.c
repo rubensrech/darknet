@@ -14,7 +14,7 @@
 
 // > Mixed precision functions
 
-// #if MIX_PRECISION_FLOAT_SUPPORT
+// #if MIX_PRECISION_SUPPORT == FLOAT
 
     void swap_binary_float(convolutional_layer *l) {
         float *swap = l->weights_float;
@@ -28,7 +28,7 @@
         #endif
     }
 
-// #elif MIX_PRECISION_HALF_SUPPORT
+// #elif MIX_PRECISION_SUPPORT == HALF
 
     void swap_binary_half(convolutional_layer *l) {
         half_host *swap = l->weights_half;
