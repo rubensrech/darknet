@@ -288,7 +288,7 @@ struct layer{
 /* --- Mixed precision --- */
     int real_type;
 
-// #if REAL != HALF
+// #if MIX_PRECISION_HALF_SUPPORT
     // > Layers: Max Pool, Convolutional
     half_host *output_half;
     half_host *delta_half;
@@ -345,7 +345,7 @@ struct layer{
         half_host *x_norm_half_gpu;
     #endif
 
-// #elif REAL != FLOAT
+// #elif MIX_PRECISION_FLOAT_SUPPORT
     // > Layers: Max Pool, Convolutional
     float *output_float;
     float *delta_float;
@@ -609,9 +609,10 @@ typedef struct network{
 #endif
 
 /* --- Mixed precision --- */
-// #if REAL != FLOAT
+// #if MIX_PRECISION_FLOAT_SUPPORT
     float *input_float;
     float *workspace_float;
+    
     #ifdef GPU
         float *input_float_gpu;
 

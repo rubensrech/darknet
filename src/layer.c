@@ -53,7 +53,7 @@ void free_layer(layer l)
     if(l.h_cpu)              free(l.h_cpu);
     if(l.binary_input)       free(l.binary_input);
 
-#if REAL != FLOAT
+#if MIX_PRECISION_FLOAT_SUPPORT
     if (l.output_float)             free(l.output_float);
     if (l.delta_float)              free(l.delta_float);
     if (l.weights_float)            free(l.weights_float);
@@ -121,7 +121,7 @@ void free_layer(layer l)
     if(l.squared_gpu)             cuda_free(l.squared_gpu);
     if(l.norms_gpu)               cuda_free(l.norms_gpu);
 
-    #if REAL != FLOAT
+    #if MIX_PRECISION_FLOAT_SUPPORT
         if(l.delta_float_gpu)               cuda_free(l.delta_float_gpu);
         if(l.output_float_gpu)              cuda_free(l.output_float_gpu);
         if(l.m_float_gpu)                   cuda_free(l.m_float_gpu);

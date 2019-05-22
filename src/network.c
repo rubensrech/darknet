@@ -361,7 +361,7 @@ int resize_network(network *net, int w, int h)
     cuda_set_device(net->gpu_index);
     cuda_free(net->workspace);
 
-    #if REAL != FLOAT
+    #if MIX_PRECISION_FLOAT_SUPPORT
         cuda_free(net->workspace_float);
     #endif
 #endif
@@ -433,7 +433,7 @@ int resize_network(network *net, int w, int h)
         if(workspace_size){
             net->workspace = cuda_make_array(0, (workspace_size-1)/sizeof(real)+1);
         
-            #if REAL != FLOAT
+            #if MIX_PRECISION_FLOAT_SUPPORT
                 net->workspace_float = cuda_make_float_array(0, (workspace_size-1)/sizeof(float)+1);
             #endif
         }
@@ -441,7 +441,7 @@ int resize_network(network *net, int w, int h)
         free(net->workspace);
         net->workspace = (real*)calloc(1, workspace_size);
 
-        #if REAL != FLOAT
+        #if MIX_PRECISION_FLOAT_SUPPORT
             free(net->workspace_float);
             net->workspace_float = (float*)calloc(1, workspace_size);
         #endif
@@ -450,7 +450,7 @@ int resize_network(network *net, int w, int h)
     free(net->workspace);
     net->workspace = (real*)calloc(1, workspace_size);
 
-    #if REAL != FLOAT
+    #if MIX_PRECISION_FLOAT_SUPPORT
         free(net->workspace_float);
         net->workspace_float = (float*)calloc(1, workspace_size);
     #endif
@@ -826,7 +826,7 @@ void forward_network_gpu(network *netp, int push_input)
 
         // printf("layer %d\n", i);
 
-#if REAL != FLOAT // MIX PRECISION SUPPORT
+#if MIX_PRECISION_FLOAT_SUPPORT
         layer *l_prev = (i > 0) ? &(net.layers[i-1]) : NULL;
 
         if (l.real_type == FLOAT) {

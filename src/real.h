@@ -11,6 +11,10 @@
 #define IS_MIX_PRECISION_FLOAT_LAYER(r)		REAL != FLOAT && r == FLOAT
 #define IS_MIX_PRECISION_HALF_LAYER(r)		REAL != HALF && r == HALF
 
+// Indication about which data type must be supported for mixed precision
+#define MIX_PRECISION_FLOAT_SUPPORT			REAL != FLOAT
+#define MIX_PRECISION_HALF_SUPPORT			REAL != HALF
+
 // > Half for mixed precision
 
 #ifdef GPU
