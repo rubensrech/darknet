@@ -28,26 +28,34 @@
 #include "half.hpp"
 using half_float::half;
 using namespace half_float::literal;
-typedef __half half_device;
 typedef half_float::half half_host;
+#if GPU
+	typedef __half half_device;
+#endif
 
 // > Real type definitions
 
 #if REAL == DOUBLE
     typedef double real;
-    typedef double real_device;
     #define REAL_MAX __DBL_MAX__
     #define CUDNN_DATA_REAL CUDNN_DATA_DOUBLE
+	#if GPU
+		typedef double real_device;
+	#endif
 #elif REAL == HALF
 	typedef half_float::half real;
-	typedef __half real_device;
     #define REAL_MAX CAST(65504)
     #define CUDNN_DATA_REAL CUDNN_DATA_HALF
+	#if GPU
+		typedef __half real_device;
+	#endif
 #else // REAL == FLOAT
     typedef float real;
-    typedef float real_device;
     #define REAL_MAX __FLT_MAX__
     #define CUDNN_DATA_REAL CUDNN_DATA_FLOAT
+	#if GPU
+		typedef float real_device;
+	#endif
 #endif
 
 // > Real type conversions

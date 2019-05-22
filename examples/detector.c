@@ -990,6 +990,7 @@ void print_detections(image im, detection *dets, int num, float thresh, char **n
     }
 }
 
+/*
 void exportNetInOut(network *net) {
     int i, j;
     layer l;
@@ -1022,6 +1023,7 @@ void exportNetInOut(network *net) {
         fclose(f);
     }
 }
+*/
 
 // Rubens Test 1
 // Purpose: Test exec time

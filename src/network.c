@@ -194,6 +194,12 @@ void forward_network(network *netp)
     }
 #endif
     network net = *netp;
+
+    // Cast input
+    if (net.input_data_type != REAL) {
+        float2real_array(net.input_float, net.input, net.inputs*net.batch);
+    }
+
     int i;
     for(i = 0; i < net.n; ++i){
         net.index = i;

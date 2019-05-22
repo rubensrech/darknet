@@ -941,7 +941,7 @@ network *parse_network_cfg_custom(char *filename, int batch)
     #if MIX_PRECISION_SUPPORT == FLOAT
         net->workspace_float = (float*)calloc(1, workspace_size);
     #elif MIX_PRECISION_SUPPORT == HALF
-        net->workspace_half = (half_half*)calloc(1, workspace_size);
+        net->workspace_half = (half_host*)calloc(1, workspace_size);
     #endif
     
 #endif
