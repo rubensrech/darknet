@@ -8,32 +8,31 @@
 // > Mixed precision functions
 
 #ifdef GPU
-// #if REAL != FLOAT
-    void gemm_float_gpu(int TA, int TB, int M, int N, int K, float ALPHA, 
-        float *A_gpu, int lda, 
-        float *B_gpu, int ldb,
-        float BETA,
-        float *C_gpu, int ldc) {
-            cublasHandle_t handle = blas_handle();
-            cudaError_t status = (cudaError_t)cublasSgemm(handle, (TB ? CUBLAS_OP_T : CUBLAS_OP_N), 
-                    (TA ? CUBLAS_OP_T : CUBLAS_OP_N), N, M, K, &ALPHA, B_gpu, ldb, A_gpu, lda, &BETA, C_gpu, ldc);
-            check_error(status);
+    void gemm_gpu(int TA, int TB, int M, int N, int K, float ALPHA, float *A_gpu, int lda, float *B_gpu, int ldb, float BETA, float *C_gpu, int ldc) {
+        cublasHandle_t handle = blas_handle();
+        cudaError_t status = (cudaError_t)cublasSgemm(handle, (TB ? CUBLAS_OP_T : CUBLAS_OP_N), 
+                (TA ? CUBLAS_OP_T : CUBLAS_OP_N), N, M, K, &ALPHA, B_gpu, ldb, A_gpu, lda, &BETA, C_gpu, ldc);
+        check_error(status);
     }
-// #elif REAL != HALF
-    void gemm_half_gpu(int TA, int TB, int M, int N, int K, float ALPHA, 
-        half_host *A_gpu, int lda, 
-        half_host *B_gpu, int ldb,
-        float BETA,
-        half_host *C_gpu, int ldc) {
-            cublasHandle_t handle = blas_handle();
-            half_host alpha = half_host(ALPHA);
-            half_host beta = half_host(BETA);
-            cudaError_t status = (cudaError_t)cublasHgemm(handle, (TB ? CUBLAS_OP_T : CUBLAS_OP_N), 
-                    (TA ? CUBLAS_OP_T : CUBLAS_OP_N), N, M, K, (half_device*)(&alpha),
-                    (half_device*)B_gpu, ldb, (half_device*)A_gpu, lda, (half_device*)(&beta), (half_device*)C_gpu, ldc);
-            check_error(status);
+
+    void gemm_gpu(int TA, int TB, int M, int N, int K, float ALPHA, double *A_gpu, int lda, double *B_gpu, int ldb, float BETA, double *C_gpu, int ldc) {
+        cublasHandle_t handle = blas_handle();
+        double alpha = ALPHA;
+        double beta = BETA;
+        cudaError_t status = (cudaError_t)cublasDgemm(handle, (TB ? CUBLAS_OP_T : CUBLAS_OP_N), 
+                (TA ? CUBLAS_OP_T : CUBLAS_OP_N), N, M, K, &alpha, B_gpu, ldb, A_gpu, lda, &beta, C_gpu, ldc);
+        check_error(status);
     }
-// #endif
+
+    void gemm_gpu(int TA, int TB, int M, int N, int K, float ALPHA, half_host *A_gpu, int lda, half_host *B_gpu, int ldb, float BETA, half_host *C_gpu, int ldc) {
+        cublasHandle_t handle = blas_handle();
+        half_host alpha = half_host(ALPHA);
+        half_host beta = half_host(BETA);
+        cudaError_t status = (cudaError_t)cublasHgemm(handle, (TB ? CUBLAS_OP_T : CUBLAS_OP_N), 
+                (TA ? CUBLAS_OP_T : CUBLAS_OP_N), N, M, K, (half_device*)(&alpha),
+                (half_device*)B_gpu, ldb, (half_device*)A_gpu, lda, (half_device*)(&beta), (half_device*)C_gpu, ldc);
+        check_error(status);
+    }
 #endif
 
 // > General functions
@@ -201,32 +200,6 @@ void gemm_cpu(int TA, int TB, int M, int N, int K, float ALPHA,
 #ifdef GPU
 
 #include <math.h>
-
-void gemm_gpu(int TA, int TB, int M, int N, int K, float ALPHA, 
-        real *A_gpu, int lda, 
-        real *B_gpu, int ldb,
-        float BETA,
-        real *C_gpu, int ldc)
-{
-    cublasHandle_t handle = blas_handle();
-#if REAL == DOUBLE
-    double alpha = ALPHA;
-    double beta = BETA;
-    cudaError_t status = (cudaError_t)cublasDgemm(handle, (TB ? CUBLAS_OP_T : CUBLAS_OP_N), 
-            (TA ? CUBLAS_OP_T : CUBLAS_OP_N), N, M, K, &alpha, B_gpu, ldb, A_gpu, lda, &beta, C_gpu, ldc);
-#elif REAL == FLOAT
-    cudaError_t status = (cudaError_t)cublasSgemm(handle, (TB ? CUBLAS_OP_T : CUBLAS_OP_N), 
-            (TA ? CUBLAS_OP_T : CUBLAS_OP_N), N, M, K, &ALPHA, B_gpu, ldb, A_gpu, lda, &BETA, C_gpu, ldc);
-#elif REAL == HALF
-    real alpha = CAST(ALPHA);
-    real beta = CAST(BETA);
-    cudaError_t status = (cudaError_t)cublasHgemm(handle, (TB ? CUBLAS_OP_T : CUBLAS_OP_N), 
-            (TA ? CUBLAS_OP_T : CUBLAS_OP_N), N, M, K, (real_device*)(&alpha),
-            (real_device*)B_gpu, ldb, (real_device*)A_gpu, lda, (real_device*)(&beta), (real_device*)C_gpu, ldc);
-#endif
-    check_error(status);
-}
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

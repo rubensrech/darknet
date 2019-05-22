@@ -110,7 +110,7 @@ void forward_convolutional_layer_float_gpu(convolutional_layer l, network net) {
                     im2col_float_gpu(im, l.c/l.groups, l.h, l.w, l.size, l.stride, l.pad, b);
                 }
 
-                gemm_float_gpu(0,0,m,n,k,1,a,k,b,n,1,c,n);
+                gemm_gpu(0,0,m,n,k,1,a,k,b,n,1,c,n);
             }
         }
 
@@ -190,7 +190,7 @@ void forward_convolutional_layer_half_gpu(convolutional_layer l, network net) {
                     im2col_half_gpu(im, l.c/l.groups, l.h, l.w, l.size, l.stride, l.pad, b);
                 }
 
-                gemm_half_gpu(0,0,m,n,k,1,a,k,b,n,1,c,n);
+                gemm_gpu(0,0,m,n,k,1,a,k,b,n,1,c,n);
             }
         }
 
