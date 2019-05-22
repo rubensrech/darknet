@@ -46,6 +46,9 @@ maxpool_layer make_maxpool_layer(int batch, int h, int w, int c, int size, int s
     if (IS_MIX_PRECISION_FLOAT_LAYER(real_type)) {
         l.output_float = (float*)calloc(output_size, sizeof(float));
         l.delta_float = (float*)calloc(output_size, sizeof(float));
+    } else if (IS_MIX_PRECISION_HALF_LAYER(real_type)) {
+        l.output_half = (half_host*)calloc(output_size, sizeof(half_host));
+        l.delta_half = (half_host*)calloc(output_size, sizeof(half_host));
     }
 
     l.forward = forward_maxpool_layer;
@@ -54,6 +57,8 @@ maxpool_layer make_maxpool_layer(int batch, int h, int w, int c, int size, int s
     #ifdef GPU
         if (IS_MIX_PRECISION_FLOAT_LAYER(real_type)) {
             l.forward_gpu = forward_maxpool_layer_float_gpu;
+        } else if (IS_MIX_PRECISION_HALF_LAYER(real_type)) {
+            l.forward_gpu = forward_maxpool_layer_half_gpu;
         } else {
             l.forward_gpu = forward_maxpool_layer_gpu;
         }
@@ -67,6 +72,9 @@ maxpool_layer make_maxpool_layer(int batch, int h, int w, int c, int size, int s
         if (IS_MIX_PRECISION_FLOAT_LAYER(real_type)) {
             l.output_float_gpu  = cuda_make_float_array(l.output_float, output_size);
             l.delta_float_gpu   = cuda_make_float_array(l.delta_float, output_size);
+        } else if (IS_MIX_PRECISION_HALF_LAYER(real_type)) {
+            l.output_half_gpu  = cuda_make_half_array(l.output_half, output_size);
+            l.delta_half_gpu   = cuda_make_half_array(l.delta_half, output_size);
         }
     #endif
     fprintf(stderr, "max          %d x %d / %d  %4d x%4d x%4d   ->  %4d x%4d x%4d", size, size, stride, w, h, c, l.out_w, l.out_h, l.out_c);
@@ -92,6 +100,9 @@ void resize_maxpool_layer(maxpool_layer *l, int w, int h)
     if (IS_MIX_PRECISION_FLOAT_LAYER(l->real_type)) {
         l->output_float = (float*)realloc(l->output_float, output_size * sizeof(float));
         l->delta_float = (float*)realloc(l->delta_float, output_size * sizeof(float));
+    } else if (IS_MIX_PRECISION_HALF_LAYER(l->real_type)) {
+        l->output_half = (half_host*)realloc(l->output_half, output_size * sizeof(half_host));
+        l->delta_half = (half_host*)realloc(l->delta_half, output_size * sizeof(half_host));
     }
 
     #ifdef GPU
@@ -107,6 +118,11 @@ void resize_maxpool_layer(maxpool_layer *l, int w, int h)
             cuda_free(l->delta_float_gpu);
             l->output_float_gpu  = cuda_make_float_array(l->output_float, output_size);
             l->delta_float_gpu   = cuda_make_float_array(l->delta_float, output_size);
+        } else if (IS_MIX_PRECISION_HALF_LAYER(l->real_type)) {
+            cuda_free(l->output_half_gpu);
+            cuda_free(l->delta_half_gpu);
+            l->output_half_gpu  = cuda_make_half_array(l->output_half, output_size);
+            l->delta_half_gpu   = cuda_make_half_array(l->delta_half, output_size);
         }
     #endif
 }

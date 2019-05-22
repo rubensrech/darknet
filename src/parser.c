@@ -892,14 +892,27 @@ network *parse_network_cfg_custom(char *filename, int batch)
     int max_input_size = 692224; // layer 1 -> outputs ??
 
     net->input = (real*)calloc(max_input_size, sizeof(real));
-    net->input_float = (float*)calloc(max_input_size, sizeof(float));
+
+    #if MIX_PRECISION_SUPPORT == FLOAT
+        net->input_float = (float*)calloc(max_input_size, sizeof(float));
+    #elif MIX_PRECISION_SUPPORT == HALF
+        net->input_half = (half_host*)calloc(max_input_size, sizeof(half_host));
+    #endif
+    
     net->truth = (real*)calloc(net->truths*net->batch, sizeof(real));
 #ifdef GPU
     net->output_gpu = out.output_gpu;
     net->input_gpu = cuda_make_array(net->input, max_input_size);
     net->hold_input_gpu = net->input_gpu;
-    net->input_float_gpu = cuda_make_float_array(net->input_float, max_input_size);
-    net->hold_input_float_gpu = net->input_float_gpu;
+
+    #if MIX_PRECISION_SUPPORT == FLOAT
+        net->input_float_gpu = cuda_make_float_array(net->input_float, max_input_size);
+        net->hold_input_float_gpu = net->input_float_gpu;
+    #elif MIX_PRECISION_SUPPORT == HALF
+        net->input_half_gpu = cuda_make_half_array(net->input_half, max_input_size);
+        net->hold_input_half_gpu = net->input_half_gpu;
+    #endif
+
     net->truth_gpu = cuda_make_array(net->truth, net->truths*net->batch);
 #endif
     if(workspace_size){
@@ -911,17 +924,23 @@ network *parse_network_cfg_custom(char *filename, int batch)
             net->workspace = (real*)calloc(1, workspace_size);
         }
     #if MIX_PRECISION_SUPPORT == FLOAT
-        if(gpu_index >= 0){
+        if (gpu_index >= 0)
             net->workspace_float = cuda_make_float_array(0, (workspace_size-1)/sizeof(float)+1);
-        } else {
+        else
             net->workspace_float = (float*)calloc(1, workspace_size);
-        }
+    #elif MIX_PRECISION_SUPPORT == HALF
+        if (gpu_index >= 0)
+            net->workspace_half = cuda_make_half_array(0, (workspace_size-1)/sizeof(half_host)+1);
+        else
+            net->workspace_half = (half_host*)calloc(1, workspace_size);
     #endif
 #else
         net->workspace = (real*)calloc(1, workspace_size);
 
     #if MIX_PRECISION_SUPPORT == FLOAT
         net->workspace_float = (float*)calloc(1, workspace_size);
+    #elif MIX_PRECISION_SUPPORT == HALF
+        net->workspace_half = (half_half*)calloc(1, workspace_size);
     #endif
     
 #endif
@@ -1282,9 +1301,9 @@ void load_convolutional_weights(layer l, FILE *fp)
     if(l.numload) l.n = l.numload;
     int num = l.c/l.groups*l.n*l.size*l.size;
 
-
-#if (REAL != FLOAT) && defined(FLOAT_WEIGHTS)
-    if (l.real_type == FLOAT) {
+#if defined(FLOAT_WEIGHTS)
+    // Mixed precision support float
+    if (IS_MIX_PRECISION_FLOAT_LAYER(l.real_type)) {
         fread(l.biases_float, sizeof(float), l.n, fp);
         if (l.batch_normalize && (!l.dontloadscales)){
             fread(l.scales_float, sizeof(float), l.n, fp);
@@ -1292,28 +1311,66 @@ void load_convolutional_weights(layer l, FILE *fp)
             fread(l.rolling_variance_float, sizeof(float), l.n, fp);
         }
         fread(l.weights_float, sizeof(float), num, fp);
-    } else {
+    }
+    // Mixed precision support half
+    else if (IS_MIX_PRECISION_HALF_LAYER(l.real_type)) {
         float *tmpBuffer0 = (float*)calloc(l.n, sizeof(float));
         float *tmpBuffer1 = (float*)calloc(num, sizeof(float));
         int j;
 
         fread(tmpBuffer0, sizeof(float), l.n, fp);
-            for(j = 0; j < l.n; ++j) l.biases[j] = tmpBuffer0[j];
+        for(j = 0; j < l.n; ++j) l.biases_half[j] = tmpBuffer0[j];
 
         if (l.batch_normalize && (!l.dontloadscales)){
             fread(tmpBuffer0, sizeof(float), l.n, fp);
-            for(j = 0; j < l.n; ++j) l.scales[j] = tmpBuffer0[j];
+            for(j = 0; j < l.n; ++j) l.scales_half[j] = tmpBuffer0[j];
             fread(tmpBuffer0, sizeof(float), l.n, fp);
-            for(j = 0; j < l.n; ++j) l.rolling_mean[j] = tmpBuffer0[j];
+            for(j = 0; j < l.n; ++j) l.rolling_mean_half[j] = tmpBuffer0[j];
             fread(tmpBuffer0, sizeof(float), l.n, fp);
-            for(j = 0; j < l.n; ++j) l.rolling_variance[j] = tmpBuffer0[j];
+            for(j = 0; j < l.n; ++j) l.rolling_variance_half[j] = tmpBuffer0[j];
         }
 
         fread(tmpBuffer1, sizeof(float), num, fp);
-        for(j = 0; j < num; ++j) l.weights[j] = tmpBuffer1[j];
+        for(j = 0; j < num; ++j) l.weights_half[j] = tmpBuffer1[j];
 
         free(tmpBuffer0);
         free(tmpBuffer1);
+    }
+    // Mixed precision default type
+    else if (l.real_type == FLOAT) {
+        fread(l.biases, sizeof(real), l.n, fp);
+        if (l.batch_normalize && (!l.dontloadscales)){
+            fread(l.scales, sizeof(real), l.n, fp);
+            fread(l.rolling_mean, sizeof(real), l.n, fp);
+            fread(l.rolling_variance, sizeof(real), l.n, fp);
+        }
+        fread(l.weights, sizeof(real), num, fp);
+    }
+    else {
+        // Load FLOAT WEIGHTS when network DEFAULT PRECISION is NOT FLOAT
+        #if (REAL != FLOAT)
+            float *tmpBuffer0 = (float*)calloc(l.n, sizeof(float));
+            float *tmpBuffer1 = (float*)calloc(num, sizeof(float));
+            int j;
+
+            fread(tmpBuffer0, sizeof(float), l.n, fp);
+            for(j = 0; j < l.n; ++j) l.biases[j] = tmpBuffer0[j];
+
+            if (l.batch_normalize && (!l.dontloadscales)){
+                fread(tmpBuffer0, sizeof(float), l.n, fp);
+                for(j = 0; j < l.n; ++j) l.scales[j] = tmpBuffer0[j];
+                fread(tmpBuffer0, sizeof(float), l.n, fp);
+                for(j = 0; j < l.n; ++j) l.rolling_mean[j] = tmpBuffer0[j];
+                fread(tmpBuffer0, sizeof(float), l.n, fp);
+                for(j = 0; j < l.n; ++j) l.rolling_variance[j] = tmpBuffer0[j];
+            }
+
+            fread(tmpBuffer1, sizeof(float), num, fp);
+            for(j = 0; j < num; ++j) l.weights[j] = tmpBuffer1[j];
+
+            free(tmpBuffer0);
+            free(tmpBuffer1);
+        #endif
     }
 #else
     fread(l.biases, sizeof(real), l.n, fp);
@@ -1321,33 +1378,6 @@ void load_convolutional_weights(layer l, FILE *fp)
         fread(l.scales, sizeof(real), l.n, fp);
         fread(l.rolling_mean, sizeof(real), l.n, fp);
         fread(l.rolling_variance, sizeof(real), l.n, fp);
-
-        if(0){
-            int i;
-            for(i = 0; i < l.n; ++i){
-                printf("%g, ", l.rolling_mean[i]);
-            }
-            printf("\n");
-            for(i = 0; i < l.n; ++i){
-                printf("%g, ", l.rolling_variance[i]);
-            }
-            printf("\n");
-        }
-        if(0){
-            fill_cpu(l.n, 0, l.rolling_mean, 1);
-            fill_cpu(l.n, 0, l.rolling_variance, 1);
-        }
-        if(0){
-            int i;
-            for(i = 0; i < l.n; ++i){
-                printf("%g, ", l.rolling_mean[i]);
-            }
-            printf("\n");
-            for(i = 0; i < l.n; ++i){
-                printf("%g, ", l.rolling_variance[i]);
-            }
-            printf("\n");
-        }
     }
     fread(l.weights, sizeof(real), num, fp);
 #endif
@@ -1355,7 +1385,6 @@ void load_convolutional_weights(layer l, FILE *fp)
     if (l.flipped) {
         transpose_matrix(l.weights, l.c*l.size*l.size, l.n);
     }
-    //if (l.binary) binarize_weights(l.weights, l.n, l.c*l.size*l.size, l.weights);
 #ifdef GPU
     if(gpu_index >= 0){
         push_convolutional_layer(l);

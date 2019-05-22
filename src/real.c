@@ -14,6 +14,22 @@ void real2float_array(real* src, float* dst, int n) {
         dst[i] = src[i];
 }
 
+
+
+
+void half2real_array(half_host* src, real* dst, int n) {
+    int i;
+    for (i = 0; i < n; i++)
+        dst[i] = src[i];
+}
+
+
+void real2half_array(real* src, half_host* dst, int n) {
+    int i;
+    for (i = 0; i < n; i++)
+        dst[i] = src[i];
+}
+
 /*
  *  @param src - CPU array
  *  @param dst_gpu - if NULL    -> 'src' will be converted to float and the output array will be available in CPU,

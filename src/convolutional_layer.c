@@ -667,7 +667,7 @@ void resize_convolutional_layer(convolutional_layer *l, int w, int h)
 
             l->x_float_gpu = cuda_make_float_array(l->output_float, l->batch*l->outputs);
             l->x_norm_float_gpu = cuda_make_float_array(l->output_float, l->batch*l->outputs);
-        } else if (IS_MIX_PRECISION_FLOAT_LAYER(l->real_type)) {
+        } else if (IS_MIX_PRECISION_HALF_LAYER(l->real_type)) {
             cuda_free(l->x_half_gpu);
             cuda_free(l->x_norm_half_gpu);
 

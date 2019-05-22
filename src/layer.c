@@ -78,6 +78,31 @@ void free_layer(layer l)
     if (l.scale_m_float)            free(l.scale_m_float);
     if (l.bias_v_float)             free(l.bias_v_float);
     if (l.scale_v_float)            free(l.scale_v_float);
+#elif MIX_PRECISION_SUPPORT == HALF
+    if (l.output_half)             free(l.output_half);
+    if (l.delta_half)              free(l.delta_half);
+    if (l.weights_half)            free(l.weights_half);
+    if (l.weight_updates_half)     free(l.weight_updates_half);
+    if (l.biases_half)             free(l.biases_half);
+    if (l.bias_updates_half)       free(l.bias_updates_half);
+    if (l.binary_weights_half)     free(l.binary_weights_half);
+    if (l.scales_half)             free(l.scales_half);
+    if (l.scale_updates_half)      free(l.scale_updates_half);
+    if (l.binary_input_half)       free(l.binary_input_half);
+    if (l.mean_half)               free(l.mean_half);
+    if (l.mean_delta_half)         free(l.mean_delta_half);
+    if (l.variance_half)           free(l.variance_half);
+    if (l.variance_delta_half)     free(l.variance_delta_half);
+    if (l.rolling_mean_half)       free(l.rolling_mean_half);
+    if (l.rolling_variance_half)   free(l.rolling_variance_half);
+    if (l.x_half)                  free(l.x_half);
+    if (l.x_norm_half)             free(l.x_norm_half);
+    if (l.m_half)                  free(l.m_half);
+    if (l.v_half)                  free(l.v_half);
+    if (l.bias_m_half)             free(l.bias_m_half);
+    if (l.scale_m_half)            free(l.scale_m_half);
+    if (l.bias_v_half)             free(l.bias_v_half);
+    if (l.scale_v_half)            free(l.scale_v_half);
 #endif
 
 #ifdef GPU
@@ -146,6 +171,31 @@ void free_layer(layer l)
         if(l.scale_updates_float_gpu)       cuda_free(l.scale_updates_float_gpu);
         if(l.x_float_gpu)                   cuda_free(l.x_float_gpu);
         if(l.x_norm_float_gpu)              cuda_free(l.x_norm_float_gpu);
+    #elif MIX_PRECISION_SUPPORT == HALF
+        if(l.delta_half_gpu)               cuda_free(l.delta_half_gpu);
+        if(l.output_half_gpu)              cuda_free(l.output_half_gpu);
+        if(l.m_half_gpu)                   cuda_free(l.m_half_gpu);
+        if(l.v_half_gpu)                   cuda_free(l.v_half_gpu);
+        if(l.bias_m_half_gpu)              cuda_free(l.bias_m_half_gpu);
+        if(l.bias_v_half_gpu)              cuda_free(l.bias_v_half_gpu);
+        if(l.scale_m_half_gpu)             cuda_free(l.scale_m_half_gpu);
+        if(l.scale_v_half_gpu)             cuda_free(l.scale_v_half_gpu);
+        if(l.weights_half_gpu)             cuda_free(l.weights_half_gpu);
+        if(l.weight_updates_half_gpu)      cuda_free(l.weight_updates_half_gpu);
+        if(l.biases_half_gpu)              cuda_free(l.biases_half_gpu);
+        if(l.bias_updates_half_gpu)        cuda_free(l.bias_updates_half_gpu);
+        if(l.binary_weights_half_gpu)      cuda_free(l.binary_weights_half_gpu);
+        if(l.binary_input_half_gpu)        cuda_free(l.binary_input_half_gpu);
+        if(l.mean_half_gpu)                cuda_free(l.mean_half_gpu);
+        if(l.variance_half_gpu)            cuda_free(l.variance_half_gpu);
+        if(l.rolling_mean_half_gpu)        cuda_free(l.rolling_mean_half_gpu);
+        if(l.rolling_variance_half_gpu)    cuda_free(l.rolling_variance_half_gpu);
+        if(l.mean_delta_half_gpu)          cuda_free(l.mean_delta_half_gpu);
+        if(l.variance_delta_half_gpu)      cuda_free(l.variance_delta_half_gpu);
+        if(l.scales_half_gpu)              cuda_free(l.scales_half_gpu);
+        if(l.scale_updates_half_gpu)       cuda_free(l.scale_updates_half_gpu);
+        if(l.x_half_gpu)                   cuda_free(l.x_half_gpu);
+        if(l.x_norm_half_gpu)              cuda_free(l.x_norm_half_gpu);
     #endif
 #endif
 }

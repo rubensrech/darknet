@@ -363,6 +363,8 @@ int resize_network(network *net, int w, int h)
 
     #if MIX_PRECISION_SUPPORT == FLOAT
         cuda_free(net->workspace_float);
+    #elif MIX_PRECISION_SUPPORT == HALF
+        cuda_free(net->workspace_half);
     #endif
 #endif
     int i;
@@ -435,15 +437,20 @@ int resize_network(network *net, int w, int h)
         
             #if MIX_PRECISION_SUPPORT == FLOAT
                 net->workspace_float = cuda_make_float_array(0, (workspace_size-1)/sizeof(float)+1);
+            #elif MIX_PRECISION_SUPPORT == HALF
+                net->workspace_half = cuda_make_half_array(0, (workspace_size-1)/sizeof(half_host)+1);
             #endif
         }
-    }else {
+    } else {
         free(net->workspace);
         net->workspace = (real*)calloc(1, workspace_size);
 
         #if MIX_PRECISION_SUPPORT == FLOAT
             free(net->workspace_float);
             net->workspace_float = (float*)calloc(1, workspace_size);
+        #elif MIX_PRECISION_SUPPORT == HALF
+            free(net->workspace_half);
+            net->workspace_half = (half_host*)calloc(1, workspace_size);
         #endif
     }
 #else
@@ -453,6 +460,9 @@ int resize_network(network *net, int w, int h)
     #if MIX_PRECISION_SUPPORT == FLOAT
         free(net->workspace_float);
         net->workspace_float = (float*)calloc(1, workspace_size);
+    #elif MIX_PRECISION_SUPPORT == HALF
+        free(net->workspace_half);
+        net->workspace_half = (half_host*)calloc(1, workspace_size);
     #endif
 #endif
     //fprintf(stderr, " Done!\n");
@@ -523,7 +533,13 @@ real *network_predict(network *net, real *input)
     net->truth = 0;
     net->train = 0;
     net->delta = 0;
+
+    fprintf(stderr, "START\n");
+
     forward_network(net, 1);
+
+    fprintf(stderr, "END\n");
+
     real *out = net->output;
     *net = orig;
     return out;
@@ -824,7 +840,7 @@ void forward_network_gpu(network *netp, int push_input)
         net.index = i;
         layer l = net.layers[i];
 
-        // printf("layer %d\n", i);
+        // fprintf(stderr, "layer %d\n", i);
 
 #if MIX_PRECISION_SUPPORT == FLOAT
         layer *l_prev = (i > 0) ? &(net.layers[i-1]) : NULL;
@@ -846,6 +862,8 @@ void forward_network_gpu(network *netp, int push_input)
             net.input = l.output;
 
             if (l.truth) {
+                // Can be optimized (if needed)
+                fprintf(stderr, "Optimize: network.c:%d\n", __LINE__);
                 float2real_array_gpu(l.output_float_gpu, net.truth_gpu, l.outputs * l.batch);
                 float2real_array(l.output_float, net.truth, l.outputs * l.batch);
             }
@@ -866,6 +884,57 @@ void forward_network_gpu(network *netp, int push_input)
             net.input = l.output;
             net.input_float_gpu = l.output_float_gpu;
             net.input_float = l.output_float;
+
+            if (l.truth) {
+                net.truth_gpu = l.output_gpu;
+                net.truth = l.output;
+            }
+        }
+#elif MIX_PRECISION_SUPPORT == HALF
+        fprintf(stderr, "layer %d\n", i);
+        cudaDeviceSynchronize();
+
+        layer *l_prev = (i > 0) ? &(net.layers[i-1]) : NULL;
+
+        if (l.real_type == HALF) {
+            if (l_prev && l_prev->real_type == REAL) {
+                real2half_array_gpu(net.input_gpu, net.hold_input_half_gpu, l_prev->outputs * l_prev->batch);
+                net.input_half_gpu = net.hold_input_half_gpu;
+            }
+            
+            if (l.delta_half_gpu) 
+                fill_gpu(l.outputs * l.batch, 0, l.delta_half_gpu, 1);
+
+            l.forward_gpu(l, net);
+
+            net.input_half_gpu = l.output_half_gpu;
+            net.input_half = l.output_half;
+            net.input_gpu = l.output_gpu;
+            net.input = l.output;
+
+            if (l.truth) {
+                // Can be optimized (if needed)
+                fprintf(stderr, "Optimize: network.c:%d\n", __LINE__);
+                half2real_array_gpu(l.output_half_gpu, net.truth_gpu, l.outputs * l.batch);
+                half2real_array(l.output_half, net.truth, l.outputs * l.batch);
+            }
+        } 
+        
+        else if (l.real_type == REAL) { // Current layer: REAL 
+            if (l_prev && l_prev->real_type == HALF) { // Previous layer: HALF
+                half2real_array_gpu(net.input_half_gpu, net.hold_input_gpu, l_prev->outputs * l_prev->batch);
+                net.input_gpu = net.hold_input_gpu;
+            }
+            
+            if (l.delta_gpu) 
+                fill_gpu(l.outputs * l.batch, 0, l.delta_gpu, 1);
+            
+            l.forward_gpu(l, net);
+
+            net.input_gpu = l.output_gpu;
+            net.input = l.output;
+            net.input_half_gpu = l.output_half_gpu;
+            net.input_half = l.output_half;
 
             if (l.truth) {
                 net.truth_gpu = l.output_gpu;

@@ -1066,7 +1066,7 @@ void test(char *cfgfile, char *filename) {
     double ttime = what_time_is_it_now();
 
     int iteration;
-    for (iteration = 0; iteration < 2; iteration++) {
+    for (iteration = 0; iteration < 1; iteration++) {
         // Load input image
         im = load_image_color(input, 0, 0);
         sized = letterbox_image(im, net->w, net->h);
@@ -1074,7 +1074,7 @@ void test(char *cfgfile, char *filename) {
         float *X = sized.data;
 
         // Run predictor
-        network_predict_float(net, X);
+        network_predict(net, X);
 
         // Generate outputs
         int letterbox = 1;
