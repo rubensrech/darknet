@@ -889,13 +889,14 @@ network *parse_network_cfg_custom(char *filename, int batch)
     if(net->layers[net->n-1].truths) net->truths = net->layers[net->n-1].truths;
     net->output = out.output;
 
-    int max_input_size = 692224; // layer 1 -> outputs ??
+    int max_input_size = 1048577;
 
     net->input = (real*)calloc(max_input_size, sizeof(real));
+    net->input_data_type = REAL;
 
-    #if MIX_PRECISION_SUPPORT == FLOAT
-        net->input_float = (float*)calloc(max_input_size, sizeof(float));
-    #elif MIX_PRECISION_SUPPORT == HALF
+    // Input float always is allocated because input data can be float
+    net->input_float = (float*)calloc(max_input_size, sizeof(float));
+    #if MIX_PRECISION_SUPPORT == HALF
         net->input_half = (half_host*)calloc(max_input_size, sizeof(half_host));
     #endif
     
@@ -905,10 +906,10 @@ network *parse_network_cfg_custom(char *filename, int batch)
     net->input_gpu = cuda_make_array(net->input, max_input_size);
     net->hold_input_gpu = net->input_gpu;
 
-    #if MIX_PRECISION_SUPPORT == FLOAT
-        net->input_float_gpu = cuda_make_float_array(net->input_float, max_input_size);
-        net->hold_input_float_gpu = net->input_float_gpu;
-    #elif MIX_PRECISION_SUPPORT == HALF
+    // Input float always is allocated because input data can be float
+    net->input_float_gpu = cuda_make_float_array(net->input_float, max_input_size);
+    net->hold_input_float_gpu = net->input_float_gpu;
+    #if MIX_PRECISION_SUPPORT == HALF
         net->input_half_gpu = cuda_make_half_array(net->input_half, max_input_size);
         net->hold_input_half_gpu = net->input_half_gpu;
     #endif
@@ -1234,75 +1235,14 @@ void load_batchnorm_weights(layer l, FILE *fp)
 #endif
 }
 
-void load_convolutional_weights_binary(layer l, FILE *fp)
-{
-#if (REAL != FLOAT) && defined(FLOAT_WEIGHTS) 
-    float *tmpBuffer = (float*)calloc(l.n, sizeof(float));
-    int x;
-
-    fread(tmpBuffer, sizeof(float), l.n, fp);
-    for (x = 0; x < l.n; x++) l.biases[x] = tmpBuffer[x];
-
-    if (l.batch_normalize && (!l.dontloadscales)){
-        fread(tmpBuffer, sizeof(float), l.n, fp);
-        for (x = 0; x < l.n; x++) l.scales[x] = tmpBuffer[x];
-        fread(tmpBuffer, sizeof(float), l.n, fp);
-        for (x = 0; x < l.n; x++) l.rolling_mean[x] = tmpBuffer[x];
-        fread(tmpBuffer, sizeof(float), l.n, fp);
-        for (x = 0; x < l.n; x++) l.rolling_variance[x] = tmpBuffer[x];
-    }
-
-    free(tmpBuffer);
-#else
-    fread(l.biases, sizeof(real), l.n, fp);
-    if (l.batch_normalize && (!l.dontloadscales)){
-        fread(l.scales, sizeof(real), l.n, fp);
-        fread(l.rolling_mean, sizeof(real), l.n, fp);
-        fread(l.rolling_variance, sizeof(real), l.n, fp);
-    }
-#endif
-
-    int size = l.c*l.size*l.size;
-    int i, j, k;
-    for(i = 0; i < l.n; ++i){
-        float mean = 0;
-        
-#if (REAL != FLOAT) && defined(FLOAT_WEIGHTS) 
-        float tmpFloat;
-        fread(&tmpFloat, sizeof(float), 1, fp);
-        mean = tmpFloat;
-#else
-        fread(&mean, sizeof(real), 1, fp);
-#endif
-
-        for(j = 0; j < size/8; ++j){
-            int index = i*size + j*8;
-            unsigned char c = 0;
-            fread(&c, sizeof(char), 1, fp);
-            for(k = 0; k < 8; ++k){
-                if (j*8 + k >= size) break;
-                l.weights[index + k] = (c & 1<<k) ? mean : -mean;
-            }
-        }
-    }
-#ifdef GPU
-    if(gpu_index >= 0){
-        push_convolutional_layer(l);
-    }
-#endif
-}
-
 void load_convolutional_weights(layer l, FILE *fp)
 {
-    if(l.binary){
-        //load_convolutional_weights_binary(l, fp);
-        //return;
-    }
     if(l.numload) l.n = l.numload;
     int num = l.c/l.groups*l.n*l.size*l.size;
 
+
 #if defined(FLOAT_WEIGHTS)
-    // Mixed precision support float
+    // FLOAT layer in MIXED PRECISION (default precision: NON-FLOAT)
     if (IS_MIX_PRECISION_FLOAT_LAYER(l.real_type)) {
         fread(l.biases_float, sizeof(float), l.n, fp);
         if (l.batch_normalize && (!l.dontloadscales)){
@@ -1312,7 +1252,7 @@ void load_convolutional_weights(layer l, FILE *fp)
         }
         fread(l.weights_float, sizeof(float), num, fp);
     }
-    // Mixed precision support half
+    // HALF layer in MIXED PRECISION (default precision: NON-HALF)
     else if (IS_MIX_PRECISION_HALF_LAYER(l.real_type)) {
         float *tmpBuffer0 = (float*)calloc(l.n, sizeof(float));
         float *tmpBuffer1 = (float*)calloc(num, sizeof(float));
@@ -1336,7 +1276,7 @@ void load_convolutional_weights(layer l, FILE *fp)
         free(tmpBuffer0);
         free(tmpBuffer1);
     }
-    // Mixed precision default type
+    // MIXED PRECISION default layer type
     else if (l.real_type == FLOAT) {
         fread(l.biases, sizeof(real), l.n, fp);
         if (l.batch_normalize && (!l.dontloadscales)){
@@ -1373,6 +1313,7 @@ void load_convolutional_weights(layer l, FILE *fp)
         #endif
     }
 #else
+    // Load REAL weights to REAL layer
     fread(l.biases, sizeof(real), l.n, fp);
     if (l.batch_normalize && (!l.dontloadscales)){
         fread(l.scales, sizeof(real), l.n, fp);
@@ -1385,21 +1326,49 @@ void load_convolutional_weights(layer l, FILE *fp)
     if (l.flipped) {
         transpose_matrix(l.weights, l.c*l.size*l.size, l.n);
     }
-#ifdef GPU
-    if(gpu_index >= 0){
-        push_convolutional_layer(l);
-    }
-#endif
+
+    #ifdef GPU
+        if(gpu_index >= 0){
+            push_convolutional_layer(l);
+        }
+    #endif
 }
 
+void load_local_weights(layer l, FILE *fp) {
+    int locations = l.out_w*l.out_h;
+    int size = l.size*l.size*l.c*l.n*locations;
 
-void load_weights_upto(network *net, char *filename, int start, int cutoff)
-{
-#ifdef GPU
-    if(net->gpu_index >= 0){
-        cuda_set_device(net->gpu_index);
-    }
-#endif
+    #if (REAL != FLOAT) && defined(FLOAT_WEIGHTS)
+        float *tmpBuffer0 = (float*)calloc(l.outputs, sizeof(float));
+        float *tmpBuffer1 = (float*)calloc(size, sizeof(float));
+        int j;
+
+        fread(tmpBuffer0, sizeof(float), l.outputs, fp);
+        for (j = 0; j < l.outputs; j++) l.biases[j] = tmpBuffer0[j];
+        fread(tmpBuffer1, sizeof(float), size, fp);
+        for (j = 0; j < size; j++) l.weights[j] = tmpBuffer1[j];
+
+        free(tmpBuffer0);
+        free(tmpBuffer1);
+    #else
+        fread(l.biases, sizeof(real), l.outputs, fp);
+        fread(l.weights, sizeof(real), size, fp);
+    #endif
+
+    #ifdef GPU
+        if(gpu_index >= 0) {
+            push_local_layer(l);
+        }
+    #endif
+}
+
+void load_weights_upto(network *net, char *filename, int start, int cutoff) {
+    #ifdef GPU
+        if (net->gpu_index >= 0) {
+            cuda_set_device(net->gpu_index);
+        }
+    #endif
+
     fprintf(stderr, "Loading weights from %s...", filename);
     fflush(stdout);
     FILE *fp = fopen(filename, "rb");
@@ -1426,21 +1395,21 @@ void load_weights_upto(network *net, char *filename, int start, int cutoff)
     for(i = start; i < net->n && i < cutoff; ++i){
         layer l = net->layers[i];
         if (l.dontload) continue;
-        if(l.type == CONVOLUTIONAL || l.type == DECONVOLUTIONAL){
+        if (l.type == CONVOLUTIONAL || l.type == DECONVOLUTIONAL) {
             load_convolutional_weights(l, fp);
         }
-        if(l.type == CONNECTED){
+        if (l.type == CONNECTED) {
             load_connected_weights(l, fp, transpose);
         }
-        if(l.type == BATCHNORM){
+        if (l.type == BATCHNORM) {
             load_batchnorm_weights(l, fp);
         }
-        if(l.type == CRNN){
+        if (l.type == CRNN) {
             load_convolutional_weights(*(l.input_layer), fp);
             load_convolutional_weights(*(l.self_layer), fp);
             load_convolutional_weights(*(l.output_layer), fp);
         }
-        if(l.type == RNN){
+        if (l.type == RNN) {
             load_connected_weights(*(l.input_layer), fp, transpose);
             load_connected_weights(*(l.self_layer), fp, transpose);
             load_connected_weights(*(l.output_layer), fp, transpose);
@@ -1456,45 +1425,15 @@ void load_weights_upto(network *net, char *filename, int start, int cutoff)
             load_connected_weights(*(l.ug), fp, transpose);
         }
         if (l.type == GRU) {
-            if(1){
-                load_connected_weights(*(l.wz), fp, transpose);
-                load_connected_weights(*(l.wr), fp, transpose);
-                load_connected_weights(*(l.wh), fp, transpose);
-                load_connected_weights(*(l.uz), fp, transpose);
-                load_connected_weights(*(l.ur), fp, transpose);
-                load_connected_weights(*(l.uh), fp, transpose);
-            }else{
-                load_connected_weights(*(l.reset_layer), fp, transpose);
-                load_connected_weights(*(l.update_layer), fp, transpose);
-                load_connected_weights(*(l.state_layer), fp, transpose);
-            }
+            load_connected_weights(*(l.wz), fp, transpose);
+            load_connected_weights(*(l.wr), fp, transpose);
+            load_connected_weights(*(l.wh), fp, transpose);
+            load_connected_weights(*(l.uz), fp, transpose);
+            load_connected_weights(*(l.ur), fp, transpose);
+            load_connected_weights(*(l.uh), fp, transpose);
         }
-        if(l.type == LOCAL){
-            int locations = l.out_w*l.out_h;
-            int size = l.size*l.size*l.c*l.n*locations;
-
-#if (REAL != FLOAT) && defined(FLOAT_WEIGHTS) 
-            float *tmpBuffer0 = (float*)calloc(l.outputs, sizeof(float));
-            float *tmpBuffer1 = (float*)calloc(size, sizeof(float));
-            int j;
-
-            fread(tmpBuffer0, sizeof(float), l.outputs, fp);
-            for (j = 0; j < l.outputs; j++) l.biases[j] = tmpBuffer0[j];
-            fread(tmpBuffer1, sizeof(float), size, fp);
-            for (j = 0; j < size; j++) l.weights[j] = tmpBuffer1[j];
-
-            free(tmpBuffer0);
-            free(tmpBuffer1);
-#else
-            fread(l.biases, sizeof(real), l.outputs, fp);
-            fread(l.weights, sizeof(real), size, fp);
-#endif
-
-#ifdef GPU
-            if(gpu_index >= 0){
-                push_local_layer(l);
-            }
-#endif
+        if (l.type == LOCAL){
+            load_local_weights(l, fp);
         }
     }
     fprintf(stderr, "Done!\n");

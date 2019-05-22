@@ -109,7 +109,7 @@ void test_tag(char *cfgfile, char *weightfile, char *filename)
 
         float *X = r.data;
         time=clock();
-        real *predictions = network_predict_float(net, X);
+        real *predictions = network_predict(net, X);
         top_predictions(net, 10, indexes);
         printf("%s: Predicted in %f seconds.\n", input, (float)sec(clock()-time));
         for(i = 0; i < 10; ++i){

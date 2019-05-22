@@ -283,7 +283,7 @@ void validate_classifier_10(char *datacfg, char *filename, char *weightfile)
         images[9] = crop_image(im, shift, shift, w, h);
         real *pred = (real*)calloc(classes, sizeof(real));
         for(j = 0; j < 10; ++j){
-            real *p = network_predict_float(net, images[j].data);
+            real *p = network_predict(net, images[j].data);
             if(net->hierarchy) hierarchy_predictions(p, net->outputs, net->hierarchy, 1, 1);
             axpy_cpu(classes, 1, p, 1, pred, 1);
             free_image(images[j]);
@@ -341,7 +341,7 @@ void validate_classifier_full(char *datacfg, char *filename, char *weightfile)
         //show_image(im, "orig");
         //show_image(crop, "cropped");
         //cvWaitKey(0);
-        real *pred = network_predict_float(net, resized.data);
+        real *pred = network_predict(net, resized.data);
         if(net->hierarchy) hierarchy_predictions(pred, net->outputs, net->hierarchy, 1, 1);
 
         free_image(im);
@@ -400,7 +400,7 @@ void validate_classifier_single(char *datacfg, char *filename, char *weightfile)
         //show_image(im, "orig");
         //show_image(crop, "cropped");
         //cvWaitKey(0);
-        real *pred = network_predict_float(net, crop.data);
+        real *pred = network_predict(net, crop.data);
         if(net->hierarchy) hierarchy_predictions(pred, net->outputs, net->hierarchy, 1, 1);
 
         free_image(im);
@@ -459,11 +459,11 @@ void validate_classifier_multi(char *datacfg, char *cfg, char *weights)
         for(j = 0; j < nscales; ++j){
             image r = resize_max(im, scales[j]);
             resize_network(net, r.w, r.h);
-            real *p = network_predict_float(net, r.data);
+            real *p = network_predict(net, r.data);
             if(net->hierarchy) hierarchy_predictions(p, net->outputs, net->hierarchy, 1 , 1);
             axpy_cpu(classes, 1, p, 1, pred, 1);
             flip_image(r);
-            p = network_predict_float(net, r.data);
+            p = network_predict(net, r.data);
             axpy_cpu(classes, 1, p, 1, pred, 1);
             if(r.data != im.data) free_image(r);
         }
@@ -521,7 +521,7 @@ void try_classifier(char *datacfg, char *cfgfile, char *weightfile, char *filena
 
         float *X = im.data;
         time=clock();
-        real *predictions = network_predict_float(net, X);
+        real *predictions = network_predict(net, X);
 
         layer l = net->layers[layer_num];
         for(i = 0; i < l.c; ++i){
@@ -594,7 +594,7 @@ void predict_classifier(char *datacfg, char *cfgfile, char *weightfile, char *fi
 
         float *X = r.data;
         time=clock();
-        real *predictions = network_predict_float(net, X);
+        real *predictions = network_predict(net, X);
         if(net->hierarchy) hierarchy_predictions(predictions, net->outputs, net->hierarchy, 1, 1);
         top_k(predictions, net->outputs, top, indexes);
         fprintf(stderr, "%s: Predicted in %f seconds.\n", input, (float)sec(clock()-time));
@@ -635,7 +635,7 @@ void label_classifier(char *datacfg, char *filename, char *weightfile)
         image im = load_image_color(paths[i], 0, 0);
         image resized = resize_min(im, net->w);
         image crop = crop_image(resized, (resized.w - net->w)/2, (resized.h - net->h)/2, net->w, net->h);
-        real *pred = network_predict_float(net, crop.data);
+        real *pred = network_predict(net, crop.data);
 
         if(resized.data != im.data) free_image(resized);
         free_image(im);
@@ -669,7 +669,7 @@ void csv_classifier(char *datacfg, char *cfgfile, char *weightfile)
         char *path = paths[i];
         image im = load_image_color(path, 0, 0);
         image r = letterbox_image(im, net->w, net->h);
-        real *predictions = network_predict_float(net, r.data);
+        real *predictions = network_predict(net, r.data);
         if(net->hierarchy) hierarchy_predictions(predictions, net->outputs, net->hierarchy, 1, 1);
         top_k(predictions, net->outputs, top, indexes);
 
@@ -778,7 +778,7 @@ void file_output_classifier(char *datacfg, char *filename, char *weightfile, cha
         image resized = resize_min(im, net->w);
         image crop = crop_image(resized, (resized.w - net->w)/2, (resized.h - net->h)/2, net->w, net->h);
 
-        real *pred = network_predict_float(net, crop.data);
+        real *pred = network_predict(net, crop.data);
         if(net->hierarchy) hierarchy_predictions(pred, net->outputs, net->hierarchy, 0, 1);
 
         if(resized.data != im.data) free_image(resized);

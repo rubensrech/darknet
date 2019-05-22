@@ -306,7 +306,7 @@ void validate_detector_flip(char *datacfg, char *cfgfile, char *weightfile, char
             flip_image(val_resized[t]);
             copy_float_cpu(net->w*net->h*net->c, val_resized[t].data, 1, input.data + net->w*net->h*net->c, 1);
 
-            network_predict_float(net, input.data);
+            network_predict(net, input.data);
             int w = val[t].w;
             int h = val[t].h;
             int num = 0;
@@ -434,7 +434,7 @@ void validate_detector(char *datacfg, char *cfgfile, char *weightfile, char *out
             char *path = paths[i+t-nthreads];
             char *id = basecfg(path);
             float *X = val_resized[t].data;
-            network_predict_float(net, X);
+            network_predict(net, X);
             int w = val[t].w;
             int h = val[t].h;
             int nboxes = 0;
@@ -497,7 +497,7 @@ void validate_detector_recall(char *cfgfile, char *weightfile)
         image orig = load_image_color(path, 0, 0);
         image sized = resize_image(orig, net->w, net->h);
         char *id = basecfg(path);
-        network_predict_float(net, sized.data);
+        network_predict(net, sized.data);
         int nboxes = 0;
         // !!!
         int letterbox = 1;
@@ -659,7 +659,7 @@ double tmpTime, tTmpTime = 0;
             char *path = paths[image_index];
             char *id = basecfg(path);
             float *X = val_resized[t].data;
-            network_predict_float(net, X);
+            network_predict(net, X);
 
             int nboxes = 0;
             float hier_thresh = 0;
@@ -938,7 +938,7 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
         time = what_time_is_it_now();
 
         // Run predictor
-        network_predict_float(net, X);
+        network_predict(net, X);
 
         // Generate outputs
         printf("%s: Predicted in %f seconds.\n", input, what_time_is_it_now()-time);

@@ -51,7 +51,7 @@ void optimize_picture(network *net, image orig, int max_layer, float scale, floa
     net->delta_gpu = cuda_make_array(deltaDataReal, im.w*im.h*im.c);
     copy_cpu(net->inputs, imDataReal, 1, net->input, 1);
 
-    forward_network_gpu(net, 1);
+    forward_network_gpu(net);
     copy_gpu(last.outputs, last.output_gpu, 1, last.delta_gpu, 1);
 
     cuda_pull_array(last.delta_gpu, last.delta, last.outputs);
@@ -67,7 +67,7 @@ void optimize_picture(network *net, image orig, int max_layer, float scale, floa
     printf("\nnet: %d %d %d im: %d %d %d\n", net->w, net->h, net->inputs, im.w, im.h, im.c);
     copy_cpu(net->inputs, imDataReal, 1, net->input, 1);
     net->delta = deltaDataReal;
-    forward_network(net, 1);
+    forward_network(net);
     copy_cpu(last.outputs, last.output, 1, last.delta, 1);
     calculate_loss(last.output, last.delta, last.outputs, thresh);
     backward_network(net);
@@ -140,7 +140,7 @@ void reconstruct_picture(network *net, float *features, image recon, image updat
         //cuda_push_array(net->truth_gpu, features, net->truths);
         net->delta_gpu = cuda_make_array(deltaDataReal, delta.w*delta.h*delta.c);
 
-        forward_network_gpu(net, 1);
+        forward_network_gpu(net);
         cuda_push_array(l.delta_gpu, featuresReal, l.outputs);
         axpy_gpu(l.outputs, -1, l.output_gpu, 1, l.delta_gpu, 1);
         backward_network_gpu(net);
@@ -153,7 +153,7 @@ void reconstruct_picture(network *net, float *features, image recon, image updat
         net->delta = deltaDataReal;
         net->truth = featuresReal;
 
-        forward_network(net, 1);
+        forward_network(net);
         backward_network(net);
 #endif
         delta.data = cast_array_real2float(deltaDataReal, delta.w*delta.h*delta.c, NULL);
@@ -224,7 +224,7 @@ void run_nightmare(int argc, char **argv)
         im = letterbox_image(im, net->w, net->h);
         //resize_network(&net, im.w, im.h);
 
-        network_predict_float(net, im.data);
+        network_predict(net, im.data);
         if(net->layers[net->n-1].type == REGION){
             printf("region!\n");
             zero_objectness(net->layers[net->n-1]);

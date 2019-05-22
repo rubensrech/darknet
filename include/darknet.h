@@ -601,6 +601,8 @@ typedef struct network{
     real *cost;
     float clip;
 
+    int input_data_type;
+
 #ifdef GPU
     real *input_gpu;
     real *truth_gpu;
@@ -745,7 +747,7 @@ data resize_data(data orig, int w, int h);
 data *tile_data(data orig, int divs, int size);
 data select_data(data *orig, int *inds);
 
-void forward_network(network *net, int push_input);
+void forward_network(network *net);
 void backward_network(network *net);
 void update_network(network *net);
 
@@ -798,7 +800,7 @@ float *cuda_make_float_array(float *x, size_t n);
 half_host *cuda_make_half_array(half_host *x, size_t n);
 
 float cuda_mag_array(real *x_gpu, size_t n);
-void forward_network_gpu(network *net, int push_input);
+void forward_network_gpu(network *net);
 void backward_network_gpu(network *net);
 void update_network_gpu(network *net);
 
@@ -905,8 +907,12 @@ void draw_detections(image im, detection *dets, int num, float thresh, char **na
 matrix network_predict_data(network *net, data test);
 image **load_alphabet();
 image get_network_image(network *net);
+
 real *network_predict(network *net, real *input);
-real *network_predict_float(network *net, float *input_float);
+
+#if REAL != FLOAT
+real *network_predict(network *net, float *input_float);
+#endif
 
 int network_width(network *net);
 int network_height(network *net);

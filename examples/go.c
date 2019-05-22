@@ -296,7 +296,7 @@ void flip_board(float *board)
 
 float predict_move2(network *net, float *board, real *move, int multi)
 {
-    real *output = network_predict_float(net, board);
+    real *output = network_predict(net, board);
     copy_cpu(19*19+1, output, 1, move, 1);
     float result = output[19*19 + 1];
     int i;
@@ -306,7 +306,7 @@ float predict_move2(network *net, float *board, real *move, int multi)
             rotate_image_cw(bim, i);
             if(i >= 4) flip_image(bim);
 
-            real *output = network_predict_float(net, board);
+            real *output = network_predict(net, board);
             image oim = real_to_image(19, 19, 1, output);
             result += output[19*19 + 1];
 
@@ -405,7 +405,7 @@ real *network_predict_rotations(network *net, float *next)
         if(i >= 4) flip_image(im);
         rotate_image_cw(im, -i);
     }
-    real *pred = network_predict_float(net, in);
+    real *pred = network_predict(net, in);
     float *predFloat = cast_array_real2float(pred, net->outputs, NULL);
     for(j = 0; j < n; ++j){
         i = inds[j];

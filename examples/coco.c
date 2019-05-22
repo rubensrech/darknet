@@ -182,7 +182,7 @@ void validate_coco(char *cfg, char *weights)
             char *path = paths[i+t-nthreads];
             int image_id = get_coco_image_id(path);
             float *X = val_resized[t].data;
-            network_predict_float(net, X);
+            network_predict(net, X);
             int w = val[t].w;
             int h = val[t].h;
             int nboxes = 0;
@@ -243,7 +243,7 @@ void validate_coco_recall(char *cfgfile, char *weightfile)
         image orig = load_image_color(path, 0, 0);
         image sized = resize_image(orig, net->w, net->h);
         char *id = basecfg(path);
-        network_predict_float(net, sized.data);
+        network_predict(net, sized.data);
 
         int nboxes = 0;
         // !!!
@@ -312,7 +312,7 @@ void test_coco(char *cfgfile, char *weightfile, char *filename, float thresh)
         image sized = resize_image(im, net->w, net->h);
         float *X = sized.data;
         time=clock();
-        network_predict_float(net, X);
+        network_predict(net, X);
         printf("%s: Predicted in %f seconds.\n", input, (float)sec(clock()-time));
 
         int nboxes = 0;

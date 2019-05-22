@@ -48,7 +48,7 @@ real_pair get_rnn_vid_data(network net, char **files, int n, int batch, int step
             free_image(im);
             free_image(re);
         }
-        real *output = network_predict_float(net, input);
+        real *output = network_predict(net, input);
 
         free(input);
 

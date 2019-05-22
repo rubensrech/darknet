@@ -152,7 +152,7 @@ void predict_segmenter(char *datafile, char *cfg, char *weights, char *filename)
 
         float *X = sized.data;
         time=clock();
-        real *predictions = network_predict_float(net, X);
+        real *predictions = network_predict(net, X);
         image pred = get_network_image(net);
         image prmask = mask_to_rgb(pred);
         printf("Predicted: %f\n", (float)predictions[0]);

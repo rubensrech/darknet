@@ -89,7 +89,7 @@ void test_super(char *cfgfile, char *weightfile, char *filename)
 
         float *X = im.data;
         time=clock();
-        network_predict_float(net, X);
+        network_predict(net, X);
         image out = get_network_image(net);
         printf("%s: Predicted in %f seconds.\n", input, (float)sec(clock()-time));
         save_image(out, "out");

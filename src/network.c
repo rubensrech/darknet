@@ -185,11 +185,11 @@ network *make_network(int n)
     return net;
 }
 
-void forward_network(network *netp, int push_input)
+void forward_network(network *netp)
 {
 #ifdef GPU
     if(netp->gpu_index >= 0){
-        forward_network_gpu(netp, push_input);   
+        forward_network_gpu(netp);   
         return;
     }
 #endif
@@ -290,7 +290,7 @@ float train_network_datum(network *net)
 {
     *net->seen += net->batch;
     net->train = 1;
-    forward_network(net, 1);
+    forward_network(net);
     backward_network(net);
     float error = *net->cost;
     if(((*net->seen)/net->batch)%net->subdivisions == 0) update_network(net);
@@ -526,40 +526,33 @@ void top_predictions(network *net, int k, int *index)
 }
 
 
-real *network_predict(network *net, real *input)
-{
+real *network_predict(network *net, real *input) {
     network orig = *net;
     net->input = input;
+    net->input_data_type = REAL;
     net->truth = 0;
     net->train = 0;
     net->delta = 0;
-    forward_network(net, 1);
+    forward_network(net);
     real *out = net->output;
     *net = orig;
     return out;
 }
 
-real *network_predict_float(network *net, float *input_float)
-{
-    network orig = *net;
-    net->truth = 0;
-    net->train = 0;
-    net->delta = 0;
-
-    int N = net->inputs * net->batch;
-
-    #ifdef GPU
-        cast_array_float2real(input_float, N, net->input_gpu);
-        forward_network(net, 0);
-    #else
-        net->input = cast_array_float2real(input_float, N, NULL);
-        forward_network(net, 0);
-    #endif
-    
-    real *out = net->output;
-    *net = orig;
-    return out;
-}
+#if REAL != FLOAT
+    real *network_predict(network *net, float *input_float) {
+        network orig = *net;
+        net->input_float = input_float;
+        net->input_data_type = FLOAT;
+        net->truth = 0;
+        net->train = 0;
+        net->delta = 0;
+        forward_network(net);
+        real *out = net->output;
+        *net = orig;
+        return out;
+    }
+#endif
 
 int num_detections(network *net, float thresh)
 {
@@ -639,7 +632,7 @@ real *network_predict_image(network *net, image im)
 {
     image imr = letterbox_image(im, net->w, net->h);
     set_batch_network(net, 1);
-    real *p = network_predict_float(net, imr.data);
+    real *p = network_predict(net, imr.data);
     free_image(imr);
     return p;
 }
@@ -659,7 +652,7 @@ matrix network_predict_data_multi(network *net, data test, int n)
             memcpy(X+b*test.X.cols, test.X.vals[i+b], test.X.cols*sizeof(float));
         }
         for(m = 0; m < n; ++m){
-            real *out = network_predict_float(net, X);
+            real *out = network_predict(net, X);
             for(b = 0; b < net->batch; ++b){
                 if(i+b == test.X.rows) break;
                 for(j = 0; j < k; ++j){
@@ -683,7 +676,7 @@ matrix network_predict_data(network *net, data test)
             if(i+b == test.X.rows) break;
             memcpy(X+b*test.X.cols, test.X.vals[i+b], test.X.cols*sizeof(float));
         }
-        real *out = network_predict_float(net, X);
+        real *out = network_predict(net, X);
         for(b = 0; b < net->batch; ++b){
             if(i+b == test.X.rows) break;
             for(j = 0; j < k; ++j){
@@ -820,12 +813,29 @@ real *network_output(network *net)
 
 #ifdef GPU
 
-void forward_network_gpu(network *netp, int push_input)
+void forward_network_gpu(network *netp)
 {
     network net = *netp;
     cuda_set_device(net.gpu_index);
-    if (push_input)
+
+    // Push input to GPU
+    if (net.input_data_type == REAL)
         cuda_push_array(net.input_gpu, net.input, net.inputs*net.batch);
+    else if (net.input_data_type == FLOAT)
+        cuda_push_array(net.input_float_gpu, net.input_float, net.inputs*net.batch);
+
+    // Cast for first layer
+    layer first_layer = net.layers[0];
+    #if MIX_PRECISION_SUPPORT == FLOAT
+        if (net.input_data_type == FLOAT && first_layer.real_type == REAL) {
+            float2real_array_gpu(net.input_float_gpu, net.input_gpu, net.inputs*net.batch);
+        }
+    #elif MIX_PRECISION_SUPPORT == HALF
+        if (net.input_data_type == REAL && first_layer.real_type == HALF) {
+            real2half_array_gpu(net.input_gpu, net.input_half_gpu, net.inputs*net.batch);
+        }
+    #endif
+
     if(net.truth)
         cuda_push_array(net.truth_gpu, net.truth, net.truths*net.batch);
     
@@ -834,7 +844,8 @@ void forward_network_gpu(network *netp, int push_input)
         net.index = i;
         layer l = net.layers[i];
 
-        // fprintf(stderr, "layer %d\n", i);
+        // cudaDeviceSynchronize();
+        // fprintf(stderr, "layer %d - in size %d - out size: %d\n", i, l.inputs, l.outputs);
 
 #if MIX_PRECISION_SUPPORT == FLOAT
         layer *l_prev = (i > 0) ? &(net.layers[i-1]) : NULL;
