@@ -12,12 +12,15 @@ float gradient(float x, ACTIVATION a);
 void gradient_array(const real *x, const int n, const ACTIVATION a, real *delta);
 void activate_array(real *x, const int n, const ACTIVATION a);
 #ifdef GPU
-void activate_array_gpu(float *x, int n, ACTIVATION a);
-void activate_array_gpu(double *x, int n, ACTIVATION a);
-void activate_array_gpu(half_host *x, int n, ACTIVATION a);
-void gradient_array_gpu(float *x, int n, ACTIVATION a, float *delta);
-void gradient_array_gpu(double *x, int n, ACTIVATION a, double *delta);
-void gradient_array_gpu(half_host *x, int n, ACTIVATION a, half_host *delta);
+
+template<typename T>
+void activate_array_gpu(T *x, int n, ACTIVATION a);
+void activate_array_gpu(half_float::half *x, int n, ACTIVATION a);
+
+template<typename T>
+void gradient_array_gpu(T *x, int n, ACTIVATION a, T *delta);
+void gradient_array_gpu(half_float::half *x, int n, ACTIVATION a, half_float::half *delta);
+
 #endif
 
 static inline float stair_activate(float x)

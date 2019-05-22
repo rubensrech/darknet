@@ -757,23 +757,25 @@ void softmax(real *input, int n, float temp, int stride, real *output);
 
 int best_3d_shift_r(image a, image b, int min, int max);
 #ifdef GPU
-void axpy_gpu(int N, float ALPHA, float *X, int INCX, float *Y, int INCY);
-void axpy_gpu(int N, float ALPHA, double *X, int INCX, double *Y, int INCY);
-void axpy_gpu(int N, float ALPHA, half_host *X, int INCX, half_host *Y, int INCY);
-
-void fill_gpu(int N, float ALPHA, float * X, int INCX);
-void fill_gpu(int N, float ALPHA, double * X, int INCX);
-void fill_gpu(int N, float ALPHA, half_host * X, int INCX);
-
-void scal_gpu(int N, float ALPHA, float *X, int INCX);
-void scal_gpu(int N, float ALPHA, double *X, int INCX);
+template<typename T>
+void scal_gpu(int N, float ALPHA, T *X, int INCX);
 void scal_gpu(int N, float ALPHA, half_host *X, int INCX);
 
-void copy_gpu(int N, float *X, int INCX, float *Y, int INCY);
-void copy_gpu(int N, double *X, int INCX, double *Y, int INCY);
+template<typename T>
+void fill_gpu(int N, float ALPHA, T *X, int INCX);
+void fill_gpu(int N, float ALPHA, half_host * X, int INCX);
+
+template<typename T>
+void copy_gpu(int N, T *X, int INCX, T *Y, int INCY);
 void copy_gpu(int N, half_host *X, int INCX, half_host *Y, int INCY);
 
+template<typename T>
+void axpy_gpu(int N, float ALPHA, T *X, int INCX, T *Y, int INCY);
+void axpy_gpu(int N, float ALPHA, half_host *X, int INCX, half_host *Y, int INCY);
+
+
 void cuda_set_device(int n);
+
 
 template<typename T>
 void cuda_push_array(T *x_gpu, T *x, size_t n);
@@ -781,7 +783,6 @@ template<typename T>
 void cuda_free(T *x_gpu);
 template<typename T>
 void cuda_pull_array(T *x_gpu, T *x, size_t n);
-
 
 real *cuda_make_array(real *x, size_t n);
 float *cuda_make_float_array(float *x, size_t n);

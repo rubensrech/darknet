@@ -52,9 +52,6 @@ void im2col_gpu(T *im, int channels, int height, int width, int ksize, int strid
     im2col_gpu_kernel<<<(num_kernels+BLOCK-1)/BLOCK, BLOCK>>>(num_kernels, im, height, width,
             ksize, pad, stride, height_col, width_col, data_col);
 }
-template void im2col_gpu(float *im, int channels, int height, int width, int ksize, int stride, int pad, float *data_col);
-template void im2col_gpu(double *im, int channels, int height, int width, int ksize, int stride, int pad, double *data_col);
-
 void im2col_gpu(half_host *im, int channels, int height, int width, int ksize, int stride, int pad, half_host *data_col) {
     // We are going to launch channels * height_col * width_col kernels, each
     // kernel responsible for copying a single-channel grid.
@@ -65,3 +62,5 @@ void im2col_gpu(half_host *im, int channels, int height, int width, int ksize, i
     im2col_gpu_kernel<<<(num_kernels+BLOCK-1)/BLOCK, BLOCK>>>(num_kernels, (half_device*)im, height, width,
             ksize, pad, stride, height_col, width_col, (half_device*)data_col);
 }
+template void im2col_gpu(float *im, int channels, int height, int width, int ksize, int stride, int pad, float *data_col);
+template void im2col_gpu(double *im, int channels, int height, int width, int ksize, int stride, int pad, double *data_col);
