@@ -533,13 +533,7 @@ real *network_predict(network *net, real *input)
     net->truth = 0;
     net->train = 0;
     net->delta = 0;
-
-    fprintf(stderr, "START\n");
-
     forward_network(net, 1);
-
-    fprintf(stderr, "END\n");
-
     real *out = net->output;
     *net = orig;
     return out;
@@ -891,9 +885,6 @@ void forward_network_gpu(network *netp, int push_input)
             }
         }
 #elif MIX_PRECISION_SUPPORT == HALF
-        fprintf(stderr, "layer %d\n", i);
-        cudaDeviceSynchronize();
-
         layer *l_prev = (i > 0) ? &(net.layers[i-1]) : NULL;
 
         if (l.real_type == HALF) {
