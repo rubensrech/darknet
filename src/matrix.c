@@ -21,7 +21,7 @@ float matrix_topk_accuracy(matrix truth, matrix guess, int k)
     int i,j;
     int correct = 0;
     for(i = 0; i < truth.rows; ++i){
-        top_k_float(guess.vals[i], n, k, indexes);
+        top_k(guess.vals[i], n, k, indexes);
         for(j = 0; j < k; ++j){
             int _class = indexes[j];
             if(truth.vals[i][_class]){
@@ -83,7 +83,7 @@ matrix copy_matrix(matrix m)
     int i;
     for(i = 0; i < c.rows; ++i){
         c.vals[i] = (float*)calloc(c.cols, sizeof(float));
-        copy_float_cpu(c.cols, m.vals[i], 1, c.vals[i], 1);
+        copy_cpu(c.cols, m.vals[i], 1, c.vals[i], 1);
     }
     return c;
 }

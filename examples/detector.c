@@ -302,9 +302,9 @@ void validate_detector_flip(char *datacfg, char *cfgfile, char *weightfile, char
         for(t = 0; t < nthreads && i+t-nthreads < m; ++t){
             char *path = paths[i+t-nthreads];
             char *id = basecfg(path);
-            copy_float_cpu(net->w*net->h*net->c, val_resized[t].data, 1, input.data, 1);
+            copy_cpu(net->w*net->h*net->c, val_resized[t].data, 1, input.data, 1);
             flip_image(val_resized[t]);
-            copy_float_cpu(net->w*net->h*net->c, val_resized[t].data, 1, input.data + net->w*net->h*net->c, 1);
+            copy_cpu(net->w*net->h*net->c, val_resized[t].data, 1, input.data + net->w*net->h*net->c, 1);
 
             network_predict(net, input.data);
             int w = val[t].w;

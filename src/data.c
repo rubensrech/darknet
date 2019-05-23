@@ -1595,7 +1595,7 @@ void scale_data_rows(data d, float s)
 {
     int i;
     for(i = 0; i < d.X.rows; ++i){
-        scale_float_array(d.X.vals[i], d.X.cols, s);
+        scale_array(d.X.vals[i], d.X.cols, s);
     }
 }
 

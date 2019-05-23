@@ -739,6 +739,8 @@ typedef struct list{
     node *back;
 } list;
 
+// > Headers
+
 pthread_t load_data(load_args args);
 list *read_data_cfg(char *filename);
 list *read_cfg(char *filename);
@@ -751,21 +753,7 @@ void forward_network(network *net);
 void backward_network(network *net);
 void update_network(network *net);
 
-
-float dot_cpu(int N, real *X, int INCX, real *Y, int INCY);
-float dot_float_cpu(int N, float *X, int INCX, float *Y, int INCY);
-void axpy_cpu(int N, float ALPHA, real *X, int INCX, real *Y, int INCY);
-void axpy_float_cpu(int N, float ALPHA, float *X, int INCX, float *Y, int INCY);
-void copy_cpu(int N, real *X, int INCX, real *Y, int INCY);
-void copy_float_cpu(int N, float *X, int INCX, float *Y, int INCY);
-void scal_cpu(int N, float ALPHA, real *X, int INCX);
-void scal_float_cpu(int N, float ALPHA, float *X, int INCX);
-void fill_cpu(int N, float ALPHA, real * X, int INCX);
-void fill_float_cpu(int N, float ALPHA, float *X, int INCX);
-void normalize_cpu(real *x, real *mean, real *variance, int batch, int filters, int spatial);
-void normalize_float_cpu(float *x, float *mean, float *variance, int batch, int filters, int spatial);
 void softmax(real *input, int n, float temp, int stride, real *output);
-
 int best_3d_shift_r(image a, image b, int min, int max);
 #ifdef GPU
 void axpy_gpu(int N, float ALPHA, float *X, int INCX, float *Y, int INCY);
@@ -954,32 +942,147 @@ char *fgetl(FILE *fp);
 void strip(char *s);
 float sec(clock_t clocks);
 void **list_to_array(list *l);
-void top_k(real *a, int n, int k, int *index);
-void top_k_float(float *a, int n, int k, int *index);
 int *read_map(char *filename);
 void error(const char *s);
-int max_index(real *a, int n);
-int max_float_index(float *a, int n);
 int max_int_index(int *a, int n);
-int sample_array(real *a, int n);
-int sample_float_array(float *a, int n);
 int *random_index_order(int min, int max);
 void free_list(list *l);
 float mse_array(real *a, int n);
-float variance_array(real *a, int n);
-float variance_float_array(float *a, int n);
-float mag_array(real *a, int n);
-float mag_float_array(float *a, int n);
-void scale_array(real *a, int n, float s);
-void scale_float_array(float *a, int n, float s);
-float mean_array(real *a, int n);
-float mean_float_array(float *a, int n);
-float sum_array(real *a, int n);
-float sum_float_array(float *a, int n);
 void normalize_array(float *a, int n);
 int *read_intlist(char *s, int *n, int d);
 size_t rand_size_t();
 float rand_normal();
 float rand_uniform(float min, float max);
+
+// > Templates
+
+template<typename T>
+void top_k(T *a, int n, int k, int *index) {
+    int i,j;
+    for(j = 0; j < k; ++j) index[j] = -1;
+    for(i = 0; i < n; ++i){
+        int curr = i;
+        for(j = 0; j < k; ++j){
+            if((index[j] < 0) || a[curr] > a[index[j]]){
+                int swap = curr;
+                curr = index[j];
+                index[j] = swap;
+            }
+        }
+    }
+}
+
+template<typename T>
+void scale_array(T *a, int n, float s) {
+    int i;
+    for(i = 0; i < n; ++i){
+        a[i] *= s;
+    }
+}
+
+template<typename T>
+void axpy_cpu(int N, float ALPHA, T *X, int INCX, T *Y, int INCY) {
+    int i;
+    for(i = 0; i < N; ++i) Y[i*INCY] += ALPHA*X[i*INCX];
+}
+
+template<typename T>
+void copy_cpu(int N, T *X, int INCX, T *Y, int INCY) {
+    int i;
+    for(i = 0; i < N; ++i) Y[i*INCY] = X[i*INCX];
+}
+
+template<typename T>
+void scal_cpu(int N, float ALPHA, T *X, int INCX) {
+    int i;
+    for(i = 0; i < N; ++i) X[i*INCX] *= ALPHA;
+}
+
+template<typename T>
+void fill_cpu(int N, float ALPHA, T *X, int INCX) {
+    int i;
+    for(i = 0; i < N; ++i) X[i*INCX] = ALPHA;
+}
+
+template<typename T>
+void normalize_cpu(T *x, T *mean, T *variance, int batch, int filters, int spatial) {
+    int b, f, i;
+    for(b = 0; b < batch; ++b){
+        for(f = 0; f < filters; ++f){
+            for(i = 0; i < spatial; ++i){
+                int index = b*filters*spatial + f*spatial + i;
+                x[index] = (x[index] - mean[f])/(sqrt(variance[f]) + T(.000001f));
+            }
+        }
+    }
+}
+
+template<typename T>
+float dot_cpu(int N, T *X, int INCX, T *Y, int INCY) {
+    int i;
+    float dot = 0;
+    for(i = 0; i < N; ++i) dot += X[i*INCX] * Y[i*INCY];
+    return dot;
+}
+
+template<typename T>
+int max_index(T *a, int n) {
+    if(n <= 0) return -1;
+    int i, max_i = 0;
+    float max = a[0];
+    for(i = 1; i < n; ++i){
+        if(a[i] > max){
+            max = a[i];
+            max_i = i;
+        }
+    }
+    return max_i;
+}
+
+template<typename T>
+float sum_array(T *a, int n) {
+    int i;
+    float sum = 0;
+    for(i = 0; i < n; ++i) sum += a[i];
+    return sum;
+}
+
+template<typename T>
+int sample_array(T *a, int n) {
+    float sum = sum_array(a, n);
+    scale_array(a, n, 1.0/sum);
+    float r = rand_uniform(0.0, 1.0);
+    int i;
+    for(i = 0; i < n; ++i){
+        r = r - a[i];
+        if (r <= 0) return i;
+    }
+    return n-1;
+}
+
+template<typename T>
+float mean_array(T *a, int n) {
+    return sum_array(a,n)/n;
+}
+
+template<typename T>
+float variance_array(T *a, int n) {
+    int i;
+    float sum = 0;
+    float mean = mean_array(a, n);
+    for(i = 0; i < n; ++i) sum += (a[i] - mean)*(a[i]-mean);
+    float variance = sum/n;
+    return variance;
+}
+
+template<typename T>
+float mag_array(T *a, int n) {
+    int i;
+    float sum = 0;
+    for(i = 0; i < n; ++i){
+        sum += a[i]*a[i];   
+    }
+    return sqrt(sum);
+}
 
 #endif

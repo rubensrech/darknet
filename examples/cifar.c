@@ -120,7 +120,7 @@ void test_cifar_multi(char *filename, char *weightfile)
         axpy_cpu(10, 1, p, 1, pred, 1);
 
         int index = max_index(pred, 10);
-        int _class = max_float_index(test.y.vals[i], 10);
+        int _class = max_index(test.y.vals[i], 10);
         if(index == _class) avg_acc += 1;
         free_image(im);
         printf("%4d: %.2f%%\n", i, 100.*avg_acc/(i+1));
@@ -154,14 +154,14 @@ char *labels[] = {(char*)"airplane",(char*)"automobile",(char*)"bird",(char*)"ca
     data test = load_cifar10_data((char*)"data/cifar/cifar-10-batches-bin/test_batch.bin");
     for(i = 0; i < train.X.rows; ++i){
         image im = float_to_image(32, 32, 3, train.X.vals[i]);
-        int _class = max_float_index(train.y.vals[i], 10);
+        int _class = max_index(train.y.vals[i], 10);
         char buff[256];
         sprintf(buff, (char*)"data/cifar/train/%d_%s",i,labels[_class]);
         save_image_options(im, buff, PNG, 0);
     }
     for(i = 0; i < test.X.rows; ++i){
         image im = float_to_image(32, 32, 3, test.X.vals[i]);
-        int _class = max_float_index(test.y.vals[i], 10);
+        int _class = max_index(test.y.vals[i], 10);
         char buff[256];
         sprintf(buff, "data/cifar/test/%d_%s",i,labels[_class]);
         save_image_options(im, buff, PNG, 0);

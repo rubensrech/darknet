@@ -131,7 +131,7 @@ image tile_images(image a, image b, int dx)
 {
     if(a.w == 0) return copy_image(b);
     image c = make_image(a.w + b.w + dx, (a.h > b.h) ? a.h : b.h, (a.c > b.c) ? a.c : b.c);
-    fill_float_cpu(c.w*c.h*c.c, 1, c.data, 1);
+    fill_cpu(c.w*c.h*c.c, 1, c.data, 1);
     embed_image(a, c, 0, 0); 
     composite_image(b, c, a.w + dx, 0);
     return c;
@@ -1263,7 +1263,7 @@ image resize_image(image im, int w, int h)
 void test_resize(char *filename)
 {
     image im = load_image(filename, 0,0, 3);
-    float mag = mag_float_array(im.data, im.w*im.h*im.c);
+    float mag = mag_array(im.data, im.w*im.h*im.c);
     printf("L2 Norm: %f\n", (float)mag);
     image gray = grayscale_image(im);
 

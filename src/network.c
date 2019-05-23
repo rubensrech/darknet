@@ -719,9 +719,9 @@ void compare_networks(network *n1, network *n2, data test)
     int a,b,c,d;
     a = b = c = d = 0;
     for(i = 0; i < g1.rows; ++i){
-        int truth = max_float_index(test.y.vals[i], test.y.cols);
-        int p1 = max_float_index(g1.vals[i], g1.cols);
-        int p2 = max_float_index(g2.vals[i], g2.cols);
+        int truth = max_index(test.y.vals[i], test.y.cols);
+        int p1 = max_index(g1.vals[i], g1.cols);
+        int p2 = max_index(g2.vals[i], g2.cols);
         if(p1 == truth){
             if(p2 == truth) ++d;
             else ++c;

@@ -517,7 +517,7 @@ void try_classifier(char *datacfg, char *cfgfile, char *weightfile, char *filena
         var[1] = std[1]*std[1];
         var[2] = std[2]*std[2];
 
-        normalize_float_cpu(im.data, mean, var, 1, 3, im.w*im.h);
+        normalize_cpu(im.data, mean, var, 1, 3, im.w*im.h);
 
         float *X = im.data;
         time=clock();

@@ -7,44 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// > Mixed precision functions
-
-    // Float
-
-    void normalize_float_cpu(float *x, float *mean, float *variance, int batch, int filters, int spatial) {
-        int b, f, i;
-        for(b = 0; b < batch; ++b){
-            for(f = 0; f < filters; ++f){
-                for(i = 0; i < spatial; ++i){
-                    int index = b*filters*spatial + f*spatial + i;
-                    x[index] = (x[index] - mean[f])/(sqrt(variance[f]) + .000001f);
-                }
-            }
-        }
-    }
-
-    void axpy_float_cpu(int N, float ALPHA, float *X, int INCX, float *Y, int INCY) {
-        int i;
-        for(i = 0; i < N; ++i) Y[i*INCY] += ALPHA*X[i*INCX];
-    }
-
-    void scal_float_cpu(int N, float ALPHA, float *X, int INCX) {
-        int i;
-        for(i = 0; i < N; ++i) X[i*INCX] *= ALPHA;
-    }
-
-    void fill_float_cpu(int N, float ALPHA, float *X, int INCX) {
-        int i;
-        for(i = 0; i < N; ++i) X[i*INCX] = ALPHA;
-    }
-
-    void copy_float_cpu(int N, float *X, int INCX, float *Y, int INCY) {
-        int i;
-        for(i = 0; i < N; ++i) Y[i*INCY] = X[i*INCX];
-    }
-
-    // Half
-
 // > General functions
 
 void reorg_cpu(real *x, int w, int h, int c, int batch, int stride, int forward, real *out)
@@ -184,20 +146,6 @@ void l2normalize_cpu(real *x, real *dx, int batch, int filters, int spatial)
     }
 }
 
-
-void normalize_cpu(real *x, real *mean, real *variance, int batch, int filters, int spatial)
-{
-    int b, f, i;
-    for(b = 0; b < batch; ++b){
-        for(f = 0; f < filters; ++f){
-            for(i = 0; i < spatial; ++i){
-                int index = b*filters*spatial + f*spatial + i;
-                x[index] = (x[index] - mean[f])/(sqrt(variance[f]) + .000001f);
-            }
-        }
-    }
-}
-
 void const_cpu(int N, float ALPHA, real *X, int INCX)
 {
     int i;
@@ -214,24 +162,6 @@ void pow_cpu(int N, float ALPHA, real *X, int INCX, real *Y, int INCY)
 {
     int i;
     for(i = 0; i < N; ++i) Y[i*INCY] = pow(X[i*INCX], ALPHA);
-}
-
-void axpy_cpu(int N, float ALPHA, real *X, int INCX, real *Y, int INCY)
-{
-    int i;
-    for(i = 0; i < N; ++i) Y[i*INCY] += ALPHA*X[i*INCX];
-}
-
-void scal_cpu(int N, float ALPHA, real *X, int INCX)
-{
-    int i;
-    for(i = 0; i < N; ++i) X[i*INCX] *= ALPHA;
-}
-
-void fill_cpu(int N, float ALPHA, real *X, int INCX)
-{
-    int i;
-    for(i = 0; i < N; ++i) X[i*INCX] = ALPHA;
 }
 
 void deinter_cpu(int NX, real *X, int NY, real *Y, int B, real *OUT)
@@ -262,12 +192,6 @@ void inter_cpu(int NX, real *X, int NY, real *Y, int B, real *OUT)
             OUT[index++] = Y[j*NY + i];
         }
     }
-}
-
-void copy_cpu(int N, real *X, int INCX, real *Y, int INCY)
-{
-    int i;
-    for(i = 0; i < N; ++i) Y[i*INCY] = X[i*INCX];
 }
 
 void mult_add_into_cpu(int N, real *X, real *Y, real *Z)
@@ -333,22 +257,6 @@ void l2_cpu(int n, real *pred, real *truth, real *delta, real *error)
         error[i] = diff * diff;
         delta[i] = diff;
     }
-}
-
-float dot_cpu(int N, real *X, int INCX, real *Y, int INCY)
-{
-    int i;
-    float dot = 0;
-    for(i = 0; i < N; ++i) dot += X[i*INCX] * Y[i*INCY];
-    return dot;
-}
-
-float dot_float_cpu(int N, float *X, int INCX, float *Y, int INCY)
-{
-    int i;
-    float dot = 0;
-    for(i = 0; i < N; ++i) dot += X[i*INCX] * Y[i*INCY];
-    return dot;
 }
 
 void softmax(real *input, int n, float temp, int stride, real *output)

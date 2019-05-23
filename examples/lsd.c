@@ -3,14 +3,14 @@
 
 void slerp(float *start, float *end, float s, int n, float *out)
 {
-    float omega = acos(dot_float_cpu(n, start, 1, end, 1));
+    float omega = acos(dot_cpu(n, start, 1, end, 1));
     float so = sin(omega);
-    fill_float_cpu(n, 0, out, 1);
-    axpy_float_cpu(n, sin((1-s)*omega)/so, start, 1, out, 1);
-    axpy_float_cpu(n, sin(s*omega)/so, end, 1, out, 1);
+    fill_cpu(n, 0, out, 1);
+    axpy_cpu(n, sin((1-s)*omega)/so, start, 1, out, 1);
+    axpy_cpu(n, sin(s*omega)/so, end, 1, out, 1);
 
-    float mag = mag_float_array(out, n);
-    scale_float_array(out, n, 1./mag);
+    float mag = mag_array(out, n);
+    scale_array(out, n, 1./mag);
 }
 
 image random_unit_vector_image(int w, int h, int c)
@@ -20,8 +20,8 @@ image random_unit_vector_image(int w, int h, int c)
     for(i = 0; i < im.w*im.h*im.c; ++i){
         im.data[i] = rand_normal();
     }
-    float mag = mag_float_array(im.data, im.w*im.h*im.c);
-    scale_float_array(im.data, im.w*im.h*im.c, 1./mag);
+    float mag = mag_array(im.data, im.w*im.h*im.c);
+    scale_array(im.data, im.w*im.h*im.c, 1./mag);
     return im;
 }
 
@@ -229,7 +229,7 @@ void train_prog(char *cfg, char *weight, char *acfg, char *aweight, int clear, i
                 int index = j*gnet->batch + k;
                 // # CAST INTERFACE #
                 float *outFloat = cast_array_real2float(gnet->output + k*gnet->outputs, gnet->outputs, NULL);
-                copy_float_cpu(gnet->outputs, outFloat, 1, gen.X.vals[index], 1);
+                copy_cpu(gnet->outputs, outFloat, 1, gen.X.vals[index], 1);
             }
         }
         harmless_update_network_gpu(anet);
@@ -405,7 +405,7 @@ void train_dcgan(char *cfg, char *weight, char *acfg, char *aweight, int clear, 
                 int index = j*gnet->batch + k;
                 // # CAST INTERFACE #
                 float *outFloat = cast_array_real2float(gnet->output + k*gnet->outputs, gnet->outputs, NULL);
-                copy_float_cpu(gnet->outputs, outFloat, 1, gen.X.vals[index], 1);
+                copy_cpu(gnet->outputs, outFloat, 1, gen.X.vals[index], 1);
             }
         }
         harmless_update_network_gpu(anet);
@@ -586,7 +586,7 @@ void train_colorizer(char *cfg, char *weight, char *acfg, char *aweight, int cle
                 int index = j*net->batch + k;
                 // # CAST INTERFACE #
                 float *outFloat = cast_array_real2float(imlayer.output + k*imlayer.outputs, imlayer.outputs, NULL);
-                copy_float_cpu(imlayer.outputs, outFloat, 1, gray.X.vals[index], 1);
+                copy_cpu(imlayer.outputs, outFloat, 1, gray.X.vals[index], 1);
             }
         }
         harmless_update_network_gpu(anet);

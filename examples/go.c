@@ -413,7 +413,7 @@ real *network_predict_rotations(network *net, float *next)
         if(i >= 4) flip_image(im);
         rotate_image_cw(im, -i);
         if(j > 0){
-            axpy_float_cpu(19*19+2, 1, im.data, 1, predFloat, 1);
+            axpy_cpu(19*19+2, 1, im.data, 1, predFloat, 1);
         }
     }
     free(in);
@@ -455,7 +455,7 @@ mcts_tree *expand(float *next, float *ko, network *net)
 float *copy_board(float *board)
 {
     float *next = (float*)calloc(19*19*3, sizeof(float));
-    copy_float_cpu(19*19*3, board, 1, next, 1);
+    copy_cpu(19*19*3, board, 1, next, 1);
     return next;
 }
 
@@ -560,18 +560,18 @@ move pick_move(mcts_tree *tree, float temp, int player)
         probs[i] = pow(tree->visit_count[i], 1./temp) / sum;
     }
 
-    int index = sample_float_array(probs, 19*19+1);
+    int index = sample_array(probs, 19*19+1);
     m.row = index / 19;
     m.col = index % 19;
     m.value = (tree->result+1.)/2.;
     m.mcts  = (tree->mean[index]+1.)/2.;
 
     int indexes[nind];
-    top_k_float(probs, 19*19+1, nind, indexes);
+    top_k(probs, 19*19+1, nind, indexes);
     print_board(stderr, tree->board, player, indexes);
 
     fprintf(stderr, "%d %d, Result: %f, Prior: %f, Prob: %f, Mean Value: %f, Child Result: %f, Visited: %d\n", index/19, index%19, (float)(tree->result), (float)(tree->prior[index]), (float)(probs[index]), (float)(tree->mean[index]), (tree->children[index])?(float)(tree->children[index]->result):0, tree->visit_count[index]);
-    int ind = max_float_index(probs, 19*19+1);
+    int ind = max_index(probs, 19*19+1);
     fprintf(stderr, "%d %d, Result: %f, Prior: %f, Prob: %f, Mean Value: %f, Child Result: %f, Visited: %d\n", ind/19, ind%19, (float)(tree->result), (float)(tree->prior[ind]), (float)(probs[ind]), (float)(tree->mean[ind]), (tree->children[ind])?(float)(tree->children[ind]->result):0, tree->visit_count[ind]);
     ind = max_index(tree->prior, 19*19+1);
     fprintf(stderr, "%d %d, Result: %f, Prior: %f, Prob: %f, Mean Value: %f, Child Result: %f, Visited: %d\n", ind/19, ind%19, (float)(tree->result), (float)(tree->prior[ind]), (float)(probs[ind]), (float)(tree->mean[ind]), (tree->children[ind])?(float)(tree->children[ind]->result):0, tree->visit_count[ind]);
@@ -605,7 +605,7 @@ int check_ko(float *x, float *ko)
 {
     if(!ko) return 0;
     float curr[19*19*3];
-    copy_float_cpu(19*19*3, x, 1, curr, 1);
+    copy_cpu(19*19*3, x, 1, curr, 1);
     if(curr[19*19*2] != ko[19*19*2]) flip_board(curr);
     if(compare_board(curr, ko)) return 1;
     return 0;
@@ -615,7 +615,7 @@ int legal_go(float *b, float *ko, int p, int r, int c)
 {
     if (occupied(b, r*19+c)) return 0;
     float curr[19*19*3];
-    copy_float_cpu(19*19*3, b, 1, curr, 1);
+    copy_cpu(19*19*3, b, 1, curr, 1);
     move_go(curr, p, r, c);
     if(check_ko(curr, ko)) return 0;
     if(suicide_go(b, p, r, c)) return 0;
@@ -869,7 +869,7 @@ void engine_go(char *filename, char *weightfile, int mcts_iters, float secs, flo
             two = one;
             one = swap;
             move_go(board, player, r, c);
-            copy_float_cpu(19*19*3, board, 1, one, 1);
+            copy_cpu(19*19*3, board, 1, one, 1);
             if(root) fprintf(stderr, "Prior: %f\n", (float)(root->prior[r*19 + c]));
             if(root) fprintf(stderr, "Mean: %f\n", (float)(root->mean[r*19 + c]));
             if(root) fprintf(stderr, "Result: %f\n", (float)root->result);
@@ -922,7 +922,7 @@ void engine_go(char *filename, char *weightfile, int mcts_iters, float secs, flo
                 one = swap;
 
                 move_go(board, player, row, col);
-                copy_float_cpu(19*19*3, board, 1, one, 1);
+                copy_cpu(19*19*3, board, 1, one, 1);
                 row = 19 - row;
                 if (col >= 8) ++col;
                 printf("=%s %c%d\n\n", ids, 'A' + col, row);
@@ -1203,7 +1203,7 @@ void self_go(char *filename, char *weightfile, char *f2, char *w2, int multi)
         ++count;
 
         move_go(board, player, row, col);
-        copy_float_cpu(19*19*3, board, 1, one, 1);
+        copy_cpu(19*19*3, board, 1, one, 1);
 
         player = -player;
     }

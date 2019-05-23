@@ -234,38 +234,6 @@ float sec(clock_t clocks)
     return (float)clocks/CLOCKS_PER_SEC;
 }
 
-void top_k(real *a, int n, int k, int *index)
-{
-    int i,j;
-    for(j = 0; j < k; ++j) index[j] = -1;
-    for(i = 0; i < n; ++i){
-        int curr = i;
-        for(j = 0; j < k; ++j){
-            if((index[j] < 0) || a[curr] > a[index[j]]){
-                int swap = curr;
-                curr = index[j];
-                index[j] = swap;
-            }
-        }
-    }
-}
-
-void top_k_float(float *a, int n, int k, int *index)
-{
-    int i,j;
-    for(j = 0; j < k; ++j) index[j] = -1;
-    for(i = 0; i < n; ++i){
-        int curr = i;
-        for(j = 0; j < k; ++j){
-            if((index[j] < 0) || a[curr] > a[index[j]]){
-                int swap = curr;
-                curr = index[j];
-                index[j] = swap;
-            }
-        }
-    }
-}
-
 void error(const char *s)
 {
     perror(s);
@@ -492,32 +460,6 @@ float *parse_fields(char *line, int n)
     return field;
 }
 
-float sum_array(real *a, int n)
-{
-    int i;
-    float sum = 0;
-    for(i = 0; i < n; ++i) sum += a[i];
-    return sum;
-}
-
-float sum_float_array(float *a, int n)
-{
-    int i;
-    float sum = 0;
-    for(i = 0; i < n; ++i) sum += a[i];
-    return sum;
-}
-
-float mean_array(real *a, int n)
-{
-    return sum_array(a,n)/n;
-}
-
-float mean_float_array(float *a, int n)
-{
-    return sum_float_array(a,n)/n;
-}
-
 void mean_arrays(real **a, int n, int els, real *avg)
 {
     int i;
@@ -538,26 +480,6 @@ void print_statistics(real *a, int n)
     float m = mean_array(a, n);
     float v = variance_array(a, n);
     printf("MSE: %.6f, Mean: %.6f, Variance: %.6f\n", (float)mse_array(a, n), (float)m, (float)v);
-}
-
-float variance_array(real *a, int n)
-{
-    int i;
-    float sum = 0;
-    float mean = mean_array(a, n);
-    for(i = 0; i < n; ++i) sum += (a[i] - mean)*(a[i]-mean);
-    float variance = sum/n;
-    return variance;
-}
-
-float variance_float_array(float *a, int n)
-{
-    int i;
-    float sum = 0;
-    float mean = mean_float_array(a, n);
-    for(i = 0; i < n; ++i) sum += (a[i] - mean)*(a[i]-mean);
-    float variance = sum/n;
-    return variance;
 }
 
 int constrain_int(int a, int min, int max)
@@ -593,13 +515,13 @@ float mse_array(real *a, int n)
 void normalize_array(float *a, int n)
 {
     int i;
-    float mu = mean_float_array(a,n);
-    float sigma = sqrt(variance_float_array(a,n));
+    float mu = mean_array(a,n);
+    float sigma = sqrt(variance_array(a,n));
     for(i = 0; i < n; ++i){
         a[i] = (a[i] - mu)/sigma;
     }
-    mu = mean_float_array(a,n);
-    sigma = sqrt(variance_float_array(a,n));
+    mu = mean_array(a,n);
+    sigma = sqrt(variance_array(a,n));
 }
 
 void translate_array(float *a, int n, float s)
@@ -610,102 +532,11 @@ void translate_array(float *a, int n, float s)
     }
 }
 
-float mag_array(real *a, int n)
-{
-    int i;
-    float sum = 0;
-    for(i = 0; i < n; ++i){
-        sum += a[i]*a[i];   
-    }
-    return sqrt(sum);
-}
-
-float mag_float_array(float *a, int n)
-{
-    int i;
-    float sum = 0;
-    for(i = 0; i < n; ++i){
-        sum += a[i]*a[i];   
-    }
-    return sqrt(sum);
-}
-
-void scale_array(real *a, int n, float s)
-{
-    int i;
-    for(i = 0; i < n; ++i){
-        a[i] *= s;
-    }
-}
-
-void scale_float_array(float *a, int n, float s)
-{
-    int i;
-    for(i = 0; i < n; ++i){
-        a[i] *= s;
-    }
-}
-
-
-int sample_array(real *a, int n)
-{
-    float sum = sum_array(a, n);
-    scale_array(a, n, 1.0/sum);
-    float r = rand_uniform(0.0, 1.0);
-    int i;
-    for(i = 0; i < n; ++i){
-        r = r - a[i];
-        if (r <= 0) return i;
-    }
-    return n-1;
-}
-
-int sample_float_array(float *a, int n)
-{
-    float sum = sum_float_array(a, n);
-    scale_float_array(a, n, 1.0/sum);
-    float r = rand_uniform(0.0, 1.0);
-    int i;
-    for(i = 0; i < n; ++i){
-        r = r - a[i];
-        if (r <= 0) return i;
-    }
-    return n-1;
-}
-
 int max_int_index(int *a, int n)
 {
     if(n <= 0) return -1;
     int i, max_i = 0;
     int max = a[0];
-    for(i = 1; i < n; ++i){
-        if(a[i] > max){
-            max = a[i];
-            max_i = i;
-        }
-    }
-    return max_i;
-}
-
-int max_index(real *a, int n)
-{
-    if(n <= 0) return -1;
-    int i, max_i = 0;
-    float max = a[0];
-    for(i = 1; i < n; ++i){
-        if(a[i] > max){
-            max = a[i];
-            max_i = i;
-        }
-    }
-    return max_i;
-}
-
-int max_float_index(float *a, int n)
-{
-    if(n <= 0) return -1;
-    int i, max_i = 0;
-    float max = a[0];
     for(i = 1; i < n; ++i){
         if(a[i] > max){
             max = a[i];
