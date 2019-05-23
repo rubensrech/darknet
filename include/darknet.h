@@ -774,15 +774,6 @@ void copy_gpu(int N, half_host *X, int INCX, half_host *Y, int INCY);
 
 
 void cuda_set_device(int n);
-
-
-template<typename T>
-void cuda_push_array(T *x_gpu, T *x, size_t n);
-template<typename T>
-void cuda_free(T *x_gpu);
-template<typename T>
-void cuda_pull_array(T *x_gpu, T *x, size_t n);
-
 real *cuda_make_array(real *x, size_t n);
 float *cuda_make_float_array(float *x, size_t n);
 half_host *cuda_make_half_array(half_host *x, size_t n);
@@ -958,5 +949,7 @@ float rand_uniform(float min, float max);
 
 #include "blas_templates.h"
 #include "utils_templates.h"
+#include "cuda_templates.h"
+#include "activation_templates.h"
 
 #endif

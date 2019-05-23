@@ -17,37 +17,6 @@ extern "C" {
 
 #include "real.h"
 
-// > Mixed precision functions (templated)
-
-template<typename T>
-void cuda_push_array(T *x_gpu, T *x, size_t n) {
-    size_t size = sizeof(T)*n;
-    cudaError_t status = cudaMemcpy(x_gpu, x, size, cudaMemcpyHostToDevice);
-    check_error(status);
-}
-template void cuda_push_array(float *x_gpu, float *x, size_t n);
-template void cuda_push_array(double *x_gpu, double *x, size_t n);
-template void cuda_push_array(half_host *x_gpu, half_host *x, size_t n);
-
-template<typename T>
-void cuda_free(T *x_gpu) {
-    cudaError_t status = cudaFree(x_gpu);
-    check_error(status);
-}
-template void cuda_free(float *x_gpu);
-template void cuda_free(double *x_gpu);
-template void cuda_free(half_host *x_gpu);
-
-template<typename T>
-void cuda_pull_array(T *x_gpu, T *x, size_t n) {
-    size_t size = sizeof(T)*n;
-    cudaError_t status = cudaMemcpy(x, x_gpu, size, cudaMemcpyDeviceToHost);
-    check_error(status);
-}
-template void cuda_pull_array(float *x_gpu, float *x, size_t n);
-template void cuda_pull_array(double *x_gpu, double *x, size_t n);
-template void cuda_pull_array(half_host *x_gpu, half_host *x, size_t n);
-
 // > Mix precision functions 
 
 // Float

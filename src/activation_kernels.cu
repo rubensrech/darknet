@@ -3,6 +3,7 @@
 #include "cublas_v2.h"
 
 #include "activations.h"
+#include "activation_templates.h"
 #include "cuda.h"
 
 // > Mixed precision kernels (templated)
@@ -283,9 +284,8 @@ void activate_array_gpu(half_float::half *x, int n, ACTIVATION a) {
     activate_array_kernel<<<cuda_gridsize(n), BLOCK>>>((half_device*)x, n, a);
     check_error(cudaPeekAtLastError());
 }
-template void activate_array_gpu(float *x, int n, ACTIVATION a);
-template void activate_array_gpu(double *x, int n, ACTIVATION a);
-
+template void activate_array_gpu<float>(float *x, int n, ACTIVATION a);
+template void activate_array_gpu<double>(double *x, int n, ACTIVATION a);
 
 // Gradients
 

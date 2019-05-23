@@ -11,17 +11,6 @@ float activate(float x, ACTIVATION a);
 float gradient(float x, ACTIVATION a);
 void gradient_array(const real *x, const int n, const ACTIVATION a, real *delta);
 void activate_array(real *x, const int n, const ACTIVATION a);
-#ifdef GPU
-
-template<typename T>
-void activate_array_gpu(T *x, int n, ACTIVATION a);
-void activate_array_gpu(half_float::half *x, int n, ACTIVATION a);
-
-template<typename T>
-void gradient_array_gpu(T *x, int n, ACTIVATION a, T *delta);
-void gradient_array_gpu(half_float::half *x, int n, ACTIVATION a, half_float::half *delta);
-
-#endif
 
 static inline float stair_activate(float x)
 {
