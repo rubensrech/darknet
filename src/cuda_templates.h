@@ -1,6 +1,8 @@
 #ifndef CUDA_TEMPLATES
 #define CUDA_TEMPLATES
 
+#ifdef GPU
+
 // > Dependencies declaration
 
 #include "cuda.h"
@@ -27,5 +29,7 @@ void cuda_pull_array(T *x_gpu, T *x, size_t n) {
     cudaError_t status = cudaMemcpy(x, x_gpu, size, cudaMemcpyDeviceToHost);
     check_error(status);
 }
+
+#endif
 
 #endif
