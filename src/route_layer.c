@@ -1,11 +1,11 @@
 #include "route_layer.h"
 #include "cuda.h"
 #include "blas.h"
+#include "utils.h"
 
 #include <stdio.h>
 
-route_layer make_route_layer(int batch, int n, int *input_layers, int *input_sizes)
-{
+route_layer make_route_layer(int batch, int n, int *input_layers, int *input_sizes) {
     fprintf(stderr,"route ");
     route_layer l = {}; // zero init
     l.type = ROUTE;
@@ -13,26 +13,28 @@ route_layer make_route_layer(int batch, int n, int *input_layers, int *input_siz
     l.n = n;
     l.input_layers = input_layers;
     l.input_sizes = input_sizes;
+
     int i;
     int outputs = 0;
-    for(i = 0; i < n; ++i){
-        fprintf(stderr," %d", input_layers[i]);
+    for (i = 0; i < n; ++i) {
+        fprintf(stderr, " %d", input_layers[i]);
         outputs += input_sizes[i];
     }
     fprintf(stderr, "\n");
+
     l.outputs = outputs;
     l.inputs = outputs;
     l.delta = (real*)calloc(outputs*batch, sizeof(real));
-    l.output = (real*)calloc(outputs*batch, sizeof(real));;
+    l.output = (real*)calloc(outputs*batch, sizeof(real));
 
     l.forward = forward_route_layer;
     l.backward = backward_route_layer;
     #ifdef GPU
-    l.forward_gpu = forward_route_layer_gpu;
-    l.backward_gpu = backward_route_layer_gpu;
+        l.forward_gpu = forward_route_layer_gpu;
+        l.backward_gpu = backward_route_layer_gpu;
 
-    l.delta_gpu =  cuda_make_array(l.delta, outputs*batch);
-    l.output_gpu = cuda_make_array(l.output, outputs*batch);
+        l.delta_gpu =  cuda_make_array(l.delta, outputs*batch);
+        l.output_gpu = cuda_make_array(l.output, outputs*batch);
     #endif
     return l;
 }
@@ -112,27 +114,41 @@ void forward_route_layer_gpu(const route_layer l, network net)
         layer inputLayer = net.layers[index];
         int input_size = l.input_sizes[i];
 
-        #if MIX_PRECISION_SUPPORT == FLOAT // REAL == HALF
-            if (inputLayer.real_type != l.real_type) {
-                if (l.real_type != REAL) {
-                    // real2float
-                } else if(l.real_type == REAL)
-                    float2real_array_gpu(inputLayer.output_float_gpu, inputLayer.output_gpu, input_size);
+        if (IS_MIX_PRECISION_HALF_LAYER(l.real_type)) { // to = l.output_half_gpu
+            if (inputLayer.real_type == REAL) { // from = inputLayer.output_gpu
+                for (j = 0; j < l.batch; ++j)
+                    generic_copy_array_gpu(inputLayer.output_gpu + j*input_size, l.output_half_gpu + offset + j*l.outputs, input_size);
+            } else if (inputLayer.real_type == FLOAT) { // inputLayer.output_float_gpu
+                for (j = 0; j < l.batch; ++j)
+                    generic_copy_array_gpu(inputLayer.output_float_gpu + j*input_size, l.output_half_gpu + offset + j*l.outputs, input_size);
+            } else if (inputLayer.real_type == HALF) { // inputLayer.output_half_gpu
+                for (j = 0; j < l.batch; ++j)
+                    generic_copy_array_gpu(inputLayer.output_half_gpu + j*input_size, l.output_half_gpu + offset + j*l.outputs, input_size);
             }
-        #elif MIX_PRECISION_SUPPORT == HALF // REAL == FLOAT
-            if (inputLayer.real_type != l.real_type) {
-                if (l.real_type != REAL) {
-                    // real2half
-                } else if(l.real_type == REAL)
-                    half2real_array_gpu(inputLayer.output_half_gpu, inputLayer.output_gpu, input_size);
+        } else if (IS_MIX_PRECISION_FLOAT_LAYER(l.real_type)) { // to = l.output_float_gpu
+            if (inputLayer.real_type == REAL) { // from = inputLayer.output_gpu
+                for (j = 0; j < l.batch; ++j)
+                    generic_copy_array_gpu(inputLayer.output_gpu + j*input_size, l.output_float_gpu + offset + j*l.outputs, input_size);
+            } else if (inputLayer.real_type == FLOAT) { // from = inputLayer.output_float_gpu
+                for (j = 0; j < l.batch; ++j)
+                    generic_copy_array_gpu(inputLayer.output_float_gpu + j*input_size, l.output_float_gpu + offset + j*l.outputs, input_size);
+            } else if (inputLayer.real_type == HALF) { // from = inputLayer.output_half_gpu
+                for (j = 0; j < l.batch; ++j)
+                    generic_copy_array_gpu(inputLayer.output_half_gpu + j*input_size, l.output_float_gpu + offset + j*l.outputs, input_size);
             }
-        #endif
-
-        real *input = inputLayer.output_gpu;
-        
-        for(j = 0; j < l.batch; ++j){
-            copy_gpu(input_size, input + j*input_size, 1, l.output_gpu + offset + j*l.outputs, 1);
+        } else { // to = l.output_gpu
+            if (inputLayer.real_type == REAL) { // from = inputLayer.output_gpu
+                for (j = 0; j < l.batch; ++j)
+                    generic_copy_array_gpu(inputLayer.output_gpu + j*input_size, l.output_gpu + offset + j*l.outputs, input_size);
+            } else if (inputLayer.real_type == FLOAT) { // from = inputLayer.output_float_gpu
+                for (j = 0; j < l.batch; ++j)
+                    generic_copy_array_gpu(inputLayer.output_float_gpu + j*input_size, l.output_gpu + offset + j*l.outputs, input_size);
+            } else if (inputLayer.real_type == HALF) { // from = inputLayer.output_half_gpu
+                for (j = 0; j < l.batch; ++j)
+                    generic_copy_array_gpu(inputLayer.output_half_gpu + j*input_size, l.output_gpu + offset + j*l.outputs, input_size);
+            }
         }
+        
         offset += input_size;
     }
 }

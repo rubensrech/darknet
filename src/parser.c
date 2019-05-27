@@ -611,20 +611,19 @@ layer parse_upsample(list *options, size_params params, network *net)
     return l;
 }
 
-route_layer parse_route(list *options, size_params params, network *net)
-{
+route_layer parse_route(list *options, size_params params, network *net) {
     char *l = option_find(options, (char*)"layers");
     int len = strlen(l);
-    if(!l) error("Route Layer must specify input layers");
+    if (!l) error("Route Layer must specify input layers");
     int n = 1;
     int i;
-    for(i = 0; i < len; ++i){
+    for (i = 0; i < len; ++i) {
         if (l[i] == ',') ++n;
     }
 
     int *layers = (int*)calloc(n, sizeof(int));
     int *sizes = (int*)calloc(n, sizeof(int));
-    for(i = 0; i < n; ++i){
+    for (i = 0; i < n; ++i) {
         int index = atoi(l);
         l = strchr(l, ',')+1;
         if(index < 0) index = params.index + index;
@@ -639,12 +638,12 @@ route_layer parse_route(list *options, size_params params, network *net)
     layer.out_w = first.out_w;
     layer.out_h = first.out_h;
     layer.out_c = first.out_c;
-    for(i = 1; i < n; ++i){
+    for (i = 1; i < n; ++i) {
         int index = layers[i];
         convolutional_layer next = net->layers[index];
-        if(next.out_w == first.out_w && next.out_h == first.out_h){
+        if (next.out_w == first.out_w && next.out_h == first.out_h) {
             layer.out_c += next.out_c;
-        }else{
+        } else {
             layer.out_h = layer.out_w = layer.out_c = 0;
         }
     }
@@ -757,8 +756,64 @@ network *parse_network_cfg(char *filename)
     return parse_network_cfg_custom(filename, 0);
 }
 
-network *parse_network_cfg_custom(char *filename, int batch)
-{
+void optimize_route_layer_real_type(network *net, int routeLayerIndex) {
+    route_layer *l = &(net->layers[routeLayerIndex]);
+    int halfCount = 0;
+    int floatCount = 0;
+
+    int i;
+    int inputIndex, inputRealType;
+    for (i = 0; i < l->n; i++) {
+        inputIndex = l->input_layers[i];
+        inputRealType = net->layers[inputIndex].real_type;
+        if (inputRealType == HALF) halfCount++;
+        if (inputRealType == FLOAT) floatCount++;
+    }
+
+    if (halfCount > floatCount)
+        l->real_type = HALF;
+    else if (floatCount > halfCount)
+        l->real_type = FLOAT;
+    else {
+        // If tied, set as the precision of next layer (if there is one)
+        if (routeLayerIndex+1 < net->n)
+            l->real_type = net->layers[routeLayerIndex+1].real_type;
+        else
+            // Half precision represents half of the memory to be copied
+            l->real_type = HALF;
+    }
+
+    fprintf(stderr, "   %d%81s%s\n", routeLayerIndex, " - ", get_real_string(l->real_type));
+
+    // Mixed precision
+    if (l->real_type != REAL) {
+        if (l->real_type == HALF) {
+            l->output_half = (half_host*)calloc(l->outputs*l->batch, sizeof(half_host));
+            #ifdef GPU
+                l->output_half_gpu = cuda_make_half_array(l->output_half, l->outputs*l->batch);
+            #endif
+        }
+        if (l-> real_type == FLOAT) {
+            l->output_float = (float*)calloc(l->outputs*l->batch, sizeof(float));
+            #ifdef GPU
+                l->output_float_gpu = cuda_make_float_array(l->output_float, l->outputs*l->batch);
+            #endif
+        }
+    }
+
+}
+
+// Optimize mixed precision execution of route layers
+void optimize_route_layers_real_type(network *net) {
+    fprintf(stderr, "   --- Route layers: optimized precisions ---\n");
+    int i;
+    for (i = 0; i < net->n; i++) {
+        if (net->layers[i].type == ROUTE)
+            optimize_route_layer_real_type(net, i);
+    }
+}
+
+network *parse_network_cfg_custom(char *filename, int batch) {
     list *sections = read_cfg(filename);
     node *n = sections->front;
     if(!n) error("Config file has no sections");
@@ -786,77 +841,78 @@ network *parse_network_cfg_custom(char *filename, int batch)
     free_section(s);
     fprintf(stderr, "layer     filters    size              input                output\n");
     
-    while(n){
+    while (n) {
         params.index = count;
         fprintf(stderr, "%5d ", count);
         s = (section *)n->val;
         options = s->options;
         layer l = {}; // zero init
         LAYER_TYPE lt = string_to_layer_type(s->type);
-        if(lt == CONVOLUTIONAL){
+        if (lt == CONVOLUTIONAL){
             l = parse_convolutional(options, params);
-        }else if(lt == DECONVOLUTIONAL){
+        } else if (lt == DECONVOLUTIONAL) {
             l = parse_deconvolutional(options, params);
-        }else if(lt == LOCAL){
+        } else if (lt == LOCAL) {
             l = parse_local(options, params);
-        }else if(lt == ACTIVE){
+        } else if (lt == ACTIVE) {
             l = parse_activation(options, params);
-        }else if(lt == LOGXENT){
+        } else if (lt == LOGXENT) {
             l = parse_logistic(options, params);
-        }else if(lt == L2NORM){
+        } else if (lt == L2NORM) {
             l = parse_l2norm(options, params);
-        }else if(lt == RNN){
+        } else if (lt == RNN) {
             l = parse_rnn(options, params);
-        }else if(lt == GRU){
+        } else if (lt == GRU) {
             l = parse_gru(options, params);
-        }else if (lt == LSTM) {
+        } else if  (lt == LSTM)  {
             l = parse_lstm(options, params);
-        }else if(lt == CRNN){
+        } else if (lt == CRNN) {
             l = parse_crnn(options, params);
-        }else if(lt == CONNECTED){
+        } else if (lt == CONNECTED) {
             l = parse_connected(options, params);
-        }else if(lt == CROP){
+        } else if (lt == CROP) {
             l = parse_crop(options, params);
-        }else if(lt == COST){
+        } else if (lt == COST) {
             l = parse_cost(options, params);
-        }else if(lt == REGION){
+        } else if (lt == REGION) {
             l = parse_region(options, params);
-        }else if(lt == YOLO){
+        } else if (lt == YOLO) {
             l = parse_yolo(options, params);
-        }else if(lt == ISEG){
+        } else if (lt == ISEG) {
             l = parse_iseg(options, params);
-        }else if(lt == DETECTION){
+        } else if (lt == DETECTION) {
             l = parse_detection(options, params);
-        }else if(lt == SOFTMAX){
+        } else if (lt == SOFTMAX) {
             l = parse_softmax(options, params);
             net->hierarchy = l.softmax_tree;
-        }else if(lt == NORMALIZATION){
+        } else if (lt == NORMALIZATION) {
             l = parse_normalization(options, params);
-        }else if(lt == BATCHNORM){
+        } else if (lt == BATCHNORM) {
             l = parse_batchnorm(options, params);
-        }else if(lt == MAXPOOL){
+        } else if (lt == MAXPOOL) {
             l = parse_maxpool(options, params);
-        }else if(lt == REORG){
+        } else if (lt == REORG) {
             l = parse_reorg(options, params);
-        }else if(lt == AVGPOOL){
+        } else if (lt == AVGPOOL) {
             l = parse_avgpool(options, params);
-        }else if(lt == ROUTE){
+        } else if (lt == ROUTE) {
             l = parse_route(options, params, net);
-        }else if(lt == UPSAMPLE){
+        } else if (lt == UPSAMPLE) {
             l = parse_upsample(options, params, net);
-        }else if(lt == SHORTCUT){
+        } else if (lt == SHORTCUT) {
             l = parse_shortcut(options, params, net);
-        }else if(lt == DROPOUT){
+        } else if (lt == DROPOUT) {
             l = parse_dropout(options, params);
             l.output = net->layers[count-1].output;
             l.delta = net->layers[count-1].delta;
-#ifdef GPU
-            l.output_gpu = net->layers[count-1].output_gpu;
-            l.delta_gpu = net->layers[count-1].delta_gpu;
-#endif
-        }else{
+            #ifdef GPU
+                l.output_gpu = net->layers[count-1].output_gpu;
+                l.delta_gpu = net->layers[count-1].delta_gpu;
+            #endif
+        } else {
             fprintf(stderr, "Type not recognized: %s\n", s->type);
         }
+
         l.clip = net->clip;
         l.truth = option_find_int_quiet(options, (char*)"truth", 0);
         l.onlyforward = option_find_int_quiet(options, (char*)"onlyforward", 0);
@@ -867,14 +923,18 @@ network *parse_network_cfg_custom(char *filename, int batch)
         l.dontloadscales = option_find_int_quiet(options, (char*)"dontloadscales", 0);
         l.learning_rate_scale = option_find_float_quiet(options, (char*)"learning_rate", 1);
         l.smooth = option_find_float_quiet(options, (char*)"smooth", 0);
-        l.real_type = option_find_int_quiet(options, (char*)"real", REAL);
+        if (l.real_type == 0)
+            l.real_type = option_find_int_quiet(options, (char*)"real", REAL);
+
         option_unused(options);
+
         net->layers[count] = l;
         if (l.workspace_size > workspace_size) workspace_size = l.workspace_size;
         free_section(s);
         n = n->next;
         ++count;
-        if(n){
+
+        if (n) {
             params.h = l.out_h;
             params.w = l.out_w;
             params.c = l.out_c;
@@ -883,6 +943,9 @@ network *parse_network_cfg_custom(char *filename, int batch)
     }
 
     free_list(sections);
+
+    optimize_route_layers_real_type(net);
+
     layer out = get_network_output_layer(net);
     net->outputs = out.outputs;
     net->truths = out.outputs;
@@ -893,7 +956,6 @@ network *parse_network_cfg_custom(char *filename, int batch)
 
     net->input = (real*)calloc(max_input_size, sizeof(real));
     net->input_data_type = REAL;
-
     // Input float always is allocated because input data can be float
     net->input_float = (float*)calloc(max_input_size, sizeof(float));
     #if MIX_PRECISION_SUPPORT == HALF
@@ -901,51 +963,51 @@ network *parse_network_cfg_custom(char *filename, int batch)
     #endif
     
     net->truth = (real*)calloc(net->truths*net->batch, sizeof(real));
-#ifdef GPU
-    net->output_gpu = out.output_gpu;
-    net->input_gpu = cuda_make_array(net->input, max_input_size);
-    net->hold_input_gpu = net->input_gpu;
 
-    // Input float always is allocated because input data can be float
-    net->input_float_gpu = cuda_make_float_array(net->input_float, max_input_size);
-    net->hold_input_float_gpu = net->input_float_gpu;
-    #if MIX_PRECISION_SUPPORT == HALF
-        net->input_half_gpu = cuda_make_half_array(net->input_half, max_input_size);
-        net->hold_input_half_gpu = net->input_half_gpu;
+    #ifdef GPU
+        net->output_gpu = out.output_gpu;
+
+        net->input_gpu = cuda_make_array(net->input, max_input_size);
+        net->hold_input_gpu = net->input_gpu;
+        // Input float always is allocated because input data can be float
+        net->input_float_gpu = cuda_make_float_array(net->input_float, max_input_size);
+        net->hold_input_float_gpu = net->input_float_gpu;
+        #if MIX_PRECISION_SUPPORT == HALF
+            net->input_half_gpu = cuda_make_half_array(net->input_half, max_input_size);
+            net->hold_input_half_gpu = net->input_half_gpu;
+        #endif
+
+        net->truth_gpu = cuda_make_array(net->truth, net->truths*net->batch);
     #endif
 
-    net->truth_gpu = cuda_make_array(net->truth, net->truths*net->batch);
-#endif
-    if(workspace_size){
-        //printf("%ld\n", workspace_size);
-#ifdef GPU
-        if(gpu_index >= 0){
-            net->workspace = cuda_make_array(0, (workspace_size-1)/sizeof(real)+1);
-        }else {
+    if (workspace_size) {
+        #ifdef GPU
+            if (gpu_index >= 0)
+                net->workspace = cuda_make_array(0, (workspace_size-1)/sizeof(real)+1);
+            else
+                net->workspace = (real*)calloc(1, workspace_size);
+            #if MIX_PRECISION_SUPPORT == FLOAT
+                if (gpu_index >= 0)
+                    net->workspace_float = cuda_make_float_array(0, (workspace_size-1)/sizeof(float)+1);
+                else
+                    net->workspace_float = (float*)calloc(1, workspace_size);
+            #elif MIX_PRECISION_SUPPORT == HALF
+                if (gpu_index >= 0)
+                    net->workspace_half = cuda_make_half_array(0, (workspace_size-1)/sizeof(half_host)+1);
+                else
+                    net->workspace_half = (half_host*)calloc(1, workspace_size);
+            #endif
+        #else
             net->workspace = (real*)calloc(1, workspace_size);
-        }
-    #if MIX_PRECISION_SUPPORT == FLOAT
-        if (gpu_index >= 0)
-            net->workspace_float = cuda_make_float_array(0, (workspace_size-1)/sizeof(float)+1);
-        else
-            net->workspace_float = (float*)calloc(1, workspace_size);
-    #elif MIX_PRECISION_SUPPORT == HALF
-        if (gpu_index >= 0)
-            net->workspace_half = cuda_make_half_array(0, (workspace_size-1)/sizeof(half_host)+1);
-        else
-            net->workspace_half = (half_host*)calloc(1, workspace_size);
-    #endif
-#else
-        net->workspace = (real*)calloc(1, workspace_size);
 
-    #if MIX_PRECISION_SUPPORT == FLOAT
-        net->workspace_float = (float*)calloc(1, workspace_size);
-    #elif MIX_PRECISION_SUPPORT == HALF
-        net->workspace_half = (half_host*)calloc(1, workspace_size);
-    #endif
-    
-#endif
+            #if MIX_PRECISION_SUPPORT == FLOAT
+                net->workspace_float = (float*)calloc(1, workspace_size);
+            #elif MIX_PRECISION_SUPPORT == HALF
+                net->workspace_half = (half_host*)calloc(1, workspace_size);
+            #endif
+        #endif
     }
+
     return net;
 }
 

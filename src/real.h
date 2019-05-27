@@ -66,6 +66,11 @@ typedef half_float::half half_host;
 
 	void half2real_array_gpu(half_host* src, real* dst, int n);
 	void real2half_array_gpu(real* src, half_host* dst, int n);
+
+	void generic_copy_array_gpu(half_host *src, half_host *dst, int n);
+	void generic_copy_array_gpu(half_host *src, float *dst, int n);
+	void generic_copy_array_gpu(float *src, half_host *dst, int n);
+	void generic_copy_array_gpu(float *src, float *dst, int n);
 #endif
 
 void float2real_array(float* src, real* dst, int n);
