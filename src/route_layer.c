@@ -112,9 +112,21 @@ void forward_route_layer_gpu(const route_layer l, network net)
         layer inputLayer = net.layers[index];
         int input_size = l.input_sizes[i];
 
-        if (inputLayer.real_type != REAL && l.real_type == REAL) {
-            float2real_array_gpu(inputLayer.output_float_gpu, inputLayer.output_gpu, input_size);
-        }
+        #if MIX_PRECISION_SUPPORT == FLOAT // REAL == HALF
+            if (inputLayer.real_type != l.real_type) {
+                if (l.real_type != REAL) {
+                    // real2float
+                } else if(l.real_type == REAL)
+                    float2real_array_gpu(inputLayer.output_float_gpu, inputLayer.output_gpu, input_size);
+            }
+        #elif MIX_PRECISION_SUPPORT == HALF // REAL == FLOAT
+            if (inputLayer.real_type != l.real_type) {
+                if (l.real_type != REAL) {
+                    // real2half
+                } else if(l.real_type == REAL)
+                    half2real_array_gpu(inputLayer.output_half_gpu, inputLayer.output_gpu, input_size);
+            }
+        #endif
 
         real *input = inputLayer.output_gpu;
         
