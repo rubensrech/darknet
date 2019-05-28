@@ -181,20 +181,6 @@ const char *get_real_string(int real);
 	#endif
 	}
 
-	__device__ __forceinline__ real_device atomicAdd_real(real_device *x, real_device val) {
-	#if REAL == HALF
-		#if __CUDA_ARCH__ > 700
-			return atomicAdd((__half*)x, (__half)val);
-		#endif
-
-		__half old = *x;
-		*x += val;
-		return old;
-	#else
-		return atomicAdd(x, val);
-	#endif
-	}
-
 	__device__ __forceinline__ real_device cos_real(real_device x) {
 	#if REAL == HALF
 		return hcos(x);
@@ -213,6 +199,16 @@ const char *get_real_string(int real);
 	#elif REAL == DOUBLE
 		return sin(x);
 	#endif
+	}
+
+	__device__ __forceinline__ half_device atomicAdd_half(half_device *x, half_device val) {
+		#if __CUDA_ARCH__ > 700
+			return atomicAdd(x, val);
+		#endif
+
+		half_device old = *x;
+		*x += val;
+		return old;
 	}
 
 #endif

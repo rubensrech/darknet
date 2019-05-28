@@ -111,7 +111,10 @@ void adam_update_gpu(real *w, real *d, real *m, real *v, float B1, float B2, flo
 void adam_gpu(int n, real *x, real *m, real *v, float B1, float B2, float rate, float eps, int t);
 void flatten_gpu(real *x, int spatial, int layers, int batch, int forward, real *out);
 void softmax_tree(real *input, int spatial, int batch, int stride, float temp, real *output, tree hier);
-void upsample_gpu(real *in, int w, int h, int c, int batch, int stride, int forward, float scale, real *out);
+
+void upsample_gpu(float *in, int w, int h, int c, int batch, int stride, int forward, float scale, float *out);
+void upsample_gpu(double *in, int w, int h, int c, int batch, int stride, int forward, float scale, double *out);
+void upsample_gpu(half_host *in, int w, int h, int c, int batch, int stride, int forward, float scale, half_host *out);
 
 #endif
 #endif

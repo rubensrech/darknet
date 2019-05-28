@@ -1135,9 +1135,8 @@ void softmax_gpu(real *input, int n, int batch, int batch_offset, int groups, in
     check_error(cudaPeekAtLastError());
 }
 
-
-__global__ void upsample_kernel(size_t N, real_device *x, int w, int h, int c, int batch, int stride, int forward, real_device scale, real_device *out)
-{
+template<typename T>
+__global__ void upsample_kernel(size_t N, T *x, int w, int h, int c, int batch, int stride, int forward, T scale, T *out) {
     size_t i = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
     if(i >= N) return;
     int out_index = i;
@@ -1155,13 +1154,43 @@ __global__ void upsample_kernel(size_t N, real_device *x, int w, int h, int c, i
 
     int in_index = b*w*h*c + in_c*w*h + in_h*w + in_w;
 
-
-    if(forward) out[out_index] += scale * x[in_index];
-    else atomicAdd_real(x+in_index, scale * out[out_index]);
+    if (forward) out[out_index] += scale * x[in_index];
+    else atomicAdd(x+in_index, scale * out[out_index]);
 }
-void upsample_gpu(real *in, int w, int h, int c, int batch, int stride, int forward, float scale, real *out)
-{
+__global__ void upsample_kernel(size_t N, half_device *x, int w, int h, int c, int batch, int stride, int forward, half_device scale, half_device *out) {
+    size_t i = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
+    if(i >= N) return;
+    int out_index = i;
+    int out_w = i%(w*stride);
+    i = i/(w*stride);
+    int out_h = i%(h*stride);
+    i = i/(h*stride);
+    int out_c = i%c;
+    i = i/c;
+    int b = i%batch;
+
+    int in_w = out_w / stride;
+    int in_h = out_h / stride;
+    int in_c = out_c;
+
+    int in_index = b*w*h*c + in_c*w*h + in_h*w + in_w;
+
+    if (forward) out[out_index] += scale * x[in_index];
+    else atomicAdd_half(x+in_index, scale * out[out_index]);
+}
+
+void upsample_gpu(float *in, int w, int h, int c, int batch, int stride, int forward, float scale, float *out) {
     size_t size = w*h*c*batch*stride*stride;
-    upsample_kernel<<<cuda_gridsize(size), BLOCK>>>(size, (real_device*)in, w, h, c, batch, stride, forward, (real_device)scale, (real_device*)out);
+    upsample_kernel<<<cuda_gridsize(size), BLOCK>>>(size, in, w, h, c, batch, stride, forward, scale, out);
+    check_error(cudaPeekAtLastError());
+}
+void upsample_gpu(double *in, int w, int h, int c, int batch, int stride, int forward, float scale, double *out) {
+    size_t size = w*h*c*batch*stride*stride;
+    upsample_kernel<<<cuda_gridsize(size), BLOCK>>>(size, in, w, h, c, batch, stride, forward, (double)scale, out);
+    check_error(cudaPeekAtLastError());
+}
+void upsample_gpu(half_host *in, int w, int h, int c, int batch, int stride, int forward, float scale, half_host *out) {
+    size_t size = w*h*c*batch*stride*stride;
+    upsample_kernel<<<cuda_gridsize(size), BLOCK>>>(size, (half_device*)in, w, h, c, batch, stride, forward, (half_device)scale, (half_device*)out);
     check_error(cudaPeekAtLastError());
 }

@@ -491,8 +491,7 @@ layer parse_reorg(list *options, size_params params)
     return layer;
 }
 
-maxpool_layer parse_maxpool(list *options, size_params params)
-{
+maxpool_layer parse_maxpool(list *options, size_params params) {
     int stride = option_find_int(options, (char*)"stride",1);
     int size = option_find_int(options, (char*)"size",stride);
     int padding = option_find_int_quiet(options, (char*)"padding", size-1);
@@ -605,8 +604,9 @@ layer parse_activation(list *options, size_params params)
 layer parse_upsample(list *options, size_params params, network *net)
 {
 
-    int stride = option_find_int(options, (char*)"stride",2);
-    layer l = make_upsample_layer(params.batch, params.w, params.h, params.c, stride);
+    int stride = option_find_int(options, (char*)"stride", 2);
+    int real_type = option_find_int_quiet(options, (char*)"real", REAL);
+    layer l = make_upsample_layer(params.batch, params.w, params.h, params.c, stride, real_type);
     l.scale = option_find_float_quiet(options, (char*)"scale", 1);
     return l;
 }
@@ -803,8 +803,8 @@ void optimize_route_layer_real_type(network *net, int routeLayerIndex) {
 
 }
 
-// Optimize mixed precision execution of route layers
 void optimize_route_layers_real_type(network *net) {
+    // Optimize mixed precision execution of route layers
     fprintf(stderr, "   --- Route layers: optimized precisions ---\n");
     int i;
     for (i = 0; i < net->n; i++) {
