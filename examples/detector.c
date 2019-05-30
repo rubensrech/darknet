@@ -629,8 +629,6 @@ double validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, flo
     double detTime, tDetTime = 0;
     double totalTime = what_time_is_it_now();
 
-double tmpTime, tTmpTime = 0;
-
     for (i = nthreads; i < m + nthreads; i += nthreads) {
         fprintf(stderr, "\r%d ", i);
 
@@ -652,7 +650,6 @@ double tmpTime, tTmpTime = 0;
 
         // > Detection
         for (t = 0; t < nthreads && i + t - nthreads < m; ++t) {
-
             detTime = what_time_is_it_now();
 
             const int image_index = i + t - nthreads;
@@ -672,9 +669,7 @@ double tmpTime, tTmpTime = 0;
                 dets = get_network_boxes(net, 1, 1, thresh, hier_thresh, 0, 0, &nboxes, letterbox);
             }
 
-tmpTime = what_time_is_it_now();
             if (nms) do_nms_sort(dets, nboxes, l.classes, nms);
-tTmpTime += what_time_is_it_now() - tmpTime;
 
             char labelpath[4096];
             replace_image_to_label(path, labelpath);
@@ -747,7 +742,6 @@ tTmpTime += what_time_is_it_now() - tmpTime;
                                 if (detections[z].unique_truth_index == truth_index) {
                                     found = 1; break;
                                 }
-
                             if (truth_index > -1 && found == 0) {
                                 avg_iou += max_iou;
                                 ++tp_for_thresh;
@@ -755,7 +749,6 @@ tTmpTime += what_time_is_it_now() - tmpTime;
                                 fp_for_thresh++;
                         }
                     }
-
                 }
             }
 
@@ -867,7 +860,6 @@ tTmpTime += what_time_is_it_now() - tmpTime;
         printf("\naverage precision (AP) = %f, or %2.2f %% for IoU threshold = %f \n", mean_average_precision, mean_average_precision * 100, (float)iou_thresh);
     }
 
-printf("tmp time: %f seconds\n", tTmpTime);
     printf("Load time: %f seconds\n", tLoadTime);
     printf("Detection time: %f seconds\n", tDetTime);
     printf("Total time: %f seconds\n", what_time_is_it_now() - totalTime);
