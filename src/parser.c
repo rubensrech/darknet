@@ -319,10 +319,11 @@ layer parse_yolo(list *options, size_params params)
     int classes = option_find_int(options, (char*)"classes", 20);
     int total = option_find_int(options, (char*)"num", 1);
     int num = total;
+    int real_type = option_find_int_quiet(options, (char*)"real", REAL);
 
     char *a = option_find_str(options, (char*)"mask", 0);
     int *mask = parse_yolo_mask(a, &num);
-    layer l = make_yolo_layer(params.batch, params.w, params.h, num, total, mask, classes);
+    layer l = make_yolo_layer(params.batch, params.w, params.h, num, total, mask, classes, real_type);
     assert(l.outputs == params.inputs);
 
     l.max_boxes = option_find_int_quiet(options, (char*)"max",90);

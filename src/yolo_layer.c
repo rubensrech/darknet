@@ -10,12 +10,10 @@
 #include <string.h>
 #include <stdlib.h>
 
-layer make_yolo_layer(int batch, int w, int h, int n, int total, int *mask, int classes)
-{
+layer make_yolo_layer(int batch, int w, int h, int n, int total, int *mask, int classes, int real_type) {
     int i;
-    layer l = {}; // zero init
+    layer l = {};
     l.type = YOLO;
-
     l.n = n;
     l.total = total;
     l.batch = batch;
@@ -28,10 +26,10 @@ layer make_yolo_layer(int batch, int w, int h, int n, int total, int *mask, int 
     l.classes = classes;
     l.cost = (real*)calloc(1, sizeof(real));
     l.biases = (real*)calloc(total*2, sizeof(real));
-    if(mask) l.mask = mask;
-    else{
+    if (mask) l.mask = mask;
+    else {
         l.mask = (int*)calloc(n, sizeof(int));
-        for(i = 0; i < n; ++i){
+        for (i = 0; i < n; ++i) {
             l.mask[i] = i;
         }
     }
@@ -39,23 +37,50 @@ layer make_yolo_layer(int batch, int w, int h, int n, int total, int *mask, int 
     l.outputs = h*w*n*(classes + 4 + 1);
     l.inputs = l.outputs;
     l.truths = 90*(4 + 1);
+
+    l.real_type = real_type;
+
     l.delta = (real*)calloc(batch*l.outputs, sizeof(real));
     l.output = (real*)calloc(batch*l.outputs, sizeof(real));
-    for(i = 0; i < total*2; ++i){
+
+    if (IS_MIX_PRECISION_FLOAT_LAYER(real_type)) {
+        l.output_float = (float*)calloc(batch*l.outputs, sizeof(float));
+        l.delta_float = (float*)calloc(batch*l.outputs, sizeof(float));
+    } else if (IS_MIX_PRECISION_HALF_LAYER(real_type)) {
+        l.output_half = (half_host*)calloc(batch*l.outputs, sizeof(half_host));
+        l.delta_half = (half_host*)calloc(batch*l.outputs, sizeof(half_host));
+    }
+
+    for (i = 0; i < total*2; ++i) {
         l.biases[i] = .5;
     }
 
     l.forward = forward_yolo_layer;
     l.backward = backward_yolo_layer;
-#ifdef GPU
-    l.forward_gpu = forward_yolo_layer_gpu;
-    l.backward_gpu = backward_yolo_layer_gpu;
-    l.output_gpu = cuda_make_array(l.output, batch*l.outputs);
-    l.delta_gpu = cuda_make_array(l.delta, batch*l.outputs);
-#endif
+
+    #ifdef GPU
+        if (IS_MIX_PRECISION_FLOAT_LAYER(real_type)) {
+            // l.forward_gpu = forward_yolo_layer_float_gpu;
+        } else if (IS_MIX_PRECISION_HALF_LAYER(real_type))
+            l.forward_gpu = forward_yolo_layer_half_gpu;
+        else
+            l.forward_gpu = forward_yolo_layer_gpu;
+        l.backward_gpu = backward_yolo_layer_gpu;
+
+        l.output_gpu = cuda_make_array(l.output, batch*l.outputs);
+        l.delta_gpu = cuda_make_array(l.delta, batch*l.outputs);
+
+        if (IS_MIX_PRECISION_FLOAT_LAYER(real_type)) {
+            l.output_float_gpu = cuda_make_float_array(l.output_float, batch*l.outputs);
+            l.delta_float_gpu  = cuda_make_float_array(l.delta_float, batch*l.outputs);
+        } else if (IS_MIX_PRECISION_HALF_LAYER(real_type)) {
+            l.output_half_gpu  = cuda_make_half_array(l.output_half, batch*l.outputs);
+            l.delta_half_gpu   = cuda_make_half_array(l.delta_half, batch*l.outputs);
+        }
+    #endif
 
     fprintf(stderr, "yolo");
-    fprintf(stderr, "%73s - %s\n", "", get_default_real_string());
+    fprintf(stderr, "%73s - %s\n", "", get_real_string(l.real_type));
     srand(0);
 
     return l;
@@ -350,8 +375,7 @@ int get_yolo_detections(layer l, int w, int h, int netw, int neth, float thresh,
 
 #ifdef GPU
 
-void forward_yolo_layer_gpu(const layer l, network net)
-{
+void forward_yolo_layer_gpu(const layer l, network net) {
     copy_gpu(l.batch*l.inputs, net.input_gpu, 1, l.output_gpu, 1);
     int b, n;
     for (b = 0; b < l.batch; ++b){
@@ -363,6 +387,29 @@ void forward_yolo_layer_gpu(const layer l, network net)
         }
     }
     if(!net.train || l.onlyforward){
+        cuda_pull_array(l.output_gpu, l.output, l.batch*l.outputs);
+        return;
+    }
+
+    cuda_pull_array(l.output_gpu, net.input, l.batch*l.inputs);
+    forward_yolo_layer(l, net);
+    cuda_push_array(l.delta_gpu, l.delta, l.batch*l.outputs);
+}
+void forward_yolo_layer_half_gpu(const layer l, network net) {
+    copy_gpu(l.batch*l.inputs, net.input_half_gpu, 1, l.output_half_gpu, 1);
+    int b, n;
+    for (b = 0; b < l.batch; ++b) {
+        for(n = 0; n < l.n; ++n) {
+            int index = entry_index(l, b, n*l.w*l.h, 0);
+            activate_array_gpu(l.output_half_gpu + index, 2*l.w*l.h, LOGISTIC);
+            index = entry_index(l, b, n*l.w*l.h, 4);
+            activate_array_gpu(l.output_half_gpu + index, (1+l.classes)*l.w*l.h, LOGISTIC);
+        }
+    }
+
+    half2real_array_gpu(l.output_half_gpu, l.output_gpu, l.batch*l.outputs);
+
+    if (!net.train || l.onlyforward) {
         cuda_pull_array(l.output_gpu, l.output, l.batch*l.outputs);
         return;
     }
