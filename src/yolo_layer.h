@@ -14,7 +14,7 @@ int yolo_num_detections(layer l, float thresh);
 #ifdef GPU
 void forward_yolo_layer_gpu(const layer l, network net);
 void forward_yolo_layer_half_gpu(const layer l, network net);
-// void forward_yolo_layer_float_gpu(const layer l, network net);
+void forward_yolo_layer_float_gpu(const layer l, network net);
 
 void backward_yolo_layer_gpu(layer l, network net);
 #endif
