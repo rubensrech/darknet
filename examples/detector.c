@@ -634,7 +634,6 @@ double validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, flo
 
         loadTime = what_time_is_it_now();
         // > Load images data
-        // >> load_data_in_thread is SLOWER in HALF because imgs data need to be CASTED
         for (t = 0; t < nthreads && i + t - nthreads < m; ++t) {
             pthread_join(thr[t], 0);
             val[t] = buf[t];
@@ -982,41 +981,6 @@ void print_detections(image im, detection *dets, int num, float thresh, char **n
     }
 }
 
-/*
-void exportNetInOut(network *net) {
-    int i, j;
-    layer l;
-
-    for (i = 0; i < net->n; i++) {
-        l = net->layers[i];
-        if (l.real_type == FLOAT)
-            cuda_pull_array(l.output_float_gpu, l.output_float, l.outputs);
-        else if (l.real_type == REAL)
-            cuda_pull_array(l.output_gpu, l.output, l.outputs);
-    }
-
-    for (i = 0; i < net->n; i++) {
-        char filename[40];
-        snprintf(filename, sizeof(filename), "_tmp_/l%d-out.txt", i);
-        FILE *f = fopen(filename, "w");
-
-        l = net->layers[i];    
-    
-        for (j = 0; j < l.outputs; j++) {
-            if (l.real_type == FLOAT)
-                fprintf(f, "%f\t", l.output_float[j]);
-            else if (l.real_type == REAL)
-                fprintf(f, "%f\t", (float)(l.output[j]));
-
-            if (j % 4 == 0)
-                fprintf(f, "\n");
-        }
-
-        fclose(f);
-    }
-}
-*/
-
 // Rubens Test 1
 // Purpose: Test exec time
 void test(char *cfgfile, char *filename) {
@@ -1025,14 +989,9 @@ void test(char *cfgfile, char *filename) {
     float thresh = 0.3;
     float hier_thresh = 0.5;
 
-    // Load config (classes names file)
     list *options = read_data_cfg(datacfg);
-
-    // Load classes names
-    char *name_list = option_find_str(options, (char *)"names", (char *)"data/names.list");
+    char *name_list = option_find_str(options, (char*)"names", (char *)"data/names.list");
     char **names = get_labels(name_list);
-
-    // Load alphabet letters images
     image **alphabet = load_alphabet();
 
     double tl = what_time_is_it_now();
@@ -1089,8 +1048,67 @@ void test(char *cfgfile, char *filename) {
     free_network(net);
 }
 
-void run_detector(int argc, char **argv)
-{
+// Rubens Test 2
+// Purpose: Test exec time 5000 images
+void test2(char *cfgfile, char *weightfile, int n) {
+    // char *datacfg = (char*)"cfg/coco.data";
+    char *filename = (char*)"data/dog.jpg";
+    float thresh = 0.3;
+    float hier_thresh = 0.5;
+
+    // list *options = read_data_cfg(datacfg);
+    // char *name_list = option_find_str(options, (char*)"names", (char *)"data/names.list");
+    // char **names = get_labels(name_list);
+    // image **alphabet = load_alphabet();
+
+    network *net = load_network(cfgfile, weightfile, 0);
+    layer l = net->layers[net->n-1];
+
+    set_batch_network(net, 1);
+    srand(2222222);
+
+    char buff[256];
+    char *input = buff;
+    float nms = .45;
+    strncpy(input, filename, 256);
+
+    image im, sized;
+    int nboxes = 0;
+    detection *dets;
+
+    double t1 = 0;
+
+    int i;
+    for (i = 0; i < n; i++) {
+        if (i == 1) // Discard first frame (because of network push cost)
+            t1 = what_time_is_it_now();
+
+        im = load_image_color(input, 0, 0);
+        sized = letterbox_image(im, net->w, net->h);
+        float *X = sized.data;
+
+        network_predict(net, X);
+
+        dets = get_network_boxes(net, im.w, im.h, thresh, hier_thresh, 0, 1, &nboxes, 1);
+        if (nms)
+            do_nms_sort(dets, nboxes, l.classes, nms);
+        // print_detections(im, dets, nboxes, thresh, names, alphabet, l.classes);
+
+        free_image(im);
+        free_image(sized);
+        free_detections(dets, nboxes);
+
+        fprintf(stderr, "\r%d ", i+1);
+    }
+
+    double t = what_time_is_it_now() - t1;
+    printf("\nTotal time for %d frame(s): %f s\n", n, t);
+    printf("Time per frame: %f ms\n", t/n);
+
+    free_network(net);
+}
+
+void run_detector(int argc, char **argv) {
     char *prefix = find_char_arg(argc, argv, (char*)"-prefix", 0);
     float thresh = find_float_arg(argc, argv, (char*)"-thresh", .5);
     float iou_thresh = find_float_arg(argc, argv, (char*)"-iou_thresh", .5);    // 0.5 for mAP
@@ -1143,18 +1161,24 @@ void run_detector(int argc, char **argv)
     else if(0==strcmp(argv[2], "valid2")) validate_detector_flip(datacfg, cfg, weights, outfile);
     else if(0==strcmp(argv[2], "recall")) validate_detector_recall(cfg, weights);
     else if(0==strcmp(argv[2], "map")) validate_detector_map(datacfg, cfg, weights, thresh, iou_thresh, NULL);
-    else if(0 == strcmp(argv[2], "rubens")) {
-        // ./darknet detector rubens <cfgfile> <filename>
-        filename = argv[4];
-        cfg = argv[3];
-        test(cfg, filename);
-    } else if(0==strcmp(argv[2], "demo")) {
+    else if(0==strcmp(argv[2], "demo")) {
         list *options = read_data_cfg(datacfg);
         int classes = option_find_int(options, (char*)"classes", 20);
         char *name_list = option_find_str(options, (char*)"names", (char*)"data/names.list");
         char **names = get_labels(name_list);
         demo(cfg, weights, thresh, cam_index, filename, names, classes, frame_skip, prefix, avg, hier_thresh, width, height, fps, fullscreen);
-    }
+    } else if (0 == strcmp(argv[2], "rubens")) {
+        // ./darknet detector rubens <cfgfile> <filename>
+        filename = argv[4];
+        cfg = argv[3];
+        test(cfg, filename);
+    } else if (0 == strcmp(argv[2], "rubens2")) {
+        // ./darknet detector rubens2 <cfgfile> <weightsfile> -n <frames>
+        cfg = argv[3];
+        weights = argv[4];
+        int n = find_int_arg(argc, argv, (char*)"-n", 1);
+        test2(cfg, weights, n);
+    } 
     //else if(0==strcmp(argv[2], "extract")) extract_detector(datacfg, cfg, weights, cam_index, filename, class, thresh, frame_skip);
     //else if(0==strcmp(argv[2], "censor")) censor_detector(datacfg, cfg, weights, cam_index, filename, class, thresh, frame_skip);
 }
