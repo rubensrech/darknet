@@ -1049,32 +1049,33 @@ void test(char *cfgfile, char *filename) {
 }
 
 // Rubens Test 2
-// Purpose: Test exec time 5000 images
+// Purpose: Test exec with 5000 COCO valid images
 void test2(char *cfgfile, char *weightfile, int n) {
-    // char *datacfg = (char*)"cfg/coco.data";
-    char *filename = (char*)"data/dog.jpg";
-    float thresh = 0.3;
-    float hier_thresh = 0.5;
-
-    // list *options = read_data_cfg(datacfg);
-    // char *name_list = option_find_str(options, (char*)"names", (char *)"data/names.list");
-    // char **names = get_labels(name_list);
-    // image **alphabet = load_alphabet();
-
     network *net = load_network(cfgfile, weightfile, 0);
     layer l = net->layers[net->n-1];
 
-    set_batch_network(net, 1);
-    srand(2222222);
+    // char *name_list = (char *)"data/coco.names";
+    // char **names = get_labels(name_list);
+    // image **alphabet = load_alphabet();
 
-    char buff[256];
-    char *input = buff;
-    float nms = .45;
-    strncpy(input, filename, 256);
+    char *valid_images = (char*)"../coco_test/5k.txt";
+    list *plist = get_paths(valid_images);
+    char **paths = (char**)list_to_array(plist);
+    if (n > plist->size) {
+        fprintf(stderr, "Argument 'n' cannot be greater than 5000!");
+        return;
+    }
+
+    set_batch_network(net, 1);
+    srand(time(0));
 
     image im, sized;
     int nboxes = 0;
     detection *dets;
+
+    float nms = .45;
+    float thresh = 0.3;
+    float hier_thresh = 0.5;
 
     double t1 = 0;
 
@@ -1083,7 +1084,7 @@ void test2(char *cfgfile, char *weightfile, int n) {
         if (i == 1) // Discard first frame (because of network push cost)
             t1 = what_time_is_it_now();
 
-        im = load_image_color(input, 0, 0);
+        im = load_image_color(paths[i], 0, 0);
         sized = letterbox_image(im, net->w, net->h);
         float *X = sized.data;
 
@@ -1176,7 +1177,7 @@ void run_detector(int argc, char **argv) {
         // ./darknet detector rubens2 <cfgfile> <weightsfile> -n <frames>
         cfg = argv[3];
         weights = argv[4];
-        int n = find_int_arg(argc, argv, (char*)"-n", 1);
+        int n = find_int_arg(argc, argv, (char*)"-n", 5000);
         test2(cfg, weights, n);
     } 
     //else if(0==strcmp(argv[2], "extract")) extract_detector(datacfg, cfg, weights, cam_index, filename, class, thresh, frame_skip);
