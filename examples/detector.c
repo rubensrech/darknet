@@ -1103,7 +1103,7 @@ void test2(char *cfgfile, char *weightfile, int n) {
 
     double t = what_time_is_it_now() - t1;
     printf("\nTotal time for %d frame(s): %f s\n", n, t);
-    printf("Time per frame: %f ms\n", t/n);
+    printf("Time per frame: %f ms\n", t/n * 1000);
 
     free_network(net);
 }
