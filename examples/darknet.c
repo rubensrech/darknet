@@ -4,10 +4,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-// extern void predict_classifier(char *datacfg, char *cfgfile, char *weightfile, char *filename, int top);
 extern void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filename, float thresh, float hier_thresh, char *outfile, int fullscreen);
-// extern void run_yolo(int argc, char **argv);
 extern void run_detector(int argc, char **argv);
+// extern void predict_classifier(char *datacfg, char *cfgfile, char *weightfile, char *filename, int top);
+// extern void run_yolo(int argc, char **argv);
 // extern void run_coco(int argc, char **argv);
 // extern void run_nightmare(int argc, char **argv);
 // extern void run_classifier(int argc, char **argv);

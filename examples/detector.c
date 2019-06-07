@@ -2,6 +2,7 @@
 
 static int coco_ids[] = {1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,17,18,19,20,21,22,23,24,25,27,28,31,32,33,34,35,36,37,38,39,40,41,42,43,44,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,67,70,72,73,74,75,76,77,78,79,80,81,82,84,85,86,87,88,89,90};
 
+void run_rtest(int testID, int argc, char **argv);
 
 void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, int ngpus, int clear)
 {
@@ -960,155 +961,6 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
     }
 }
 
-void print_detections(image im, detection *dets, int num, float thresh, char **names, image **alphabet, int classes) {
-    int i,j;
-
-    for(i = 0; i < num; ++i){
-        char labelstr[4096] = {0};
-        int _class = -1;
-        for(j = 0; j < classes; ++j){
-            if (dets[i].prob[j] > thresh){
-                if (_class < 0) {
-                    strcat(labelstr, names[j]);
-                    _class = j;
-                } else {
-                    strcat(labelstr, ", ");
-                    strcat(labelstr, names[j]);
-                }
-                printf("%s: %.0f%%\n", names[j], dets[i].prob[j]*100);
-            }
-        }
-    }
-}
-
-// Rubens Test 1
-// Purpose: Test exec time
-void test(char *cfgfile, char *filename) {
-    char *datacfg = (char*)"cfg/coco.data";
-    char *weightfile = (char*)"../yolov3-tiny2.weights";
-    float thresh = 0.3;
-    float hier_thresh = 0.5;
-
-    list *options = read_data_cfg(datacfg);
-    char *name_list = option_find_str(options, (char*)"names", (char *)"data/names.list");
-    char **names = get_labels(name_list);
-    image **alphabet = load_alphabet();
-
-    double tl = what_time_is_it_now();
-
-    // Load neural network
-    network *net = load_network(cfgfile, weightfile, 0);
-
-    printf("Load net time: %f ms.\n\n", (what_time_is_it_now() - tl) * 1000);
-
-    set_batch_network(net, 1);
-    srand(2222222);
-
-    char buff[256];
-    char *input = buff;
-    float nms = .45;
-
-    strncpy(input, filename, 256);
-
-    layer l = net->layers[net->n - 1];
-
-    image im, sized;
-    int nboxes = 0;
-    detection *dets;
-
-    double ttime = what_time_is_it_now();
-
-    int iteration;
-    for (iteration = 0; iteration < 1; iteration++) {
-        // Load input image
-        im = load_image_color(input, 0, 0);
-        sized = letterbox_image(im, net->w, net->h);
-
-        float *X = sized.data;
-
-        // Run predictor
-        network_predict(net, X);
-
-        // Generate outputs
-        int letterbox = 1;
-        dets = get_network_boxes(net, im.w, im.h, thresh, hier_thresh, 0, 1, &nboxes, letterbox);
-
-        if (nms)
-            do_nms_sort(dets, nboxes, l.classes, nms);
-        print_detections(im, dets, nboxes, thresh, names, alphabet, l.classes);
-
-        free_detections(dets, nboxes);
-    }
-
-    printf("\nTotal Time: %f ms.\n", (what_time_is_it_now() - ttime) * 1000);
-
-    save_image(im, "predictions");
-    free_image(im);
-    free_image(sized);
-    free_network(net);
-}
-
-// Rubens Test 2
-// Purpose: Test exec with 5000 COCO valid images
-void test2(char *cfgfile, char *weightfile, int n) {
-    network *net = load_network(cfgfile, weightfile, 0);
-    layer l = net->layers[net->n-1];
-
-    // char *name_list = (char *)"data/coco.names";
-    // char **names = get_labels(name_list);
-    // image **alphabet = load_alphabet();
-
-    char *valid_images = (char*)"../coco_test/5k.txt";
-    list *plist = get_paths(valid_images);
-    char **paths = (char**)list_to_array(plist);
-    if (n > plist->size) {
-        fprintf(stderr, "Argument 'n' cannot be greater than 5000!");
-        return;
-    }
-
-    set_batch_network(net, 1);
-    srand(time(0));
-
-    image im, sized;
-    int nboxes = 0;
-    detection *dets;
-
-    float nms = .45;
-    float thresh = 0.3;
-    float hier_thresh = 0.5;
-
-    double t1 = 0;
-
-    int i;
-    for (i = 0; i < n; i++) {
-        if (i == 1) // Discard first frame (because of network push cost)
-            t1 = what_time_is_it_now();
-
-        im = load_image_color(paths[i], 0, 0);
-        sized = letterbox_image(im, net->w, net->h);
-        float *X = sized.data;
-
-        network_predict(net, X);
-
-        dets = get_network_boxes(net, im.w, im.h, thresh, hier_thresh, 0, 1, &nboxes, 1);
-        if (nms)
-            do_nms_sort(dets, nboxes, l.classes, nms);
-        // print_detections(im, dets, nboxes, thresh, names, alphabet, l.classes);
-
-        free_image(im);
-        free_image(sized);
-        free_detections(dets, nboxes);
-
-        fprintf(stderr, "\r%d ", i+1);
-    }
-
-    double t = what_time_is_it_now() - t1;
-    printf("\nTotal time for %d frame(s): %f s\n", n, t);
-    printf("Time per frame: %f ms\n", t/n * 1000);
-
-    free_network(net);
-}
-
 void run_detector(int argc, char **argv) {
     char *prefix = find_char_arg(argc, argv, (char*)"-prefix", 0);
     float thresh = find_float_arg(argc, argv, (char*)"-thresh", .5);
@@ -1168,18 +1020,10 @@ void run_detector(int argc, char **argv) {
         char *name_list = option_find_str(options, (char*)"names", (char*)"data/names.list");
         char **names = get_labels(name_list);
         demo(cfg, weights, thresh, cam_index, filename, names, classes, frame_skip, prefix, avg, hier_thresh, width, height, fps, fullscreen);
-    } else if (0 == strcmp(argv[2], "rubens")) {
-        // ./darknet detector rubens <cfgfile> <filename>
-        filename = argv[4];
-        cfg = argv[3];
-        test(cfg, filename);
-    } else if (0 == strcmp(argv[2], "rubens2")) {
-        // ./darknet detector rubens2 <cfgfile> <weightsfile> -n <frames>
-        cfg = argv[3];
-        weights = argv[4];
-        int n = find_int_arg(argc, argv, (char*)"-n", 5000);
-        test2(cfg, weights, n);
-    } 
-    //else if(0==strcmp(argv[2], "extract")) extract_detector(datacfg, cfg, weights, cam_index, filename, class, thresh, frame_skip);
-    //else if(0==strcmp(argv[2], "censor")) censor_detector(datacfg, cfg, weights, cam_index, filename, class, thresh, frame_skip);
+    }
+     else if (0 == strcmp(argv[2], "rtest")) {
+        // ./darknet detector rtest <test-id>
+        int testID = atoi(argv[3]);
+        run_rtest(testID, argc, argv);
+    }
 }
