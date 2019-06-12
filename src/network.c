@@ -827,7 +827,7 @@ real *network_output(network *net)
 
 #ifdef GPU
 
-#define LAYERS_TIME_TEST 1
+#define LAYERS_TIME_TEST 0
 extern float **layers_times;
 
 void forward_network_gpu(network *netp) {
