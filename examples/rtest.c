@@ -208,7 +208,7 @@ void test3(char *cfgfile, char *weightfile, char *filename, int n) {
         double sum = 0;
         for (j = 1; j < n; j++) sum += layers_times[i][j];
         double avg = sum/(n-1);
-        printf("%f\n", i, avg*1000);
+        printf("%f\n", avg*1000);
     }
 
     free_image(im);
