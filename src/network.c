@@ -827,8 +827,10 @@ real *network_output(network *net)
 
 #ifdef GPU
 
-void forward_network_gpu(network *netp)
-{
+#define LAYERS_TIME_TEST 1
+extern float **layers_times;
+
+void forward_network_gpu(network *netp) {
     network net = *netp;
     cuda_set_device(net.gpu_index);
 
@@ -850,15 +852,20 @@ void forward_network_gpu(network *netp)
         }
     #endif
 
-    if(net.truth)
+    if (net.truth)
         cuda_push_array(net.truth_gpu, net.truth, net.truths*net.batch);
+
+    // > Test code
+    #if LAYERS_TIME_TEST
+        static int iteration = 0;
+        double ft;
+    #endif
     
     int i;
-    for(i = 0; i < net.n; ++i){
+    for (i = 0; i < net.n; ++i) {
         net.index = i;
         layer l = net.layers[i];
 
-        // cudaDeviceSynchronize();
         // fprintf(stderr, "layer %d - in size %d - out size: %d\n", i, l.inputs, l.outputs);
 
 #if MIX_PRECISION_SUPPORT == FLOAT
@@ -872,7 +879,7 @@ void forward_network_gpu(network *netp)
             
             if (l.delta_float_gpu) 
                 fill_gpu(l.outputs * l.batch, 0, l.delta_float_gpu, 1);
-
+            
             l.forward_gpu(l, net);
 
             net.input_float_gpu = l.output_float_gpu;
@@ -897,7 +904,18 @@ void forward_network_gpu(network *netp)
             if (l.delta_gpu) 
                 fill_gpu(l.outputs * l.batch, 0, l.delta_gpu, 1);
             
+            #if LAYERS_TIME_TEST
+                cudaDeviceSynchronize();
+                ft = what_time_is_it_now();
+            #endif
+            
             l.forward_gpu(l, net);
+
+            #if LAYERS_TIME_TEST
+                cudaDeviceSynchronize();
+                layers_times[i][iteration] = what_time_is_it_now() - ft;
+                iteration++;
+            #endif
 
             net.input_gpu = l.output_gpu;
             net.input = l.output;
@@ -945,7 +963,17 @@ void forward_network_gpu(network *netp)
             if (l.delta_gpu) 
                 fill_gpu(l.outputs * l.batch, 0, l.delta_gpu, 1);
             
+            #if LAYERS_TIME_TEST
+                cudaDeviceSynchronize();
+                ft = what_time_is_it_now();
+            #endif
+            
             l.forward_gpu(l, net);
+
+            #if LAYERS_TIME_TEST
+                cudaDeviceSynchronize();
+                layers_times[i][iteration] = what_time_is_it_now() - ft;
+            #endif
 
             net.input_gpu = l.output_gpu;
             net.input = l.output;
@@ -971,6 +999,10 @@ void forward_network_gpu(network *netp)
         }
 #endif
     }
+
+    #if LAYERS_TIME_TEST
+        iteration++;
+    #endif
 
     pull_network_output(netp);
     calc_network_cost(netp);

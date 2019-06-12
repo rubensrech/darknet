@@ -27,8 +27,8 @@ void print_detections(image im, detection *dets, int num, float thresh, char **n
 
 /* 
  * Test 1
- * Description: Test execution time for one frame 'n' times (default n=1)
- * Call: ./darknet detector rtest 1 <cfgfile> <weightfile> <filename> 
+ * Description: Test average execution time for one frame after 'n' predictions (default n=1)
+ * Call: ./darknet detector rtest 1 <cfgfile> <weightfile> <filename> [-n <iterations>] [-print <0|1>]
  * Optionals: -n <iterations>   - default: 1
  *            -print <0|1>      - print detections? default: 1
  */
@@ -91,6 +91,8 @@ void test1(char *cfgfile, char *weightfile, char *filename, int n, int print) {
         }
 
         free_detections(dets, nboxes);
+        free_image(im);
+        free_image(sized);
     }
 
     double tt = (what_time_is_it_now() - t) * 1000;
@@ -98,9 +100,6 @@ void test1(char *cfgfile, char *weightfile, char *filename, int n, int print) {
     if (n > 1)
         printf("Average time: %f ms.\n", tt/n);
 
-    save_image(im, "predictions");
-    free_image(im);
-    free_image(sized);
     free_network(net);
 }
 
@@ -166,6 +165,57 @@ void test2(char *cfgfile, char *weightfile, int n) {
     free_network(net);
 }
 
+/* 
+ * Test 3
+ * Description: Test average execution time for each layer after 'n' predictions
+ * Call: ./darknet detector rtest 3 <cfgfile> <weightfile> <filename> [-n <iterations>]
+ * Details: First prediction time is discarded because of network push cost
+ *          Important: set LAYERS_TIME_TEST to 1 in network.c!
+ * Optionals: -n <iterations>   - default: 50
+ */
+
+/* Format: layers_times[layer][iteration] */
+float **layers_times;
+
+void test3(char *cfgfile, char *weightfile, char *filename, int n) {
+    network *net = load_network(cfgfile, weightfile, 0);
+    set_batch_network(net, 1);
+    srand(2222222);
+
+    char buff[256];
+    char *input = buff;
+    strncpy(input, filename, 256);
+
+    image im = load_image_color(input, 0, 0);
+    image sized = letterbox_image(im, net->w, net->h);
+    float *X = sized.data;
+
+    // Alloc times matrix
+    int j;
+    layers_times = (float**)malloc(net->n * sizeof(float*));
+    for (j = 0; j < net->n; j++)
+        layers_times[j] = (float*)malloc(n * sizeof(float));
+
+    int i;
+    for (i = 0; i < n; i++) {
+        network_predict(net, X);
+        fprintf(stderr, "\r%d ", i+1);
+    }
+
+    // Calculate average (discarding first iteration of each layer)
+    printf("\n");
+    for (i = 0; i < net->n; i++) {
+        double sum = 0;
+        for (j = 1; j < n; j++) sum += layers_times[i][j];
+        double avg = sum/(n-1);
+        printf("layer %3d: %f ms\n", i, avg*1000);
+    }
+
+    free_image(im);
+    free_image(sized);
+    free_network(net);    
+}
+
 void run_rtest(int testID, int argc, char **argv) {
     if (testID == 1) {
         char *cfgfile = argv[4];
@@ -179,6 +229,12 @@ void run_rtest(int testID, int argc, char **argv) {
         char *weightfile = argv[5];
         int n = find_int_arg(argc, argv, (char*)"-n", 1);
         test2(cfgfile, weightfile, n);
+    } else if (testID == 3) {
+        char *cfgfile = argv[4];
+        char *weightfile = argv[5];
+        char *filename = argv[6];
+        int n = find_int_arg(argc, argv, (char*)"-n", 50);
+        test3(cfgfile, weightfile, filename, n);
     } else {
         printf("Invalid test ID!\n");
     }
