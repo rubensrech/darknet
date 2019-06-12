@@ -914,7 +914,6 @@ void forward_network_gpu(network *netp) {
             #if LAYERS_TIME_TEST
                 cudaDeviceSynchronize();
                 layers_times[i][iteration] = what_time_is_it_now() - ft;
-                iteration++;
             #endif
 
             net.input_gpu = l.output_gpu;
