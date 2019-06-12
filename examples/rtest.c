@@ -167,7 +167,7 @@ void test2(char *cfgfile, char *weightfile, int n) {
 
 /* 
  * Test 3
- * Description: Test average execution time for each layer after 'n' predictions
+ * Description: Test average execution time (in ms) for each layer after 'n' predictions
  * Call: ./darknet detector rtest 3 <cfgfile> <weightfile> <filename> [-n <iterations>]
  * Details: First prediction time is discarded because of network push cost
  *          Important: set LAYERS_TIME_TEST to 1 in network.c!
@@ -208,7 +208,7 @@ void test3(char *cfgfile, char *weightfile, char *filename, int n) {
         double sum = 0;
         for (j = 1; j < n; j++) sum += layers_times[i][j];
         double avg = sum/(n-1);
-        printf("layer %3d: %f ms\n", i, avg*1000);
+        printf("%f\n", i, avg*1000);
     }
 
     free_image(im);
