@@ -23,14 +23,48 @@ void print_detections(image im, detection *dets, int num, float thresh, char **n
     }
 }
 
+/* Save output to file
+ * Binary file format
+ *      n               (int - 32 bits)
+ *      output array    (float - n*32 bits)
+ */
+template <typename T>
+void save_output_to_file(T *output, int n, char *filename, int bin) {
+    FILE *f;
+    int i;
+
+    if (bin) {
+        f = fopen(filename, "wb");
+        float *output_float;
+
+        if (typeid(T) == typeid(float))
+            output_float = (float*)output;
+        else if (typeid(T) == typeid(half_host)) {
+            output_float = (float*)calloc(n, sizeof(float));
+            for (i = 0; i < n; i++)
+                output_float[i] = output[i];
+        }
+
+        fwrite(&n, sizeof(int), 1, f);
+        fwrite(output_float, sizeof(float), n, f);
+
+        if (typeid(T) == typeid(half_host)) free(output_float);
+    } else {
+        f = fopen(filename, "w");
+        for (i = 0; i < n; i++)
+            fprintf(f, "%f\n", (float)output[i]);
+    }
+
+    fclose(f);
+}
+
 // > Tests
 
-/* 
- * Test 1
+/* Test 1
  * Description: Test average execution time for one frame after 'n' predictions (default n=1)
  * Call: ./darknet detector rtest 1 <cfgfile> <weightfile> <filename> [-n <iterations>] [-print <0|1>]
- * Optionals: -n <iterations>   - default: 1
- *            -print <0|1>      - print detections? default: 1
+ * Optionals: -n <iterations> => default: 1
+ *            -print <0|1>    => print detections? default: 1
  */
 void test1(char *cfgfile, char *weightfile, char *filename, int n, int print) {
     char *datacfg = (char*)"cfg/coco.data";
@@ -103,8 +137,7 @@ void test1(char *cfgfile, char *weightfile, char *filename, int n, int print) {
     free_network(net);
 }
 
-/* 
- * Test 2
+/* Test 2
  * Description: Test average execution time for one frame with 'n' COCO validation images
  * Details: First prediction time is discarded because of network push cost
  * Call: ./darknet detector rtest 2 <cfgfile> <weightfile> [-n <images>]
@@ -165,13 +198,12 @@ void test2(char *cfgfile, char *weightfile, int n) {
     free_network(net);
 }
 
-/* 
- * Test 3
+/* Test 3
  * Description: Test average execution time (in ms) for each layer after 'n' predictions
  * Call: ./darknet detector rtest 3 <cfgfile> <weightfile> <filename> [-n <iterations>]
  * Details: First prediction time is discarded because of network push cost
- *          Important: set LAYERS_TIME_TEST to 1 in network.c!
- * Optionals: -n <iterations>   - default: 50
+ *          IMPORTANT: set LAYERS_TIME_TEST to 1 in network.c!
+ * Optionals: -n <iterations> => default: 50
  */
 
 /* Format: layers_times[layer][iteration] */
@@ -216,6 +248,111 @@ void test3(char *cfgfile, char *weightfile, char *filename, int n) {
     free_network(net);    
 }
 
+/* Test 4
+ * Description: Save output of the layer indicated by 'layerIndex' (related to 'Test 5')
+ * Call: ./darknet detector rtest 4 <cfgfile> <weightfile> <inputFile> <layerIndex> <outputFile> [-bin <0|1>]
+ * Optionals: -bin <0|1> => Output file type (0: txt, 1: binary), default: 1 (binary)
+ */
+void test4(char *cfgfile, char *weightfile, char *inputFile, int layerIndex, char *outputFile, int bin) {
+    network *net = load_network(cfgfile, weightfile, 0);
+    set_batch_network(net, 1);
+    srand(2222222);
+
+    char buff[256];
+    char *input = buff;
+    strncpy(input, inputFile, 256);
+
+    image im = load_image_color(input, 0, 0);
+    image sized = letterbox_image(im, net->w, net->h);
+    float *X = sized.data;
+
+    network_predict(net, X);
+
+    layer l = net->layers[layerIndex];
+    int outputs = l.outputs * l.batch;
+
+    if (IS_MIX_PRECISION_FLOAT_LAYER(l.real_type)) {
+        cuda_pull_array(l.output_float_gpu, l.output_float, outputs);
+        save_output_to_file(l.output_float, outputs, outputFile, bin);
+    } else if (IS_MIX_PRECISION_HALF_LAYER(l.real_type)) {
+        cuda_pull_array(l.output_half_gpu, l.output_half, outputs);
+        save_output_to_file(l.output_half, outputs, outputFile, bin);
+    } else {
+        cuda_pull_array(l.output_gpu, l.output, outputs);
+        save_output_to_file(l.output, outputs, outputFile, bin);
+    }
+
+    printf("Output of layer %d saved to file: %s\n", layerIndex, outputFile);
+
+    free_image(im);
+    free_image(sized);
+    free_network(net);    
+}
+
+/* Test 5
+ * Description: Compare output of layers (related to 'Test 4')
+ * Call: ./darknet detector rtest 5 <inputFile1> <inputFile2>
+ * Details: input files must be binary files
+ */
+void test5(char *inputFile1, char *inputFile2) {
+    FILE *f1 = fopen(inputFile1, "rb");
+    FILE *f2 = fopen(inputFile2, "rb");
+
+    if (f1 == NULL) {
+        printf("Could not open file: %s\n", inputFile1);
+        return;
+    }
+
+    if (f2 == NULL) {
+        printf("Could not open file: %s\n", inputFile2);
+        return;
+    }
+
+    int n1, n2;
+
+    fread(&n1, sizeof(int), 1, f1);
+    fread(&n2, sizeof(int), 1, f2);
+
+    if (n1 != n2) {
+        printf("Invalid input files: sizes doesn't match!\n");
+        fclose(f1);
+        fclose(f2);
+        return;
+    }
+
+    int n = n1;
+    int i;
+
+    float *arr1 = (float*)calloc(n, sizeof(float));
+    float *arr2 = (float*)calloc(n, sizeof(float));
+
+    fread(arr1, sizeof(float), n, f1);
+    fread(arr2, sizeof(float), n, f2);
+
+    double max = 0;
+    double min = 100;
+    double sum = 0;
+
+    for (i = 0; i < n; i++) {
+        double rel_err = abs(arr1[i] - arr2[i])/abs(arr1[i]);
+        sum += rel_err;
+        if (max < rel_err) max = rel_err;
+        if (min > rel_err) min = rel_err;
+    }
+
+    printf("===== Comparison results =====\n");
+    printf("> Files: %s X %s\n", inputFile1, inputFile2);
+    printf("> Average error: %f\n", sum/n);
+    printf("> Max error: %f\n", max);
+    printf("> Min error: %f\n", min);
+    printf("==============================\n");
+
+    free(arr1);
+    free(arr2);
+    fclose(f1);
+    fclose(f2);
+}
+
 void run_rtest(int testID, int argc, char **argv) {
     if (testID == 1) {
         char *cfgfile = argv[4];
@@ -235,6 +372,18 @@ void run_rtest(int testID, int argc, char **argv) {
         char *filename = argv[6];
         int n = find_int_arg(argc, argv, (char*)"-n", 50);
         test3(cfgfile, weightfile, filename, n);
+    } else if (testID == 4) {
+        char *cfgfile = argv[4];
+        char *weightfile = argv[5];
+        char *inputFile = argv[6];
+        int layerIndex = atoi(argv[7]);
+        char *outputFile = argv[8];
+        int bin = find_int_arg(argc, argv, (char*)"-bin", 1);
+        test4(cfgfile, weightfile, inputFile, layerIndex, outputFile, bin);
+    } else if (testID == 5) {
+        char *inputFile1 = argv[4];
+        char *inputFile2 = argv[5];
+        test5(inputFile1, inputFile2);
     } else {
         printf("Invalid test ID!\n");
     }
