@@ -330,21 +330,40 @@ void test5(char *inputFile1, char *inputFile2) {
     fread(arr2, sizeof(float), n, f2);
 
     double max = 0;
+    int max_index = -1;
     double min = 100;
     double sum = 0;
+
+    // High error
+    int high_n = 10;
+    int high_count = 0;
+    int high_index[high_n];
+    float thresh = 20;
 
     for (i = 0; i < n; i++) {
         double rel_err = abs(arr1[i] - arr2[i])/abs(arr1[i]);
         sum += rel_err;
-        if (max < rel_err) max = rel_err;
+        if (max < rel_err) { max = rel_err; max_index = i; }
         if (min > rel_err) min = rel_err;
+
+        if (rel_err >= thresh) {
+            if (high_count < high_n) high_index[high_count] = i;
+            high_count++;
+        }
     }
 
     printf("===== Comparison results =====\n");
     printf("> Files: %s X %s\n", inputFile1, inputFile2);
     printf("> Average error: %f\n", sum/n);
-    printf("> Max error: %f\n", max);
+    printf("> Max error: %f (%f X %f)\n", max, arr1[max_index], arr2[max_index]);
     printf("> Min error: %f\n", min);
+
+    printf("> High error count (thresh: %.1f%%): %d (%f%%)\n", thresh*100, high_count, (float)high_count/n*100);
+    for (i = 0; i < ((high_count > high_n) ? high_n : high_count); i++) {
+        int index = high_index[i];
+        printf(" - %7d: %+f X %+f (%.1f%%)\n", index, arr1[index], arr2[index], abs(arr1[index] - arr2[index])/abs(arr1[index])*100);
+    }
+
     printf("==============================\n");
 
     free(arr1);
