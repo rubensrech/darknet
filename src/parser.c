@@ -838,6 +838,7 @@ network *parse_network_cfg_custom(char *filename, int batch) {
     params.net = net;
 
     size_t workspace_size = 0;
+    int max_output_size = 0;
     n = n->next;
     int count = 0;
     free_section(s);
@@ -932,6 +933,7 @@ network *parse_network_cfg_custom(char *filename, int batch) {
 
         net->layers[count] = l;
         if (l.workspace_size > workspace_size) workspace_size = l.workspace_size;
+        if (l.outputs > max_output_size) max_output_size = l.outputs;
         free_section(s);
         n = n->next;
         ++count;
@@ -954,7 +956,9 @@ network *parse_network_cfg_custom(char *filename, int batch) {
     if(net->layers[net->n-1].truths) net->truths = net->layers[net->n-1].truths;
     net->output = out.output;
 
-    int max_input_size = net->inputs*net->batch; // 1572865;
+    // As input array will be used as temp space for layers ouput casts,
+    // it must be as large as the largest layer output
+    int max_input_size = max_output_size; // net->inputs*net->batch; // YOLOv3-tiny: 1572865; // YOLOv3: 11829248;
 
     net->input = (real*)calloc(max_input_size, sizeof(real));
     net->input_data_type = REAL;
