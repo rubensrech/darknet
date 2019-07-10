@@ -549,8 +549,7 @@ layer parse_batchnorm(list *options, size_params params)
     return l;
 }
 
-layer parse_shortcut(list *options, size_params params, network *net)
-{
+layer parse_shortcut(list *options, size_params params, network *net) {
     char *l = option_find(options, (char*)"from");
     int index = atoi(l);
     if(index < 0) index = params.index + index;
@@ -558,7 +557,9 @@ layer parse_shortcut(list *options, size_params params, network *net)
     int batch = params.batch;
     layer from = net->layers[index];
 
-    layer s = make_shortcut_layer(batch, index, params.w, params.h, params.c, from.out_w, from.out_h, from.out_c);
+    int real_type = option_find_int_quiet(options, (char*)"real", REAL);
+
+    layer s = make_shortcut_layer(batch, index, params.w, params.h, params.c, from.out_w, from.out_h, from.out_c, real_type);
 
     char *activation_s = option_find_str(options, (char*)"activation", (char*)"linear");
     ACTIVATION activation = get_activation(activation_s);

@@ -77,6 +77,12 @@ void fast_variance_gpu(float *x, float *mean, int batch, int filters, int spatia
 void fast_variance_gpu(double *x, double *mean, int batch, int filters, int spatial, double *variance);
 void fast_variance_gpu(half_host *x, half_host *mean, int batch, int filters, int spatial, half_host *variance);
 
+void shortcut_gpu(int batch, int w1, int h1, int c1, float *add, int w2, int h2, int c2, float s1, float s2, float *out);
+void shortcut_gpu(int batch, int w1, int h1, int c1, double *add, int w2, int h2, int c2, float s1, float s2, double *out);
+void shortcut_gpu(int batch, int w1, int h1, int c1, half_host *add, int w2, int h2, int c2, float s1, float s2, half_host *out);
+void shortcut_gpu(int batch, int w1, int h1, int c1, float *add, int w2, int h2, int c2, float s1, float s2, half_host *out);
+void shortcut_gpu(int batch, int w1, int h1, int c1, half_host *add, int w2, int h2, int c2, float s1, float s2, float *out);
+
 // > General functions
 void add_gpu(int N, float ALPHA, real * X, int INCX);
 void supp_gpu(int N, float ALPHA, real * X, int INCX);
@@ -91,7 +97,6 @@ void l2normalize_gpu(real *x, real *dx, int batch, int filters, int spatial);
 void normalize_delta_gpu(real *x, real *mean, real *variance, real *mean_delta, real *variance_delta, int batch, int filters, int spatial, real *delta);
 void fast_mean_delta_gpu(real *delta, real *variance, int batch, int filters, int spatial, real *mean_delta);
 void fast_variance_delta_gpu(real *x, real *delta, real *mean, real *variance, int batch, int filters, int spatial, real *variance_delta);
-void shortcut_gpu(int batch, int w1, int h1, int c1, real *add, int w2, int h2, int c2, float s1, float s2, real *out);
 void backward_scale_gpu(real *x_norm, real *delta, int batch, int n, int size, real *scale_updates);
 void backward_bias_gpu(real *bias_updates, real *delta, int batch, int n, int size);
 void logistic_x_ent_gpu(int n, real *pred, real *truth, real *delta, real *error);

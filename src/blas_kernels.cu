@@ -158,6 +158,23 @@ __global__ void  fast_variance_kernel(half_device *x, half_device *mean, int bat
     }
 }
 
+template<typename T1, typename T2>
+__global__ void shortcut_kernel(int size, int minw, int minh, int minc, int stride, int sample, int batch, int w1, int h1, int c1, T1 *add, int w2, int h2, int c2, float s1, float s2, T2 *out) {
+    int id = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
+    if (id >= size) return;
+    int i = id % minw;
+    id /= minw;
+    int j = id % minh;
+    id /= minh;
+    int k = id % minc;
+    id /= minc;
+    int b = id % batch;
+
+    int out_index = i*sample + w2*(j*sample + h2*(k + c2*b));
+    int add_index = i*stride + w1*(j*stride + h1*(k + c1*b));
+    out[out_index] = T2(s1)*out[out_index] + T2(T1(s2)*add[add_index]);
+}
+
 // > Mixed precision kernels callers
 
 template<typename T>
@@ -327,6 +344,39 @@ void fast_variance_gpu(double *x, double *mean, int batch, int filters, int spat
 }
 void fast_variance_gpu(half_host *x, half_host *mean, int batch, int filters, int spatial, half_host *variance) {
     fast_variance_gpu_template((half_device*)x, (half_device*)mean, batch, filters, spatial, (half_device*)variance);
+}
+
+template<typename T1, typename T2>
+void shortcut_gpu_template(int batch, int w1, int h1, int c1, T1 *add, int w2, int h2, int c2, float s1, float s2, T2 *out) {
+    int minw = (w1 < w2) ? w1 : w2;
+    int minh = (h1 < h2) ? h1 : h2;
+    int minc = (c1 < c2) ? c1 : c2;
+
+    int stride = w1/w2;
+    int sample = w2/w1;
+    assert(stride == h1/h2);
+    assert(sample == h2/h1);
+    if(stride < 1) stride = 1;
+    if(sample < 1) sample = 1;
+
+    int size = batch * minw * minh * minc;
+    shortcut_kernel<<<cuda_gridsize(size), BLOCK>>>(size, minw, minh, minc, stride, sample, batch, w1, h1, c1, add, w2, h2, c2, s1, s2, out);
+    check_error(cudaPeekAtLastError());
+}
+void shortcut_gpu(int batch, int w1, int h1, int c1, float *add, int w2, int h2, int c2, float s1, float s2, float *out) {
+    shortcut_gpu_template(batch, w1, h1, c1, add, w2, h2, c2, s1, s2, out);
+}
+void shortcut_gpu(int batch, int w1, int h1, int c1, double *add, int w2, int h2, int c2, float s1, float s2, double *out) {
+    shortcut_gpu_template(batch, w1, h1, c1, add, w2, h2, c2, s1, s2, out);
+}
+void shortcut_gpu(int batch, int w1, int h1, int c1, half_host *add, int w2, int h2, int c2, float s1, float s2, half_host *out) {
+    shortcut_gpu_template(batch, w1, h1, c1, (half_device*)add, w2, h2, c2, s1, s2, (half_device*)out);
+}
+void shortcut_gpu(int batch, int w1, int h1, int c1, float *add, int w2, int h2, int c2, float s1, float s2, half_host *out) {
+    shortcut_gpu_template(batch, w1, h1, c1, add, w2, h2, c2, s1, s2, (half_device*)out);
+}
+void shortcut_gpu(int batch, int w1, int h1, int c1, half_host *add, int w2, int h2, int c2, float s1, float s2, float *out) {
+    shortcut_gpu_template(batch, w1, h1, c1, (half_device*)add, w2, h2, c2, s1, s2, out);
 }
 
 // > General functions
@@ -845,42 +895,6 @@ void add_gpu(int N, float ALPHA, real *X, int INCX)
 void supp_gpu(int N, float ALPHA, real *X, int INCX)
 {
     supp_kernel<<<cuda_gridsize(N), BLOCK>>>(N, (real_device)ALPHA, (real_device*)X, INCX);
-    check_error(cudaPeekAtLastError());
-}
-
-__global__ void shortcut_kernel(int size, int minw, int minh, int minc, int stride, int sample, int batch, int w1, int h1, int c1, real_device *add, int w2, int h2, int c2, real_device s1, real_device s2, real_device *out)
-{
-    int id = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
-    if (id >= size) return;
-    int i = id % minw;
-    id /= minw;
-    int j = id % minh;
-    id /= minh;
-    int k = id % minc;
-    id /= minc;
-    int b = id % batch;
-
-    int out_index = i*sample + w2*(j*sample + h2*(k + c2*b));
-    int add_index = i*stride + w1*(j*stride + h1*(k + c1*b));
-    out[out_index] = s1*out[out_index] + s2*add[add_index];
-    //out[out_index] += add[add_index];
-}
-
-void shortcut_gpu(int batch, int w1, int h1, int c1, real *add, int w2, int h2, int c2, float s1, float s2, real *out)
-{
-    int minw = (w1 < w2) ? w1 : w2;
-    int minh = (h1 < h2) ? h1 : h2;
-    int minc = (c1 < c2) ? c1 : c2;
-
-    int stride = w1/w2;
-    int sample = w2/w1;
-    assert(stride == h1/h2);
-    assert(sample == h2/h1);
-    if(stride < 1) stride = 1;
-    if(sample < 1) sample = 1;
-
-    int size = batch * minw * minh * minc;
-    shortcut_kernel<<<cuda_gridsize(size), BLOCK>>>(size, minw, minh, minc, stride, sample, batch, w1, h1, c1, (real_device*)add, w2, h2, c2, (real_device)s1, (real_device)s2, (real_device*)out);
     check_error(cudaPeekAtLastError());
 }
 
