@@ -953,7 +953,7 @@ network *parse_network_cfg_custom(char *filename, int batch) {
     if(net->layers[net->n-1].truths) net->truths = net->layers[net->n-1].truths;
     net->output = out.output;
 
-    int max_input_size = 1572865;
+    int max_input_size = net->inputs*net->batch; // 1572865;
 
     net->input = (real*)calloc(max_input_size, sizeof(real));
     net->input_data_type = REAL;
