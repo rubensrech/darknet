@@ -1,15 +1,28 @@
 #include "darknet.h"
+#include <libgen.h>
+
+// > Auxiliary structs
+
+#define LAYERS_OUT_COMP_INTVL_LIMITS 3
+typedef struct  {
+    double err_avg;
+    double err_max;
+    int err_max_index;
+    double err_min;
+    float intvl_limits[LAYERS_OUT_COMP_INTVL_LIMITS];
+    int intvl_counts[LAYERS_OUT_COMP_INTVL_LIMITS+1];
+} layersOutComp;
 
 // > Auxiliary functions
 
-void print_detections(image im, detection *dets, int num, float thresh, char **names, image **alphabet, int classes) {
+void print_detections(detection *dets, int num, float thresh, char **names, int classes) {
     int i,j;
 
     for(i = 0; i < num; ++i){
         char labelstr[4096] = {0};
         int _class = -1;
-        for(j = 0; j < classes; ++j){
-            if (dets[i].prob[j] > thresh){
+        for(j = 0; j < classes; ++j) {
+            if (dets[i].prob[j] > thresh) {
                 if (_class < 0) {
                     strcat(labelstr, names[j]);
                     _class = j;
@@ -23,13 +36,13 @@ void print_detections(image im, detection *dets, int num, float thresh, char **n
     }
 }
 
-/* Save output to file
+/* Save array to file
  * Binary file format
- *      n               (int - 32 bits)
- *      output array    (float - n*32 bits)
+ *     - n               (int   - 32 bits)
+ *     - output array    (float - n*32 bits)
  */
 template <typename T>
-void save_output_to_file(T *output, int n, char *filename, int bin) {
+void save_array_to_file(T *output, int n, char *filename, int bin) {
     FILE *f;
     int i;
 
@@ -58,6 +71,62 @@ void save_output_to_file(T *output, int n, char *filename, int bin) {
     fclose(f);
 }
 
+/* Save layer output to file
+ * - bin [int 0|1]: whether output file will be binary or text
+ * [Binary file format]
+ *    -> n               (int   - 32 bits)
+ *    -> output array    (float - n*32 bits)
+ */
+void save_layer_output_to_file(layer l, char *outputFile, int bin) {
+    int outputs = l.outputs * l.batch;
+    if (IS_MIX_PRECISION_FLOAT_LAYER(l.real_type)) {
+        cuda_pull_array(l.output_float_gpu, l.output_float, outputs);
+        save_array_to_file(l.output_float, outputs, outputFile, bin);
+    } else if (IS_MIX_PRECISION_HALF_LAYER(l.real_type)) {
+        cuda_pull_array(l.output_half_gpu, l.output_half, outputs);
+        save_array_to_file(l.output_half, outputs, outputFile, bin);
+    } else {
+        cuda_pull_array(l.output_gpu, l.output, outputs);
+        save_array_to_file(l.output, outputs, outputFile, bin);
+    }
+}
+
+layersOutComp *compare_layers_output(float *floatOut, half_host *halfOut, int n) {
+    layersOutComp *res = (layersOutComp*)calloc(1, sizeof(layersOutComp));
+
+    double max = 0; int max_index = -1;
+    double min = 100;
+    double sum = 0;
+
+    float intvl_limits[LAYERS_OUT_COMP_INTVL_LIMITS] = {1, 10, 100};
+    int intvl_counts[LAYERS_OUT_COMP_INTVL_LIMITS+1] = {0, 0, 0, 0};
+
+    int i, j;
+    for (i = 0; i < n; i++) {
+        if (abs(floatOut[i]) == 0) continue;
+        double rel_err = abs(floatOut[i] - halfOut[i])/abs(floatOut[i]);
+
+        sum += rel_err;
+        if (max < rel_err) { max = rel_err; max_index = i; }
+        if (min > rel_err) min = rel_err;
+
+        for (j = 0; j < LAYERS_OUT_COMP_INTVL_LIMITS+1; j++) {
+            float inf = (j-1 < 0) ? 0.0 : intvl_limits[j-1];
+            float sup = (j >= LAYERS_OUT_COMP_INTVL_LIMITS) ? INFINITY : intvl_limits[j]; 
+            if (rel_err > inf && rel_err <= sup) intvl_counts[j]++;
+        }
+    }
+
+    res->err_avg = sum/n;
+    res->err_max = max;
+    res->err_max_index = max_index;
+    res->err_min = min;
+    memcpy(res->intvl_limits, intvl_limits, LAYERS_OUT_COMP_INTVL_LIMITS*sizeof(float));
+    memcpy(res->intvl_counts, intvl_counts, (LAYERS_OUT_COMP_INTVL_LIMITS+1)*sizeof(int));
+
+    return res;
+}
+
 // > Tests
 
 /* Test 1
@@ -74,7 +143,6 @@ void test1(char *cfgfile, char *weightfile, char *filename, int n, int print) {
     list *options = read_data_cfg(datacfg);
     char *name_list = option_find_str(options, (char*)"names", (char *)"data/names.list");
     char **names = get_labels(name_list);
-    image **alphabet = load_alphabet();
 
     double tl = what_time_is_it_now();
 
@@ -118,7 +186,7 @@ void test1(char *cfgfile, char *weightfile, char *filename, int n, int print) {
             do_nms_sort(dets, nboxes, l.classes, nms);
 
         if (print) {
-            print_detections(im, dets, nboxes, thresh, names, alphabet, l.classes);
+            print_detections(dets, nboxes, thresh, names, l.classes);
             printf("\n");
         } else {
             fprintf(stderr, "\r%d ", i+1);
@@ -145,6 +213,8 @@ void test1(char *cfgfile, char *weightfile, char *filename, int n, int print) {
  */
 void test2(char *cfgfile, char *weightfile, int n) {
     network *net = load_network(cfgfile, weightfile, 0);
+    set_batch_network(net, 1);
+    srand(22222);
     layer l = net->layers[net->n-1];
 
     char *valid_images = (char*)"../coco_test/5k.txt";
@@ -154,9 +224,6 @@ void test2(char *cfgfile, char *weightfile, int n) {
         fprintf(stderr, "Argument 'n' cannot be greater than 5000!");
         return;
     }
-
-    set_batch_network(net, 1);
-    srand(22222);
 
     image im, sized;
     int nboxes = 0;
@@ -182,7 +249,7 @@ void test2(char *cfgfile, char *weightfile, int n) {
         dets = get_network_boxes(net, im.w, im.h, thresh, hier_thresh, 0, 1, &nboxes, 1);
         if (nms)
             do_nms_sort(dets, nboxes, l.classes, nms);
-        // print_detections(im, dets, nboxes, thresh, names, alphabet, l.classes);
+        // print_detections(dets, nboxes, thresh, names, l.classes);
 
         free_image(im);
         free_image(sized);
@@ -269,18 +336,8 @@ void test4(char *cfgfile, char *weightfile, char *inputFile, int layerIndex, cha
     network_predict(net, X);
 
     layer l = net->layers[layerIndex];
-    int outputs = l.outputs * l.batch;
 
-    if (IS_MIX_PRECISION_FLOAT_LAYER(l.real_type)) {
-        cuda_pull_array(l.output_float_gpu, l.output_float, outputs);
-        save_output_to_file(l.output_float, outputs, outputFile, bin);
-    } else if (IS_MIX_PRECISION_HALF_LAYER(l.real_type)) {
-        cuda_pull_array(l.output_half_gpu, l.output_half, outputs);
-        save_output_to_file(l.output_half, outputs, outputFile, bin);
-    } else {
-        cuda_pull_array(l.output_gpu, l.output, outputs);
-        save_output_to_file(l.output, outputs, outputFile, bin);
-    }
+    save_layer_output_to_file(l, outputFile, bin);
 
     printf("Output of layer %d saved to file: %s\n", layerIndex, outputFile);
 
@@ -372,6 +429,126 @@ void test5(char *inputFile1, char *inputFile2) {
     fclose(f2);
 }
 
+/* Test 6
+ * Description: Compare (float VS. half) outputs of last two layers (105 and 106) of YOLOv3 on 'n' COCO validation images
+ * Call: ./darknet detector rtest 6 [-n <images>]
+ * Optionals: -n <images> - number of images from COCO dataset (max: 4999, min: 2, default: 4999)
+ *            -high_err_thresh <thresh> - errors above this thresh will be included in high errors count (default: 20 (2000%))
+ * IMPORTANT: REAL=float (on Makefile)
+ */
+void test6(int n) {
+    if (REAL != FLOAT) {
+        printf("Default REAL must be FLOAT (REAL=float on Makefile)!\n");
+        return;
+    }
+
+    char *cfgfile_float = (char*)"cfg/yolov3.cfg";
+    char *cfgfile_half = (char*)"cfg/yolov3-half.cfg";
+    char *weightfile = (char*)"../yolov3.weights";
+
+    network *netFloat = load_network(cfgfile_float, weightfile, 0);
+    set_batch_network(netFloat, 1);
+    network *netHalf = load_network(cfgfile_half, weightfile, 0);
+    set_batch_network(netHalf, 1);
+    srand(2222222);
+
+    char *valid_images = (char*)"../coco_test/5k.txt";
+    list *plist = get_paths(valid_images);
+    char **paths = (char**)list_to_array(plist);
+    image im, sized;
+    if (n > plist->size) {
+        fprintf(stderr, "Argument 'n' cannot be greater than %d!", plist->size);
+        return;
+    }
+
+    char *datacfg = (char*)"cfg/coco.data";
+    list *options = read_data_cfg(datacfg);
+    char *name_list = option_find_str(options, (char*)"names", (char *)"data/names.list");
+    char **class_names = get_labels(name_list);
+
+
+    double t1 = what_time_is_it_now();
+
+    layer l105_float = netFloat->layers[105], l105_half = netHalf->layers[105];
+    layer l106_float = netFloat->layers[106], l106_half = netHalf->layers[106];
+    int l105_outputs = l105_float.outputs;
+    int l106_outputs = l106_float.outputs;
+    layersOutComp *l105_cmp, *l106_cmp;
+
+    char *img_name;
+    char label_path[1000];
+    int num_labels = 0;
+
+    FILE *outFile = fopen("layer105x106-halfXfloat.csv", "w");
+    if (!outFile) {
+        perror("Could not create output file: ");
+        return;
+    }
+
+    int i, j;
+    for (i = 0; i < n; i++) {
+        im = load_image_color(paths[i], 0, 0);
+        sized = letterbox_image(im, netFloat->w, netFloat->h);
+        float *X = sized.data;
+
+        network_predict(netFloat, X);
+        network_predict(netHalf, X);
+
+        // Compare layer 105 output (float VS half)
+        cuda_pull_array(l105_float.output_gpu, l105_float.output, l105_outputs);
+        cuda_pull_array(l105_half.output_half_gpu, l105_half.output_half, l105_outputs);
+        l105_cmp = compare_layers_output(l105_float.output, l105_half.output_half, l105_outputs);
+
+        // Compare layer 106 output (float VS half)
+        cuda_pull_array(l106_float.output_gpu, l106_float.output, l106_outputs);
+        cuda_pull_array(l106_half.output_half_gpu, l106_half.output_half, l106_outputs);
+        l106_cmp = compare_layers_output(l106_float.output, l106_half.output_half, l106_outputs);
+
+        // Load image valid labels
+        replace_image_to_label(paths[i], label_path);
+        box_label *truth = read_boxes(label_path, &num_labels);
+
+        // Print results
+        img_name = basename(paths[i]);
+        int last_class_id = -1;
+
+        fprintf(outFile, "#%d,%s,objects: %d,", i, img_name, num_labels);
+        for (j = 0; j < num_labels; j++) {
+            int class_id = truth[j].id;
+            if (class_id != last_class_id)
+                fprintf(outFile, "%s ", class_names[class_id]);
+            last_class_id = class_id;
+        }
+        fprintf(outFile, "\n");
+        fprintf(outFile, ",LAYER 105,LAYER 106,\n");
+        fprintf(outFile, "AVG,%.2f%%,%.2f%%,%.2f\n", l105_cmp->err_avg*100, l106_cmp->err_avg*100, l106_cmp->err_avg/l105_cmp->err_avg);
+        fprintf(outFile, "MAX,%.1f%%,%.1f%%,\n", l105_cmp->err_max*100, l106_cmp->err_max*100);
+        fprintf(outFile, "MIN,%f%%,%f%%,\n", l105_cmp->err_min*100, l106_cmp->err_min*100);
+        for (j = 0; j < LAYERS_OUT_COMP_INTVL_LIMITS+1; j++) {
+            float inf = (j-1 < 0) ? 0.0 : l105_cmp->intvl_limits[j-1];
+            float sup = (j >= LAYERS_OUT_COMP_INTVL_LIMITS) ? INFINITY : l105_cmp->intvl_limits[j]; 
+            fprintf(outFile, "[%.0f%%..%.0f%%],", inf*100, sup*100);
+            fprintf(outFile, "%.2f%%,", (float)l105_cmp->intvl_counts[j]/l105_outputs*100);
+            fprintf(outFile, "%.2f%%,\n", (float)l106_cmp->intvl_counts[j]/l106_outputs*100);
+        }
+        fprintf(outFile, "\n");
+
+        free(l105_cmp);
+        free(l106_cmp);
+        free(truth);
+        free_image(im);
+        free_image(sized);
+
+        fprintf(stderr, "\r%d ", i+1);
+    }
+
+    fclose(outFile);
+
+    printf("\nTotal time for %d frame(s): %f seconds\n", n, what_time_is_it_now() - t1);
+    free_network(netFloat);
+    free_network(netHalf);
+}
+
 void run_rtest(int testID, int argc, char **argv) {
     if (testID == 1) {
         char *cfgfile = argv[4];
@@ -383,7 +560,7 @@ void run_rtest(int testID, int argc, char **argv) {
     } else if (testID == 2) {
         char *cfgfile = argv[4];
         char *weightfile = argv[5];
-        int n = find_int_arg(argc, argv, (char*)"-n", 1);
+        int n = find_int_arg(argc, argv, (char*)"-n", 5000);
         test2(cfgfile, weightfile, n);
     } else if (testID == 3) {
         char *cfgfile = argv[4];
@@ -403,6 +580,9 @@ void run_rtest(int testID, int argc, char **argv) {
         char *inputFile1 = argv[4];
         char *inputFile2 = argv[5];
         test5(inputFile1, inputFile2);
+    } else if (testID == 6) {
+        int n = find_int_arg(argc, argv, (char*)"-n", 4999);
+        test6(n);
     } else {
         printf("Invalid test ID!\n");
     }

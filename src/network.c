@@ -866,6 +866,7 @@ void forward_network_gpu(network *netp) {
         net.index = i;
         layer l = net.layers[i];
 
+        // cudaDeviceSynchronize();
         // fprintf(stderr, "layer %d - in size %d - out size: %d\n", i, l.inputs, l.outputs);
 
 #if MIX_PRECISION_SUPPORT == FLOAT
