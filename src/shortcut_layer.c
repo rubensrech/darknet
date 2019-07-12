@@ -122,7 +122,16 @@ void backward_shortcut_layer(const layer l, network net)
 #ifdef GPU
 void forward_shortcut_layer_gpu(const layer l, network net) {
     copy_gpu(l.outputs*l.batch, net.input_gpu, 1, l.output_gpu, 1);
-    shortcut_gpu(l.batch, l.w, l.h, l.c, net.layers[l.index].output_gpu, l.out_w, l.out_h, l.out_c, l.alpha, l.beta, l.output_gpu);
+
+    layer fromLayer = net.layers[l.index];
+
+    if (fromLayer.real_type == REAL)
+        shortcut_gpu(l.batch, l.w, l.h, l.c, fromLayer.output_gpu, l.out_w, l.out_h, l.out_c, l.alpha, l.beta, l.output_gpu);
+    else if (IS_MIX_PRECISION_FLOAT_LAYER(fromLayer.real_type))
+        shortcut_gpu(l.batch, l.w, l.h, l.c, fromLayer.output_float_gpu, l.out_w, l.out_h, l.out_c, l.alpha, l.beta, l.output_gpu);
+    else if (IS_MIX_PRECISION_HALF_LAYER(fromLayer.real_type))
+        shortcut_gpu(l.batch, l.w, l.h, l.c, fromLayer.output_half_gpu, l.out_w, l.out_h, l.out_c, l.alpha, l.beta, l.output_gpu);    
+
     activate_array_gpu(l.output_gpu, l.outputs*l.batch, l.activation);
 }
 
