@@ -512,26 +512,26 @@ void test6(int n) {
         img_name = basename(paths[i]);
         int last_class_id = -1;
 
-        fprintf(outFile, "#%d,%s,objects: %d,", i, img_name, num_labels);
-        for (j = 0; j < num_labels; j++) {
-            int class_id = truth[j].id;
-            if (class_id != last_class_id)
-                fprintf(outFile, "%s ", class_names[class_id]);
-            last_class_id = class_id;
-        }
-        fprintf(outFile, "\n");
-        fprintf(outFile, ",LAYER 105,LAYER 106,\n");
-        fprintf(outFile, "AVG,%.2f%%,%.2f%%,%.2f\n", l105_cmp->err_avg*100, l106_cmp->err_avg*100, l106_cmp->err_avg/l105_cmp->err_avg);
-        fprintf(outFile, "MAX,%.1f%%,%.1f%%,\n", l105_cmp->err_max*100, l106_cmp->err_max*100);
-        fprintf(outFile, "MIN,%f%%,%f%%,\n", l105_cmp->err_min*100, l106_cmp->err_min*100);
-        for (j = 0; j < LAYERS_OUT_COMP_INTVL_LIMITS+1; j++) {
-            float inf = (j-1 < 0) ? 0.0 : l105_cmp->intvl_limits[j-1];
-            float sup = (j >= LAYERS_OUT_COMP_INTVL_LIMITS) ? INFINITY : l105_cmp->intvl_limits[j]; 
-            fprintf(outFile, "[%.0f%%..%.0f%%],", inf*100, sup*100);
-            fprintf(outFile, "%.2f%%,", (float)l105_cmp->intvl_counts[j]/l105_outputs*100);
-            fprintf(outFile, "%.2f%%,\n", (float)l106_cmp->intvl_counts[j]/l106_outputs*100);
-        }
-        fprintf(outFile, "\n");
+            fprintf(outFile, "#%d,%s,objects: %d,", i, img_name, num_labels);
+            for (j = 0; j < num_labels; j++) {
+                int class_id = truth[j].id;
+                if (class_id != last_class_id)
+                    fprintf(outFile, "%s ", class_names[class_id]);
+                last_class_id = class_id;
+            }
+            fprintf(outFile, "\n");
+            fprintf(outFile, ",LAYER 105,LAYER 106,\n");
+            fprintf(outFile, "AVG,%.2f%%,%.2f%%,%.2f\n", l105_cmp->err_avg*100, l106_cmp->err_avg*100, l106_cmp->err_avg/l105_cmp->err_avg);
+            fprintf(outFile, "MAX,%.1f%%,%.1f%%,\n", l105_cmp->err_max*100, l106_cmp->err_max*100);
+            fprintf(outFile, "MIN,%f%%,%f%%,\n", l105_cmp->err_min*100, l106_cmp->err_min*100);
+            for (j = 0; j < LAYERS_OUT_COMP_INTVL_LIMITS+1; j++) {
+                float inf = (j-1 < 0) ? 0.0 : l105_cmp->intvl_limits[j-1];
+                float sup = (j >= LAYERS_OUT_COMP_INTVL_LIMITS) ? INFINITY : l105_cmp->intvl_limits[j]; 
+                fprintf(outFile, "[%.0f%%..%.0f%%],", inf*100, sup*100);
+                fprintf(outFile, "%.2f%%,", (float)l105_cmp->intvl_counts[j]/l105_outputs*100);
+                fprintf(outFile, "%.2f%%,\n", (float)l106_cmp->intvl_counts[j]/l106_outputs*100);
+            }
+            fprintf(outFile, "\n");
 
         free(l105_cmp);
         free(l106_cmp);
