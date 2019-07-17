@@ -1208,3 +1208,26 @@ void upsample_gpu(half_host *in, int w, int h, int c, int batch, int stride, int
     upsample_kernel<<<cuda_gridsize(size), BLOCK>>>(size, (half_device*)in, w, h, c, batch, stride, forward, (half_device)scale, (half_device*)out);
     check_error(cudaPeekAtLastError());
 }
+
+
+// > Extra/Test functions
+
+template<typename T1, typename T2>
+__global__ void relative_error_kernel(T1 *arr1, T2 *arr2, int N, T1 *out) {
+    int i = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
+    if(i >= N) return;
+
+    if (abs(arr1[i]) == 0)
+        out[i] = 0;
+    else
+        out[i] = abs(arr1[i] - T1(arr2[i]))/abs(arr1[i]);
+}
+
+void relative_error_gpu(float *arr1, half_host* arr2, int N, float *out) {
+    relative_error_kernel<<<cuda_gridsize(N), BLOCK>>>(arr1, (half_device*)arr2, N, out);
+    check_error(cudaPeekAtLastError());
+}
+void relative_error_gpu(float *arr1, float* arr2, int N, float *out) {
+    relative_error_kernel<<<cuda_gridsize(N), BLOCK>>>(arr1, arr2, N, out);
+    check_error(cudaPeekAtLastError());
+}

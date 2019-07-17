@@ -1,4 +1,5 @@
 #include "darknet.h"
+#include "blas.h"
 #include <libgen.h>
 
 // > Auxiliary structs
@@ -125,6 +126,13 @@ layersOutComp *compare_layers_output(float *floatOut, half_host *halfOut, int n)
     memcpy(res->intvl_counts, intvl_counts, (LAYERS_OUT_COMP_INTVL_LIMITS+1)*sizeof(int));
 
     return res;
+}
+
+double array_average(float *array, int n) {
+    double sum = 0;
+    int i;
+    for (i = 0; i < n; i++) sum += array[i];
+    return sum/n;
 }
 
 // > Tests
@@ -433,7 +441,6 @@ void test5(char *inputFile1, char *inputFile2) {
  * Description: Compare (float VS. half) outputs of last two layers (105 and 106) of YOLOv3 on 'n' COCO validation images
  * Call: ./darknet detector rtest 6 [-n <images>]
  * Optionals: -n <images> - number of images from COCO dataset (max: 4999, min: 2, default: 4999)
- *            -high_err_thresh <thresh> - errors above this thresh will be included in high errors count (default: 20 (2000%))
  * IMPORTANT: REAL=float (on Makefile)
  */
 void test6(int n) {
@@ -512,26 +519,26 @@ void test6(int n) {
         img_name = basename(paths[i]);
         int last_class_id = -1;
 
-            fprintf(outFile, "#%d,%s,objects: %d,", i, img_name, num_labels);
-            for (j = 0; j < num_labels; j++) {
-                int class_id = truth[j].id;
-                if (class_id != last_class_id)
-                    fprintf(outFile, "%s ", class_names[class_id]);
-                last_class_id = class_id;
-            }
-            fprintf(outFile, "\n");
-            fprintf(outFile, ",LAYER 105,LAYER 106,\n");
-            fprintf(outFile, "AVG,%.2f%%,%.2f%%,%.2f\n", l105_cmp->err_avg*100, l106_cmp->err_avg*100, l106_cmp->err_avg/l105_cmp->err_avg);
-            fprintf(outFile, "MAX,%.1f%%,%.1f%%,\n", l105_cmp->err_max*100, l106_cmp->err_max*100);
-            fprintf(outFile, "MIN,%f%%,%f%%,\n", l105_cmp->err_min*100, l106_cmp->err_min*100);
-            for (j = 0; j < LAYERS_OUT_COMP_INTVL_LIMITS+1; j++) {
-                float inf = (j-1 < 0) ? 0.0 : l105_cmp->intvl_limits[j-1];
-                float sup = (j >= LAYERS_OUT_COMP_INTVL_LIMITS) ? INFINITY : l105_cmp->intvl_limits[j]; 
-                fprintf(outFile, "[%.0f%%..%.0f%%],", inf*100, sup*100);
-                fprintf(outFile, "%.2f%%,", (float)l105_cmp->intvl_counts[j]/l105_outputs*100);
-                fprintf(outFile, "%.2f%%,\n", (float)l106_cmp->intvl_counts[j]/l106_outputs*100);
-            }
-            fprintf(outFile, "\n");
+        fprintf(outFile, "#%d,%s,objects: %d,", i, img_name, num_labels);
+        for (j = 0; j < num_labels; j++) {
+            int class_id = truth[j].id;
+            if (class_id != last_class_id)
+                fprintf(outFile, "%s ", class_names[class_id]);
+            last_class_id = class_id;
+        }
+        fprintf(outFile, "\n");
+        fprintf(outFile, ",LAYER 105,LAYER 106,\n");
+        fprintf(outFile, "AVG,%.2f%%,%.2f%%,%.2f\n", l105_cmp->err_avg*100, l106_cmp->err_avg*100, l106_cmp->err_avg/l105_cmp->err_avg);
+        fprintf(outFile, "MAX,%.1f%%,%.1f%%,\n", l105_cmp->err_max*100, l106_cmp->err_max*100);
+        fprintf(outFile, "MIN,%f%%,%f%%,\n", l105_cmp->err_min*100, l106_cmp->err_min*100);
+        for (j = 0; j < LAYERS_OUT_COMP_INTVL_LIMITS+1; j++) {
+            float inf = (j-1 < 0) ? 0.0 : l105_cmp->intvl_limits[j-1];
+            float sup = (j >= LAYERS_OUT_COMP_INTVL_LIMITS) ? INFINITY : l105_cmp->intvl_limits[j]; 
+            fprintf(outFile, "[%.0f%%..%.0f%%],", inf*100, sup*100);
+            fprintf(outFile, "%.2f%%,", (float)l105_cmp->intvl_counts[j]/l105_outputs*100);
+            fprintf(outFile, "%.2f%%,\n", (float)l106_cmp->intvl_counts[j]/l106_outputs*100);
+        }
+        fprintf(outFile, "\n");
 
         free(l105_cmp);
         free(l106_cmp);
@@ -547,6 +554,98 @@ void test6(int n) {
     printf("\nTotal time for %d frame(s): %f seconds\n", n, what_time_is_it_now() - t1);
     free_network(netFloat);
     free_network(netHalf);
+}
+
+/* Test 7
+ * Description: Compare outputs of all layers of YOLOv3. Get relative error between full-float network and mix-precision network.
+ * Call: ./darknet detector rtest 7 <mixnet-cfgfile> [-n <images>]
+ * Optionals: -n <images> - number of images from COCO dataset (max: 4999, min: 2, default: 4999)
+ * IMPORTANT: REAL=float (on Makefile)
+ */
+void test7(char *cfgfile_mix, int n) {
+    if (REAL != FLOAT) {
+        printf("Default REAL must be FLOAT (REAL=float on Makefile)!\n");
+        return;
+    }
+
+    char *cfgfile_float = (char*)"cfg/yolov3.cfg";
+    char *weightfile = (char*)"../yolov3.weights";
+
+    network *netFloat = load_network(cfgfile_float, weightfile, 0);
+    set_batch_network(netFloat, 1);
+    network *netMix = load_network(cfgfile_mix, weightfile, 0);
+    set_batch_network(netMix, 1);
+    srand(2222222);
+
+    char *valid_images = (char*)"../coco_test/5k.txt";
+    list *plist = get_paths(valid_images);
+    char **paths = (char**)list_to_array(plist);
+    image im, sized;
+    if (n > plist->size) {
+        fprintf(stderr, "Argument 'n' cannot be greater than %d!", plist->size);
+        return;
+    }
+
+    double t1 = what_time_is_it_now();
+
+    FILE *outFile = fopen("layersOut-mixXfloat.csv", "w");
+    if (!outFile) {
+        perror("Could not create output file: ");
+        return;
+    }
+
+    int i, j;
+    float *relErrArray = (float*)calloc(20000000, sizeof(float));
+
+    float relErrAvgMatrix[netFloat->n][n];
+    
+    for (i = 0; i < n; i++) {
+        im = load_image_color(paths[i], 0, 0);
+        sized = letterbox_image(im, netFloat->w, netFloat->h);
+        float *X = sized.data;
+
+        network_predict(netFloat, X);
+        network_predict(netMix, X);
+
+        for (j = 0; j < netFloat->n; j++) {
+            layer lF = netFloat->layers[j];
+            layer lM = netMix->layers[j];
+            int layerOutputs = lF.outputs;
+
+            if (IS_MIX_PRECISION_HALF_LAYER(lM.real_type))
+                relative_error_gpu(lF.output_gpu, lM.output_half_gpu, layerOutputs, netFloat->hold_input_gpu);
+            else
+                relative_error_gpu(lF.output_gpu, lM.output_gpu, layerOutputs, netFloat->hold_input_gpu);
+
+            cuda_pull_array(netFloat->hold_input_gpu, relErrArray, layerOutputs);
+            
+            relErrAvgMatrix[j][i] = array_average(relErrArray, layerOutputs);
+        }
+
+        free_image(im);
+        free_image(sized);
+
+        fprintf(stderr, "\r%d ", i+1);
+    }
+
+    // Print to CSV file
+    fprintf(outFile, ",TYPE");
+    for (i = 0; i < n; i++)
+        fprintf(outFile, ",frame %3d", i);
+    fprintf(outFile, "\n");
+    for (i = 0; i < netFloat->n; i++) {
+        fprintf(outFile, "layer %3d,%s", i, get_real_string(netMix->layers[i].real_type));
+        for (j = 0; j < n; j++)
+            fprintf(outFile, ",%.2f%%", relErrAvgMatrix[i][j]*100);
+        fprintf(outFile, "\n");
+    }
+
+    fclose(outFile);
+    free(relErrArray);
+
+    printf("\nTotal time for %d frame(s): %f seconds\n", n, what_time_is_it_now() - t1);
+    free_network(netFloat);
+    free_network(netMix);
 }
 
 void run_rtest(int testID, int argc, char **argv) {
@@ -583,6 +682,10 @@ void run_rtest(int testID, int argc, char **argv) {
     } else if (testID == 6) {
         int n = find_int_arg(argc, argv, (char*)"-n", 4999);
         test6(n);
+    } else if (testID == 7) {
+        char *cfgfile_mix = argv[4];
+        int n = find_int_arg(argc, argv, (char*)"-n", 4999);
+        test7(cfgfile_mix, n);
     } else {
         printf("Invalid test ID!\n");
     }
