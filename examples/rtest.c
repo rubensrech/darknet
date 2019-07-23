@@ -639,6 +639,7 @@ void test7(char *cfgfile_mix, int n) {
             fprintf(outFile, ",%.5f", relErrAvgMatrix[i][j]);
         fprintf(outFile, "\n");
     }
+    fclose(outFile);
 
     float l93Sum = 0, l94Sum = 0, l105Sum = 0, l106Sum = 0;
     for (i = 0; i < n; i++) {
@@ -647,6 +648,7 @@ void test7(char *cfgfile_mix, int n) {
         l105Sum += relErrAvgMatrix[105][i];
         l106Sum += relErrAvgMatrix[106][i];
     }
+    free(relErrArray);
 
     printf("\n\nAverage errors:\n");
     printf("Layer  93 (CONV): %.2f%%\n", l93Sum/n*100);
@@ -654,8 +656,15 @@ void test7(char *cfgfile_mix, int n) {
     printf("Layer 105 (CONV): %.2f%%\n", l105Sum/n*100);
     printf("Layer 106 (YOLO): %.2f%%\n", l106Sum/n*100);
 
-    fclose(outFile);
-    free(relErrArray);
+    int halfLayers = 0;
+    for (i = 0; i < netMix->n; i++) {
+        if (netMix->layers[i].real_type == HALF)
+            halfLayers++;
+    }
+
+    printf("\nMixed-Precision Network:\n");
+    printf("FLOAT Layers: %d\n", netMix->n - halfLayers);
+    printf("HALF Layers: %d\n", halfLayers);
 
     printf("\nTotal time for %d frame(s): %f seconds\n", n, what_time_is_it_now() - t1);
     free_network(netFloat);
