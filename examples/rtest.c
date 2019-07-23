@@ -636,9 +636,23 @@ void test7(char *cfgfile_mix, int n) {
     for (i = 0; i < netFloat->n; i++) {
         fprintf(outFile, "layer %3d,%s", i, get_real_string(netMix->layers[i].real_type));
         for (j = 0; j < n; j++)
-            fprintf(outFile, ",%.2f%%", relErrAvgMatrix[i][j]*100);
+            fprintf(outFile, ",%.5f", relErrAvgMatrix[i][j]);
         fprintf(outFile, "\n");
     }
+
+    float l93Sum = 0, l94Sum = 0, l105Sum = 0, l106Sum = 0;
+    for (i = 0; i < n; i++) {
+        l93Sum += relErrAvgMatrix[93][i];
+        l94Sum += relErrAvgMatrix[94][i];
+        l105Sum += relErrAvgMatrix[105][i];
+        l106Sum += relErrAvgMatrix[106][i];
+    }
+
+    printf("\n\nAverage errors:\n");
+    printf("Layer  93 (CONV): %.2f%%\n", l93Sum/n*100);
+    printf("Layer  94 (YOLO): %.2f%%\n", l94Sum/n*100);
+    printf("Layer 105 (CONV): %.2f%%\n", l105Sum/n*100);
+    printf("Layer 106 (YOLO): %.2f%%\n", l106Sum/n*100);
 
     fclose(outFile);
     free(relErrArray);
