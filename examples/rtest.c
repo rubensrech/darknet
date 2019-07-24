@@ -641,8 +641,10 @@ void test7(char *cfgfile_mix, int n) {
     }
     fclose(outFile);
 
-    float l93Sum = 0, l94Sum = 0, l105Sum = 0, l106Sum = 0;
+    float l81Sum = 0, l82Sum = 0, l93Sum = 0, l94Sum = 0, l105Sum = 0, l106Sum = 0;
     for (i = 0; i < n; i++) {
+        l81Sum += relErrAvgMatrix[81][i];
+        l82Sum += relErrAvgMatrix[82][i];
         l93Sum += relErrAvgMatrix[93][i];
         l94Sum += relErrAvgMatrix[94][i];
         l105Sum += relErrAvgMatrix[105][i];
@@ -651,6 +653,8 @@ void test7(char *cfgfile_mix, int n) {
     free(relErrArray);
 
     printf("\n\nAverage errors:\n");
+    printf("Layer  81 (CONV): %.2f%%\n", l81Sum/n*100);
+    printf("Layer  82 (YOLO): %.2f%%\n", l82Sum/n*100);
     printf("Layer  93 (CONV): %.2f%%\n", l93Sum/n*100);
     printf("Layer  94 (YOLO): %.2f%%\n", l94Sum/n*100);
     printf("Layer 105 (CONV): %.2f%%\n", l105Sum/n*100);
