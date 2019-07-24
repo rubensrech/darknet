@@ -36,12 +36,15 @@ def setLayersReal(cfg, layers, realToBeSet):
         if sec == "net": continue
 
         if len(layers) > 0 and int(layers[0]) == layerIndex:
-            currReal = realToBeSet
+            if sec == "route":
+                print("Warning: real type cannot be set for ROUTE layers (on layer %d)" % layerIndex)
+            else:
+                currReal = realToBeSet
             layers.pop(0)
         else:
             currReal = otherReal
 
-        if 'real' in cfg[tsec]:
+        if 'real' in cfg[tsec] and sec != "route":
             cfg[tsec]['real'] = str(currReal)
         
         layerIndex += 1
