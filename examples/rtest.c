@@ -229,7 +229,7 @@ void test2(char *cfgfile, char *weightfile, int n) {
     list *plist = get_paths(valid_images);
     char **paths = (char**)list_to_array(plist);
     if (n > plist->size) {
-        fprintf(stderr, "Argument 'n' cannot be greater than 5000!");
+        fprintf(stderr, "Argument 'n' cannot be greater than %d!", plist->size);
         return;
     }
 
@@ -686,7 +686,7 @@ void run_rtest(int testID, int argc, char **argv) {
     } else if (testID == 2) {
         char *cfgfile = argv[4];
         char *weightfile = argv[5];
-        int n = find_int_arg(argc, argv, (char*)"-n", 5000);
+        int n = find_int_arg(argc, argv, (char*)"-n", 4999);
         test2(cfgfile, weightfile, n);
     } else if (testID == 3) {
         char *cfgfile = argv[4];
