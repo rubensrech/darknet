@@ -165,7 +165,7 @@ void test1(char *cfgfile, char *weightfile, char *filename, int n, int print) {
     char *input = buff;
     float nms = .45;
 
-    strncpy(input, filename, 256);
+    strncpy(input, filename, 255);
 
     layer l = net->layers[net->n - 1];
 
@@ -291,7 +291,7 @@ void test3(char *cfgfile, char *weightfile, char *filename, int n) {
 
     char buff[256];
     char *input = buff;
-    strncpy(input, filename, 256);
+    strncpy(input, filename, 255);
 
     image im = load_image_color(input, 0, 0);
     image sized = letterbox_image(im, net->w, net->h);
@@ -335,7 +335,7 @@ void test4(char *cfgfile, char *weightfile, char *inputFile, int layerIndex, cha
 
     char buff[256];
     char *input = buff;
-    strncpy(input, inputFile, 256);
+    strncpy(input, inputFile, 255);
 
     image im = load_image_color(input, 0, 0);
     image sized = letterbox_image(im, net->w, net->h);
@@ -560,6 +560,7 @@ void test6(int n) {
  * Description: Compare outputs of all layers of YOLOv3. Get relative error between full-float network and mix-precision network.
  * Call: ./darknet detector rtest 7 <mixnet-cfgfile> [-n <images>]
  * Optionals: -n <images> - number of images from COCO dataset (max: 4999, min: 2, default: 4999)
+ * Output: CSV file with average error for each layer output of each frame/image
  * IMPORTANT: REAL=float (on Makefile)
  */
 void test7(char *cfgfile_mix, int n) {
@@ -586,8 +587,6 @@ void test7(char *cfgfile_mix, int n) {
         return;
     }
 
-    double t1 = what_time_is_it_now();
-
     FILE *outFile = fopen("layersOut-mixXfloat.csv", "w");
     if (!outFile) {
         perror("Could not create output file: ");
@@ -596,8 +595,9 @@ void test7(char *cfgfile_mix, int n) {
 
     int i, j;
     float *relErrArray = (float*)calloc(20000000, sizeof(float));
-
     float relErrAvgMatrix[netFloat->n][n];
+
+    double t1 = what_time_is_it_now();
     
     for (i = 0; i < n; i++) {
         im = load_image_color(paths[i], 0, 0);
@@ -675,6 +675,98 @@ void test7(char *cfgfile_mix, int n) {
     free_network(netMix);
 }
 
+/* Test 8
+ * Description: Compare outputs of some layers of YOLOv3. Get relative error between full-float network and mix-precision network.
+ *      The layers to be compared must be specified by parameter.
+ * Call: ./darknet detector rtest 8 <mixnet-cfgfile> [-n <images>]
+ * Optionals: -n <images> - number of images from COCO dataset (max: 4999, min: 2, default: 4999)
+ * IMPORTANT: REAL=float (on Makefile)
+ */
+void test8(char *cfgfile_mix, int n, int *layers, int nlayers) {
+    if (REAL != FLOAT) {
+        printf("Default REAL must be FLOAT (REAL=float on Makefile)!\n");
+        return;
+    }
+
+    char *cfgfile_float = (char*)"cfg/yolov3.cfg";
+    char *weightfile = (char*)"../yolov3.weights";
+
+    network *netFloat = load_network(cfgfile_float, weightfile, 0);
+    set_batch_network(netFloat, 1);
+    network *netMix = load_network(cfgfile_mix, weightfile, 0);
+    set_batch_network(netMix, 1);
+    srand(2222222);
+
+    char *valid_images = (char*)"../coco_test/5k.txt";
+    list *plist = get_paths(valid_images);
+    char **paths = (char**)list_to_array(plist);
+    image im, sized;
+    if (n > plist->size) {
+        fprintf(stderr, "Argument 'n' cannot be greater than %d!", plist->size);
+        return;
+    }
+
+    int i, j;
+    float *relErrArray = (float*)calloc(20000000, sizeof(float));
+    float relErrAvgMatrix[nlayers][n];
+
+    double t1 = what_time_is_it_now();
+
+    for (i = 0; i < n; i++) {
+        im = load_image_color(paths[i], 0, 0);
+        sized = letterbox_image(im, netFloat->w, netFloat->h);
+        float *X = sized.data;
+
+        network_predict(netFloat, X);
+        network_predict(netMix, X);
+
+        for (j = 0; j < nlayers; j++) {
+            int layerIndex = layers[j];
+            layer lF = netFloat->layers[layerIndex];
+            layer lM = netMix->layers[layerIndex];
+            int layerOutputs = lF.outputs;
+
+            if (IS_MIX_PRECISION_HALF_LAYER(lM.real_type))
+                relative_error_gpu(lF.output_gpu, lM.output_half_gpu, layerOutputs, netFloat->hold_input_gpu);
+            else
+                relative_error_gpu(lF.output_gpu, lM.output_gpu, layerOutputs, netFloat->hold_input_gpu);
+
+            cuda_pull_array(netFloat->hold_input_gpu, relErrArray, layerOutputs);
+            
+            relErrAvgMatrix[j][i] = array_average(relErrArray, layerOutputs);
+        }
+
+        free_image(im);
+        free_image(sized);
+
+        fprintf(stderr, "\r%d ", i+1);
+    }
+
+    printf("\n\nAverage errors:\n");
+    float layersErrorSum[nlayers] = {};
+    for (j = 0; j < nlayers; j++) {
+        for (i = 0; i < n; i++) {
+            layersErrorSum[j] += relErrAvgMatrix[j][i];
+        }
+        printf("Layer %3d: %.2f%%\n", layers[j], layersErrorSum[j]/n*100);
+    }
+    free(relErrArray);
+
+    int halfLayers = 0;
+    for (i = 0; i < netMix->n; i++) {
+        if (netMix->layers[i].real_type == HALF)
+            halfLayers++;
+    }
+
+    printf("\nMixed-Precision Network:\n");
+    printf("FLOAT Layers: %d\n", netMix->n - halfLayers);
+    printf("HALF Layers: %d\n", halfLayers);
+
+    printf("\nTotal time for %d frame(s): %f seconds\n", n, what_time_is_it_now() - t1);
+    free_network(netFloat);
+    free_network(netMix);
+}
+
 void run_rtest(int testID, int argc, char **argv) {
     if (testID == 1) {
         char *cfgfile = argv[4];
@@ -713,6 +805,11 @@ void run_rtest(int testID, int argc, char **argv) {
         char *cfgfile_mix = argv[4];
         int n = find_int_arg(argc, argv, (char*)"-n", 4999);
         test7(cfgfile_mix, n);
+    } else if (testID == 8) {
+        char *cfgfile_mix = argv[4];
+        int n = find_int_arg(argc, argv, (char*)"-n", 4999);
+        int layers[] = { 81, 82, 93, 94, 105, 106 };
+        test8(cfgfile_mix, n, layers, sizeof(layers)/sizeof(int));
     } else {
         printf("Invalid test ID!\n");
     }
