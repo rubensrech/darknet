@@ -682,11 +682,13 @@ void test7(char *cfgfile_mix, int n) {
  * Optionals: -n <images> - number of images from COCO dataset (max: 4999, min: 2, default: 4999)
  * IMPORTANT: REAL=float (on Makefile)
  */
-void test8(char *cfgfile_mix, int n, int *layers, int nlayers) {
+void test8(char *cfgfile_mix, int n, int *layers, int nlayers, int gpu) {
     if (REAL != FLOAT) {
         printf("Default REAL must be FLOAT (REAL=float on Makefile)!\n");
         return;
     }
+
+    cuda_set_device(gpu);
 
     char *cfgfile_float = (char*)"cfg/yolov3.cfg";
     char *weightfile = (char*)"../yolov3.weights";
@@ -841,8 +843,9 @@ void run_rtest(int testID, int argc, char **argv) {
     } else if (testID == 8) {
         char *cfgfile_mix = argv[4];
         int n = find_int_arg(argc, argv, (char*)"-n", 4999);
+        int gpu = find_int_arg(argc, argv, (char*)"-gpu", 0);
         int layers[] = { 106 };
-        test8(cfgfile_mix, n, layers, sizeof(layers)/sizeof(int));
+        test8(cfgfile_mix, n, layers, sizeof(layers)/sizeof(int), gpu);
     } else {
         printf("Invalid test ID!\n");
     }
