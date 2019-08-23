@@ -700,46 +700,79 @@ void test8(char *cfgfile_mix, int n, int *layers, int nlayers) {
     char *valid_images = (char*)"../coco_test/5k.txt";
     list *plist = get_paths(valid_images);
     char **paths = (char**)list_to_array(plist);
-    image im, sized;
     if (n > plist->size) {
         fprintf(stderr, "Argument 'n' cannot be greater than %d!", plist->size);
         return;
     }
 
-    int i, j;
+    int nthreads = 4;
+    if (n < 4) nthreads = n;
+    image *val = (image*)calloc(nthreads, sizeof(image));
+    image *val_resized = (image*)calloc(nthreads, sizeof(image));
+    image *buf = (image*)calloc(nthreads, sizeof(image));
+    image *buf_resized = (image*)calloc(nthreads, sizeof(image));
+    pthread_t *thr = (pthread_t*)calloc(nthreads, sizeof(pthread_t));
+
+    load_args args = { 0 };
+    args.w = netFloat->w;
+    args.h = netFloat->h;
+    args.type = LETTERBOX_DATA;
+
+    int i = 0, j, t;
     float *relErrArray = (float*)calloc(20000000, sizeof(float));
     float relErrAvgMatrix[nlayers][n];
 
     double t1 = what_time_is_it_now();
 
-    for (i = 0; i < n; i++) {
-        im = load_image_color(paths[i], 0, 0);
-        sized = letterbox_image(im, netFloat->w, netFloat->h);
-        float *X = sized.data;
+    for (t = 0; t < nthreads; ++t) {
+        args.path = paths[i + t];
+        args.im = &buf[t];
+        args.resized = &buf_resized[t];
+        thr[t] = load_data_in_thread(args);
+    }
 
-        network_predict(netFloat, X);
-        network_predict(netMix, X);
-
-        for (j = 0; j < nlayers; j++) {
-            int layerIndex = layers[j];
-            layer lF = netFloat->layers[layerIndex];
-            layer lM = netMix->layers[layerIndex];
-            int layerOutputs = lF.outputs;
-
-            if (IS_MIX_PRECISION_HALF_LAYER(lM.real_type))
-                relative_error_gpu(lF.output_gpu, lM.output_half_gpu, layerOutputs, netFloat->hold_input_gpu);
-            else
-                relative_error_gpu(lF.output_gpu, lM.output_gpu, layerOutputs, netFloat->hold_input_gpu);
-
-            cuda_pull_array(netFloat->hold_input_gpu, relErrArray, layerOutputs);
-            
-            relErrAvgMatrix[j][i] = array_average(relErrArray, layerOutputs);
+    for (i = nthreads; i < n + nthreads; i += nthreads) {
+        // > Load images data
+        for (t = 0; t < nthreads && i + t - nthreads < n; ++t) {
+            pthread_join(thr[t], 0);
+            val[t] = buf[t];
+            val_resized[t] = buf_resized[t];
+        }
+        for (t = 0; t < nthreads && i + t < n; ++t) {
+            args.path = paths[i + t];
+            args.im = &buf[t];
+            args.resized = &buf_resized[t];
+            thr[t] = load_data_in_thread(args);
         }
 
-        free_image(im);
-        free_image(sized);
+        for (t = 0; t < nthreads && i + t - nthreads < n; ++t) {
+            int image_index = i + t - nthreads;
+            float *X = val_resized[t].data;
 
-        fprintf(stderr, "\r%d ", i+1);
+            network_predict(netFloat, X);
+            network_predict(netMix, X);
+
+            for (j = 0; j < nlayers; j++) {
+                int layerIndex = layers[j];
+                layer lF = netFloat->layers[layerIndex];
+                layer lM = netMix->layers[layerIndex];
+                int layerOutputs = lF.outputs;
+
+                if (IS_MIX_PRECISION_HALF_LAYER(lM.real_type))
+                    relative_error_gpu(lF.output_gpu, lM.output_half_gpu, layerOutputs, netFloat->hold_input_gpu);
+                else
+                    relative_error_gpu(lF.output_gpu, lM.output_gpu, layerOutputs, netFloat->hold_input_gpu);
+
+                cuda_pull_array(netFloat->hold_input_gpu, relErrArray, layerOutputs);
+                
+                relErrAvgMatrix[j][image_index] = array_average(relErrArray, layerOutputs);
+            }
+
+            free_image(val[t]);
+            free_image(val_resized[t]);
+
+            fprintf(stderr, "\r%d ", image_index+1);
+        }
     }
 
     printf("\n\nAverage errors:\n");
@@ -808,7 +841,7 @@ void run_rtest(int testID, int argc, char **argv) {
     } else if (testID == 8) {
         char *cfgfile_mix = argv[4];
         int n = find_int_arg(argc, argv, (char*)"-n", 4999);
-        int layers[] = { 81, 82, 93, 94, 105, 106 };
+        int layers[] = { 106 };
         test8(cfgfile_mix, n, layers, sizeof(layers)/sizeof(int));
     } else {
         printf("Invalid test ID!\n");
