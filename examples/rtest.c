@@ -748,7 +748,7 @@ void test8(char *cfgfile_mix, int n, int *layers, int nlayers) {
         for (i = 0; i < n; i++) {
             layersErrorSum[j] += relErrAvgMatrix[j][i];
         }
-        printf("Layer %3d: %.2f%%\n", layers[j], layersErrorSum[j]/n*100);
+        printf("Layer %3d: %.f%%\n", layers[j], layersErrorSum[j]/n*100);
     }
     free(relErrArray);
 
