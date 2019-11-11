@@ -14,6 +14,14 @@ typedef struct  {
     int intvl_counts[LAYERS_OUT_COMP_INTVL_LIMITS+1];
 } layersOutComp;
 
+typedef struct {
+    float avgArea;
+    float stdevArea;
+    float minArea;
+    float maxArea;
+    int numObjs;
+} LabelsMetrics;
+
 // > Auxiliary functions
 
 void print_detections(detection *dets, int num, float thresh, char **names, int classes) {
@@ -133,6 +141,37 @@ double array_average(float *array, int n) {
     int i;
     for (i = 0; i < n; i++) sum += array[i];
     return sum/n;
+}
+
+LabelsMetrics calcLabelsMetrics(box_label *labels, int n) {
+    LabelsMetrics m;
+    int i;
+    
+    float minArea = MAXFLOAT;
+    float maxArea = -MAXFLOAT;
+    float avgArea = 0;
+    float stdevArea = 0;
+    for (i = 0; i < n; i++) {
+        float A = labels[i].w * labels[i].h;
+        if (A < minArea) minArea = A;
+        if (A > maxArea) maxArea = A;
+        avgArea += A;
+    }
+    avgArea /= n;
+
+    for (i = 0; i < n; i++) {
+        float A = labels[i].w * labels[i].h;
+        stdevArea += pow(A - avgArea, 2);
+    }
+    stdevArea = sqrt(stdevArea/n);
+
+    m.avgArea = avgArea;
+    m.stdevArea = stdevArea;
+    m.minArea = minArea;
+    m.maxArea = maxArea;
+    m.numObjs = n;
+
+    return m;
 }
 
 // > Tests
@@ -678,8 +717,9 @@ void test7(char *cfgfile_mix, int n) {
 /* Test 8
  * Description: Compare outputs of some layers of YOLOv3. Get relative error between full-float network and mix-precision network.
  *      The layers to be compared must be specified by parameter.
- * Call: ./darknet detector rtest 8 <mixnet-cfgfile> [-n <images>]
+ * Call: ./darknet detector rtest 8 <mixnet-cfgfile> [-n <images>] [-gpu <gpu-index>]
  * Optionals: -n <images> - number of images from COCO dataset (max: 4999, min: 2, default: 4999)
+ *            -gpu <gpu-index> - index of GPU device
  * IMPORTANT: REAL=float (on Makefile)
  */
 void test8(char *cfgfile_mix, int n, int *layers, int nlayers, int gpu) {
@@ -802,6 +842,169 @@ void test8(char *cfgfile_mix, int n, int *layers, int nlayers, int gpu) {
     free_network(netMix);
 }
 
+/* Test 9
+ * Description: Compare outputs of some layers of YOLOv3. Get relative error between full-float network and mix-precision network.
+ *      The layers to be compared must be specified by parameter.
+ * Call: ./darknet detector rtest 9 <mixnet-cfgfile> [-n <images>] [-gpu <gpu-index>]
+ * Optionals: -n <images> - number of images from COCO dataset (max: 4999, min: 2, default: 4999)
+ *            -gpu <gpu-index> - index of GPU device
+ * Output: CSV file with results for each frame (average error in each layer, frame truth labels, ...)
+ * IMPORTANT: REAL=float (on Makefile)
+ */
+void test9(char *cfgfile_mix, int n, int *layers, int nlayers, int gpu) {
+    if (REAL != FLOAT) {
+        printf("Default REAL must be FLOAT (REAL=float on Makefile)!\n");
+        return;
+    }
+
+    cuda_set_device(gpu);
+
+    char *cfgfile_float = (char*)"cfg/yolov3.cfg";
+    char *weightfile = (char*)"../yolov3.weights";
+
+    network *netFloat = load_network(cfgfile_float, weightfile, 0);
+    set_batch_network(netFloat, 1);
+    network *netMix = load_network(cfgfile_mix, weightfile, 0);
+    set_batch_network(netMix, 1);
+    srand(2222222);
+
+    char *valid_images = (char*)"../coco_test/5k.txt";
+    list *plist = get_paths(valid_images);
+    char **paths = (char**)list_to_array(plist);
+    if (n > plist->size) {
+        fprintf(stderr, "Argument 'n' cannot be greater than %d!", plist->size);
+        return;
+    }
+
+    char *datacfg = (char*)"cfg/coco.data";
+    list *options = read_data_cfg(datacfg);
+    char *name_list = option_find_str(options, (char*)"names", (char *)"data/names.list");
+    char **class_names = get_labels(name_list);
+
+    int nthreads = 4;
+    if (n < 4) nthreads = n;
+    image *val = (image*)calloc(nthreads, sizeof(image));
+    image *val_resized = (image*)calloc(nthreads, sizeof(image));
+    image *buf = (image*)calloc(nthreads, sizeof(image));
+    image *buf_resized = (image*)calloc(nthreads, sizeof(image));
+    pthread_t *thr = (pthread_t*)calloc(nthreads, sizeof(pthread_t));
+
+    load_args args = { 0 };
+    args.w = netFloat->w;
+    args.h = netFloat->h;
+    args.type = LETTERBOX_DATA;
+
+    int i = 0, j, t, k;
+    float *relErrArray = (float*)calloc(20000000, sizeof(float));
+    float relErrAvgMatrix[n][nlayers];
+
+    double t1 = what_time_is_it_now();
+
+    for (t = 0; t < nthreads; ++t) {
+        args.path = paths[i + t];
+        args.im = &buf[t];
+        args.resized = &buf_resized[t];
+        thr[t] = load_data_in_thread(args);
+    }
+
+    for (i = nthreads; i < n + nthreads; i += nthreads) {
+        // > Load images data
+        for (t = 0; t < nthreads && i + t - nthreads < n; ++t) {
+            pthread_join(thr[t], 0);
+            val[t] = buf[t];
+            val_resized[t] = buf_resized[t];
+        }
+        for (t = 0; t < nthreads && i + t < n; ++t) {
+            args.path = paths[i + t];
+            args.im = &buf[t];
+            args.resized = &buf_resized[t];
+            thr[t] = load_data_in_thread(args);
+        }
+
+        for (t = 0; t < nthreads && i + t - nthreads < n; ++t) {
+            int image_index = i + t - nthreads;
+            float *X = val_resized[t].data;
+
+            network_predict(netFloat, X);
+            network_predict(netMix, X);
+
+            for (j = 0; j < nlayers; j++) {
+                int layerIndex = layers[j];
+                layer lF = netFloat->layers[layerIndex];
+                layer lM = netMix->layers[layerIndex];
+                int layerOutputs = lF.outputs;
+
+                if (IS_MIX_PRECISION_HALF_LAYER(lM.real_type))
+                    relative_error_gpu(lF.output_gpu, lM.output_half_gpu, layerOutputs, netFloat->hold_input_gpu);
+                else
+                    relative_error_gpu(lF.output_gpu, lM.output_gpu, layerOutputs, netFloat->hold_input_gpu);
+
+                cuda_pull_array(netFloat->hold_input_gpu, relErrArray, layerOutputs);
+                
+                relErrAvgMatrix[image_index][j] = array_average(relErrArray, layerOutputs);
+            }
+
+            free_image(val[t]);
+            free_image(val_resized[t]);
+
+            fprintf(stderr, "\r%d ", image_index+1);
+        }
+    }
+
+    char outFileName[50];
+    snprintf(outFileName, sizeof(outFileName), "results-%d.csv", gpu);
+    FILE *outFile = fopen(outFileName, "w");
+    if (!outFile) {
+        perror("Could not create output file: ");
+        return;
+    }
+
+    // Print results to CSV file
+    // Print header: Frame Index | Frame File | Layer X Err | Layer ... Err | Layer Z Err | \
+    //                 | # Objects | Avg Objs Area | StdDev Objs Area | Min Obj Area | Max Obj Area | Objs Classes
+    fprintf(outFile, "FRAME INDEX;FRAME FILE;");
+    for (i = 0; i < nlayers; i++)
+        fprintf(outFile, "LAYER %d;", layers[i]);
+    fprintf(outFile, "NUMBER OF OBJS;AVG OBJS AREA;STDEV OBJS AREA;MIN OBJ AREA;MAX OBJ AREA;OBJECTS\n");
+
+    box_label *truth;
+    LabelsMetrics metrics;
+    char *imgName, labelPath[1000];
+    float *frameLayersErrors;
+    int numLabels = 0, classId;
+
+    for (i = 0; i < n; i++) {
+        // Load image truth labels
+        replace_image_to_label(paths[i], labelPath);
+        truth = read_boxes(labelPath, &numLabels);
+        metrics = calcLabelsMetrics(truth);
+        imgName = basename(paths[i]);
+        frameLayersErrors = relErrAvgMatrix[i];
+
+        // Print results for frame 'i'
+        fprintf(outFile, "%d;", i);                 // Frame index 
+        fprintf(outFile, "%s;", imgName);           // Frame file 
+        for (j = 0; j < nlayers; j++)               // Layer X...Z Error
+            fprintf(outFile, "%f;", frameLayersErrors[j]);
+        fprintf(outFile, "%d;", numLabels);         // Number of objects
+        fprintf(outFile, "%f;", metrics.avgArea);   // Average objects area
+        fprintf(outFile, "%f;", metrics.stdevArea); // Standard deviation of objects area
+        fprintf(outFile, "%f;", metrics.minArea);   // Min object area
+        fprintf(outFile, "%f;", metrics.maxArea);   // Max object area
+        for (k = 0; k < numLabels; k++)             // Objects classes
+            fprintf(outFile, "%s,", class_names[truth[k].id]);
+        fprintf(outFile, "\n");
+        free(truth);
+    }
+
+    fclose(outFile);
+
+    printf("\nTotal time for %d frame(s): %f seconds\n", n, what_time_is_it_now() - t1);
+    free_network(netFloat);
+    free_network(netMix);
+    free(relErrArray);
+}
+
 void run_rtest(int testID, int argc, char **argv) {
     if (testID == 1) {
         char *cfgfile = argv[4];
@@ -846,6 +1049,12 @@ void run_rtest(int testID, int argc, char **argv) {
         int gpu = find_int_arg(argc, argv, (char*)"-gpu", 0);
         int layers[] = { 106 };
         test8(cfgfile_mix, n, layers, sizeof(layers)/sizeof(int), gpu);
+    } else if (testID == 9) {
+        char *cfgfile_mix = argv[4];
+        int n = find_int_arg(argc, argv, (char*)"-n", 4999);
+        int gpu = find_int_arg(argc, argv, (char*)"-gpu", 0);
+        int layers[] = { 82, 94, 106 };
+        test9(cfgfile_mix, n, layers, sizeof(layers)/sizeof(int), gpu);
     } else {
         printf("Invalid test ID!\n");
     }
