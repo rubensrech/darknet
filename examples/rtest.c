@@ -960,7 +960,7 @@ void test9(char *cfgfile_mix, int n, int *layers, int nlayers, int gpu) {
     }
 
     // Print results to CSV file
-    // Print header: Frame Index | Frame File | Layer X Err | Layer ... Err | Layer Z Err | \
+    // Print header: Frame Index | Frame File | Layer X Err | Layer ... Err | Layer Z Err |
     //                 | # Objects | Avg Objs Area | StdDev Objs Area | Min Obj Area | Max Obj Area | Objs Classes
     fprintf(outFile, "FRAME INDEX;FRAME FILE;");
     for (i = 0; i < nlayers; i++)
@@ -971,15 +971,17 @@ void test9(char *cfgfile_mix, int n, int *layers, int nlayers, int gpu) {
     LabelsMetrics metrics;
     char *imgName, labelPath[1000];
     float *frameLayersErrors;
-    int numLabels = 0, classId;
+    int numLabels = 0;
 
     for (i = 0; i < n; i++) {
         // Load image truth labels
         replace_image_to_label(paths[i], labelPath);
         truth = read_boxes(labelPath, &numLabels);
-        metrics = calcLabelsMetrics(truth);
+        metrics = calcLabelsMetrics(truth, numLabels);
         imgName = basename(paths[i]);
         frameLayersErrors = relErrAvgMatrix[i];
+
+        if (numLabels == 0) continue;
 
         // Print results for frame 'i'
         fprintf(outFile, "%d;", i);                 // Frame index 
