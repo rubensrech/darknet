@@ -1007,6 +1007,217 @@ void test9(char *cfgfile_mix, int n, int *layers, int nlayers, int gpu) {
     free(relErrArray);
 }
 
+float calcDetectionsError(detection detFloat, detection detMixed, int classes, int *nvals) {
+    float objectnessErr = abs(detFloat.objectness - detMixed.objectness) / detFloat.objectness;
+
+    float xErr = abs(detFloat.bbox.x - detMixed.bbox.x) / detFloat.bbox.x;
+    float yErr = abs(detFloat.bbox.y - detMixed.bbox.y) / detFloat.bbox.y;
+    float wErr = abs(detFloat.bbox.w - detMixed.bbox.w) / detFloat.bbox.w;
+    float hErr = abs(detFloat.bbox.h - detMixed.bbox.h) / detFloat.bbox.h;
+
+    float classesErr = 0;
+    int j;
+    for (j = 0; j < classes; ++j){
+        if (detFloat.prob[j] == 0) { continue; }
+        float classErr = abs(detFloat.prob[j] - detMixed.prob[j]) / detFloat.prob[j];
+        classesErr += classErr;
+    }
+
+    float detErr = 0;
+    if (detFloat.objectness != 0) detErr += objectnessErr;
+    if (detFloat.bbox.x != 0) detErr += xErr;
+    if (detFloat.bbox.y != 0) detErr += yErr;
+    if (detFloat.bbox.w != 0) detErr += wErr;
+    if (detFloat.bbox.h != 0) detErr += hErr;
+    detErr += classesErr;
+
+    *nvals = 1 + 4 + classes;
+
+    return detErr;
+}
+
+float calcFramePredAvgErr(network *netFloat, network *netMixed, image im, float thresh) {
+    int letterbox = 1;
+    int nboxesFloat = 0;
+    int nboxesMixed = 0;
+
+    detection *detsFloat = get_network_boxes(netFloat, im.w, im.h, thresh, thresh, 0, 1, &nboxesFloat, letterbox);
+    detection *detsMixed = get_network_boxes(netMixed, im.w, im.h, thresh, thresh, 0, 1, &nboxesMixed, letterbox);
+
+    int i;
+    int num = nboxesFloat;
+    if (nboxesMixed < num) num = nboxesMixed;
+
+    if (nboxesFloat != nboxesMixed)
+        printf("nboxes float: %d, nboxes mixed: %d (=> %d)\n", nboxesFloat, nboxesMixed, num);
+
+    int nclasses = netFloat->layers[netFloat->n-1].classes;
+    float errAcc = 0;
+    int N = 0;
+    int nvals = 0;
+
+    for (i = 0; i < num; ++i) {
+        float detErr = calcDetectionsError(detsFloat[i], detsMixed[i], nclasses, &nvals);
+        fprintf(stderr, "%f, ", detErr);
+        errAcc += detErr;
+        N += nvals;
+    }
+
+    free_detections(detsFloat, nboxesFloat);
+    free_detections(detsMixed, nboxesMixed);
+
+    return errAcc / N;
+}
+
+/* Test 10
+ * Description: Compare outputs with objectness above threshold of the YOLO layers of YOLOv3. Get relative error between full-float
+ *      network and mix-precision network. The layers to be compared must be specified by parameter!
+ * Call: ./darknet detector rtest 10 <mixnet-cfgfile> [-thresh <threshold>] [-n <images>] [-gpu <gpu-index>]
+ * Optionals: -thresh <threshold> - objectness threshold (max: 1, min: 0, default: 0.4)
+ *            -n <images> - number of images from COCO dataset (max: 4999, min: 2, default: 4999)
+ *            -gpu <gpu-index> - index of GPU device
+ * Output: CSV file with results for each frame
+ * IMPORTANT: REAL=float (on Makefile)
+ */
+void test10(char *cfgfile_mix, float thresh, int n, int gpu) {
+    if (REAL != FLOAT) {
+        printf("Default REAL must be FLOAT (REAL=float on Makefile)!\n");
+        return;
+    }
+
+    cuda_set_device(gpu);
+
+    char *cfgfile_float = (char*)"cfg/yolov3.cfg";
+    char *weightfile = (char*)"../yolov3.weights";
+
+    network *netFloat = load_network(cfgfile_float, weightfile, 0);
+    set_batch_network(netFloat, 1);
+    network *netMix = load_network(cfgfile_mix, weightfile, 0);
+    set_batch_network(netMix, 1);
+    srand(2222222);
+
+    char *valid_images = (char*)"../coco_test/5k.txt";
+    list *plist = get_paths(valid_images);
+    char **paths = (char**)list_to_array(plist);
+    if (n > plist->size) {
+        fprintf(stderr, "Argument 'n' cannot be greater than %d!", plist->size);
+        return;
+    }
+
+    char *datacfg = (char*)"cfg/coco.data";
+    list *options = read_data_cfg(datacfg);
+    char *name_list = option_find_str(options, (char*)"names", (char *)"data/names.list");
+    char **class_names = get_labels(name_list);
+
+    int nthreads = 4;
+    if (n < 4) nthreads = n;
+    image *val = (image*)calloc(nthreads, sizeof(image));
+    image *val_resized = (image*)calloc(nthreads, sizeof(image));
+    image *buf = (image*)calloc(nthreads, sizeof(image));
+    image *buf_resized = (image*)calloc(nthreads, sizeof(image));
+    pthread_t *thr = (pthread_t*)calloc(nthreads, sizeof(pthread_t));
+
+    load_args args = { 0 };
+    args.w = netFloat->w;
+    args.h = netFloat->h;
+    args.type = LETTERBOX_DATA;
+
+    int i = 0, t, k;
+    float framesAvgErr[n];
+
+    double t1 = what_time_is_it_now();
+
+    for (t = 0; t < nthreads; ++t) {
+        args.path = paths[i + t];
+        args.im = &buf[t];
+        args.resized = &buf_resized[t];
+        thr[t] = load_data_in_thread(args);
+    }
+
+    for (i = nthreads; i < n + nthreads; i += nthreads) {
+        // > Load images data
+        for (t = 0; t < nthreads && i + t - nthreads < n; ++t) {
+            pthread_join(thr[t], 0);
+            val[t] = buf[t];
+            val_resized[t] = buf_resized[t];
+        }
+        for (t = 0; t < nthreads && i + t < n; ++t) {
+            args.path = paths[i + t];
+            args.im = &buf[t];
+            args.resized = &buf_resized[t];
+            thr[t] = load_data_in_thread(args);
+        }
+
+        for (t = 0; t < nthreads && i + t - nthreads < n; ++t) {
+            int imageIndex = i + t - nthreads;
+            image im = val_resized[t];
+            float *X = val_resized[t].data;
+
+            network_predict(netFloat, X);
+            network_predict(netMix, X);
+
+            float frameErr = calcFramePredAvgErr(netFloat, netMix, im, thresh);
+
+            framesAvgErr[imageIndex] = frameErr;
+
+            free_image(val[t]);
+            free_image(val_resized[t]);
+
+            fprintf(stderr, "\r%d ", imageIndex+1);
+        }
+
+    }
+
+    // Print results to CSV file
+    char outFileName[50];
+    snprintf(outFileName, sizeof(outFileName), "results-%d.csv", gpu);
+    FILE *outFile = fopen(outFileName, "w");
+    if (!outFile) {
+        perror("Could not create output file: ");
+        return;
+    }
+
+    // Print header: Frame Index | Frame File | Detections Avg Err | # Objects | Avg Objs Area | StdDev Objs Area | Min Obj Area | Max Obj Area | Objs Classes
+    fprintf(outFile, "FRAME INDEX;FRAME FILE;DETECTIONS AVG ERR;NUMBER OF OBJS;AVG OBJS AREA;STDEV OBJS AREA;MIN OBJ AREA;MAX OBJ AREA;OBJECTS\n");
+
+    box_label *truth;
+    LabelsMetrics metrics;
+    char *imgName, labelPath[1000];
+    float frameAvgError;
+    int numLabels = 0;
+
+    for (i = 0; i < n; i++) {
+        // Load image truth labels
+        replace_image_to_label(paths[i], labelPath);
+        truth = read_boxes(labelPath, &numLabels);
+        metrics = calcLabelsMetrics(truth, numLabels);
+        imgName = basename(paths[i]);
+        frameAvgError = framesAvgErr[i];
+
+        if (numLabels == 0) continue;
+
+        // Print results for frame 'i'
+        fprintf(outFile, "%d;", i);                 // Frame index 
+        fprintf(outFile, "%s;", imgName);           // Frame file 
+        fprintf(outFile, "%f;", frameAvgError);     // Detections Avg Err
+        fprintf(outFile, "%d;", numLabels);         // Number of objects
+        fprintf(outFile, "%f;", metrics.avgArea);   // Average objects area
+        fprintf(outFile, "%f;", metrics.stdevArea); // Standard deviation of objects area
+        fprintf(outFile, "%f;", metrics.minArea);   // Min object area
+        fprintf(outFile, "%f;", metrics.maxArea);   // Max object area
+        for (k = 0; k < numLabels; k++)             // Objects classes
+            fprintf(outFile, "%s,", class_names[truth[k].id]);
+        fprintf(outFile, "\n");
+        free(truth);
+    }
+
+    fclose(outFile);
+
+    printf("\nTotal time for %d frame(s): %f seconds\n", n, what_time_is_it_now() - t1);
+    free_network(netFloat);
+    free_network(netMix);
+}
+
 void run_rtest(int testID, int argc, char **argv) {
     if (testID == 1) {
         char *cfgfile = argv[4];
@@ -1057,6 +1268,12 @@ void run_rtest(int testID, int argc, char **argv) {
         int gpu = find_int_arg(argc, argv, (char*)"-gpu", 0);
         int layers[] = { 82, 94, 106 };
         test9(cfgfile_mix, n, layers, sizeof(layers)/sizeof(int), gpu);
+    }  else if (testID == 10) {
+        char *cfgfile_mix = argv[4];
+        float thresh = find_float_arg(argc, argv, (char*)"-thresh", 0.4);
+        int n = find_int_arg(argc, argv, (char*)"-n", 4999);
+        int gpu = find_int_arg(argc, argv, (char*)"-gpu", 0);
+        test10(cfgfile_mix, thresh, n, gpu);
     } else {
         printf("Invalid test ID!\n");
     }
