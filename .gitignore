@@ -31,3 +31,9 @@ Thumbs.db
 
 .vscode
 .push.settings.jsonc
+
+# Fault injection
+stdout.txt
+stderr.txt
+golden_stdout.txt
+golder_stderr.txt
