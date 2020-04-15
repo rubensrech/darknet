@@ -1019,12 +1019,6 @@ void test9(char *cfgfile_mix, int n, int *layers, int nlayers, int gpu) {
 void test10(char *cfgfile, char *weightsfile, char *frameslistfile, float thresh, int timedebug) {
     double t0 = what_time_is_it_now();
 
-    // Load classes names
-    char *datacfg = (char*)"cfg/coco.data";
-    list *dataOptions = read_data_cfg(datacfg);
-    char *classesList = option_find_str(dataOptions, (char*)"names", (char*)"data/names.list");
-    char **classes = get_labels(classesList);
-
     // Load frames list
     list *framesList = get_paths(frameslistfile);
     char **framesPaths = (char**)list_to_array(framesList);
