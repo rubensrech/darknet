@@ -131,5 +131,8 @@ clean:
 
 # Fault injection
 
+fi-test:
+	./$(EXEC) detector rtest 10 cfg/yolov3.cfg yolov3.weights data/coco_100.txt -timedebug 1
+
 fi-golden:
 	./$(EXEC) detector rtest 10 cfg/yolov3.cfg yolov3.weights data/coco_100.txt > golden_stdout.txt 2> golden_stderr.txt
