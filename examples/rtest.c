@@ -1012,10 +1012,11 @@ void test9(char *cfgfile_mix, int n, int *layers, int nlayers, int gpu) {
  * Description: Aiming fault injection, this routine predicts all frames listed on file whose path 
  *              is given by 'frameslistfile' and, for each frame, outputs the following data about each
  *              detected box: -> class, x, y, width, height
- * Call: ./darknet detector rtest 10 <cfgfile> <weightsfile> <frameslistfile> [-thresh <threshold>]
- * Optionals: -thresh <threshold> - All detections with objectness under <threshold> will be droped
+ * Call: ./darknet detector rtest 10 <cfgfile> <weightsfile> <frameslistfile> [-thresh <threshold>] [-timedebug 0|1]
+ * Optionals: -thresh <threshold> - All detections with objectness under <threshold> will be droped (max: 1, min: 0, default: 0.5)
+ *            -timedebug 0|1 - Whether the routine will print execution times (default: 0)
  */
-void test10(char *cfgfile, char *weightsfile, char *frameslistfile, float thresh) {
+void test10(char *cfgfile, char *weightsfile, char *frameslistfile, float thresh, int timedebug) {
     double t0 = what_time_is_it_now();
 
     // Load classes names
@@ -1042,7 +1043,7 @@ void test10(char *cfgfile, char *weightsfile, char *frameslistfile, float thresh
     image im, sized;
     float *X, BoxX, BoxY, BoxW, BoxH, Objectness, Prob;
 
-    // fprintf(stderr, "Load net time: %f s\n\n", what_time_is_it_now() - t0);
+    if (timedebug) fprintf(stderr, "Load net time: %f s\n\n", what_time_is_it_now() - t0);
 
     for (i = 0; i < nframes; i++) {
         // Load and resize frame 'i'
@@ -1083,6 +1084,8 @@ void test10(char *cfgfile, char *weightsfile, char *frameslistfile, float thresh
     }
 
     free_network(net);
+
+    if (timedebug) fprintf(stderr, "Total execution time: %f s\n\n", what_time_is_it_now() - t0);
 }
 
 void run_rtest(int testID, int argc, char **argv) {
@@ -1140,7 +1143,8 @@ void run_rtest(int testID, int argc, char **argv) {
         char *weightsfile = argv[5];
         char *frameslistfile = argv[6];
         float thresh = find_float_arg(argc, argv, (char*)"-thresh", .5);
-        test10(cfgfile, weightsfile, frameslistfile, thresh);
+        int timedebug = find_int_arg(argc, argv, (char*)"-timedebug", 0);
+        test10(cfgfile, weightsfile, frameslistfile, thresh, timedebug);
     } else {
         printf("Invalid test ID!\n");
     }
