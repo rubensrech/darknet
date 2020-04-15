@@ -128,3 +128,8 @@ results:
 
 clean:
 	rm -rf $(OBJS) $(SLIB) $(ALIB) $(EXEC) $(EXECOBJ) $(OBJDIR)/*
+
+# Fault injection
+
+fi-golden:
+	./$(EXEC) detector rtest 10 cfg/yolov3.cfg yolov3.weights data/coco_100.txt > golden_stdout.txt 2> golden_stderr.txt
