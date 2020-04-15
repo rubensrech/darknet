@@ -1007,6 +1007,84 @@ void test9(char *cfgfile_mix, int n, int *layers, int nlayers, int gpu) {
     free(relErrArray);
 }
 
+/***
+ * Test 10
+ * Description: Aiming fault injection, this routine predicts all frames listed on file whose path 
+ *              is given by 'frameslistfile' and, for each frame, outputs the following data about each
+ *              detected box: -> class, x, y, width, height
+ * Call: ./darknet detector rtest 10 <cfgfile> <weightsfile> <frameslistfile> [-thresh <threshold>]
+ * Optionals: -thresh <threshold> - All detections with objectness under <threshold> will be droped
+ */
+void test10(char *cfgfile, char *weightsfile, char *frameslistfile, float thresh) {
+    double t0 = what_time_is_it_now();
+
+    // Load classes names
+    char *datacfg = (char*)"cfg/coco.data";
+    list *dataOptions = read_data_cfg(datacfg);
+    char *classesList = option_find_str(dataOptions, (char*)"names", (char*)"data/names.list");
+    char **classes = get_labels(classesList);
+
+    // Load frames list
+    list *framesList = get_paths(frameslistfile);
+    char **framesPaths = (char**)list_to_array(framesList);
+    int nframes = framesList->size;
+
+    // Load network
+    network *net = load_network(cfgfile, weightsfile, 0);
+    set_batch_network(net, 1);
+    srand(2222222);
+
+    // Aux vars
+    layer l = net->layers[net->n - 1];
+    float hier_thresh = 0.5, nms = 0.45;
+    detection *detections, det;
+    int i, j, nboxes, Class;
+    image im, sized;
+    float *X, BoxX, BoxY, BoxW, BoxH, Objectness, Prob;
+
+    fprintf(stderr, "Load net time: %f s\n\n", what_time_is_it_now() - t0);
+
+    for (i = 0; i < nframes; i++) {
+        // Load and resize frame 'i'
+        im = load_image_color(framesPaths[i], 0, 0);
+        sized = letterbox_image(im, net->w, net->h);
+        X = sized.data;
+
+        // Predict
+        network_predict(net, X);
+
+        // Get detections
+        nboxes = 0;
+        detections = get_network_boxes(net, im.w, im.h, thresh, hier_thresh, 0, 1, &nboxes, 1);
+        if (nms) do_nms_sort(detections, nboxes, l.classes, nms);
+
+        // Print detections
+        for (j = 0; j < nboxes; j++) {
+            det = detections[j];
+            Objectness = det.objectness;
+            BoxX = det.bbox.x;
+            BoxY = det.bbox.y;
+            BoxW = det.bbox.w;
+            BoxH = det.bbox.h;
+            for (Class = 0; Class < l.classes; Class++) {
+                Prob = det.prob[Class];
+                if (Prob > thresh) {
+                    // Class,X,Y,W,H,Objectness,Prob;
+                    printf("%d,%f,%f,%f,%f,%f,%f;",Class,BoxX,BoxY,BoxW,BoxH,Objectness,Prob);
+                }
+            }
+        }
+        printf("\n");
+
+        // Free data
+        free_image(im);
+        free_image(sized);
+        free_detections(detections, nboxes);
+    }
+
+    free_network(net);
+}
+
 void run_rtest(int testID, int argc, char **argv) {
     if (testID == 1) {
         char *cfgfile = argv[4];
@@ -1057,6 +1135,12 @@ void run_rtest(int testID, int argc, char **argv) {
         int gpu = find_int_arg(argc, argv, (char*)"-gpu", 0);
         int layers[] = { 82, 94, 106 };
         test9(cfgfile_mix, n, layers, sizeof(layers)/sizeof(int), gpu);
+    }  else if (testID == 10) {
+        char *cfgfile = argv[4];
+        char *weightsfile = argv[5];
+        char *frameslistfile = argv[6];
+        float thresh = find_float_arg(argc, argv, (char*)"-thresh", .5);
+        test10(cfgfile, weightsfile, frameslistfile, thresh);
     } else {
         printf("Invalid test ID!\n");
     }
