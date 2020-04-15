@@ -1042,7 +1042,7 @@ void test10(char *cfgfile, char *weightsfile, char *frameslistfile, float thresh
     image im, sized;
     float *X, BoxX, BoxY, BoxW, BoxH, Objectness, Prob;
 
-    fprintf(stderr, "Load net time: %f s\n\n", what_time_is_it_now() - t0);
+    // fprintf(stderr, "Load net time: %f s\n\n", what_time_is_it_now() - t0);
 
     for (i = 0; i < nframes; i++) {
         // Load and resize frame 'i'
