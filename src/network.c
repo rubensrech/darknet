@@ -617,8 +617,8 @@ detection *get_network_boxes(network *net, int w, int h, float thresh, float hie
 {
     detection *dets = make_network_boxes(net, thresh, num);
 
-    if (*num == 0)
-        fprintf(stderr, "> DETECTS: %d - calling 'fill_network_boxes()' might cause segmentation fault\n", *num);
+    // if (*num == 0)
+    //     fprintf(stderr, "> DETECTS: %d - calling 'fill_network_boxes()' might cause segmentation fault\n", *num);
 
     fill_network_boxes(net, w, h, thresh, hier, map, relative, dets, letter);
     return dets;
