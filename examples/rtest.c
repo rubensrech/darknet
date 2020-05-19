@@ -1007,6 +1007,24 @@ void test9(char *cfgfile_mix, int n, int *layers, int nlayers, int gpu) {
     free(relErrArray);
 }
 
+/* Test 11
+ * Description: Print (CSV formated) the number of output values in each layer of the network
+ * Call: ./darknet detector rtest 11 <cfgfile>
+ */
+void test11(char *cfgfile) {
+    network *net = load_network(cfgfile, NULL, 0);
+
+    printf("LAYER,# OUTPUTS\n");
+
+    int i;
+    for (i = 0; i < net->n; i++) {
+        printf("%d,%d\n", i, net->layers[i].outputs);
+    }
+
+    free_network(net);
+}
+
+
 void run_rtest(int testID, int argc, char **argv) {
     if (testID == 1) {
         char *cfgfile = argv[4];
@@ -1057,6 +1075,9 @@ void run_rtest(int testID, int argc, char **argv) {
         int gpu = find_int_arg(argc, argv, (char*)"-gpu", 0);
         int layers[] = { 82, 94, 106 };
         test9(cfgfile_mix, n, layers, sizeof(layers)/sizeof(int), gpu);
+    } else if (testID == 11) {
+        char *cfgfile = argv[4];
+        test11(cfgfile);
     } else {
         printf("Invalid test ID!\n");
     }
