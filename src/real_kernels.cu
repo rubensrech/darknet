@@ -48,6 +48,3 @@ void generic_copy_array_gpu(float *src, half_host *dst, int n) {
 void generic_copy_array_gpu(float *src, float *dst, int n) {
 	generic_copy_array_gpu_template(src, dst, n);
 }
-
-
-

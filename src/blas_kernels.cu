@@ -1231,3 +1231,25 @@ void relative_error_gpu(float *arr1, float* arr2, int N, float *out) {
     relative_error_kernel<<<cuda_gridsize(N), BLOCK>>>(arr1, arr2, N, out);
     check_error(cudaPeekAtLastError());
 }
+
+
+__global__ void uint_error_kernel(half_device* half_arr, float* float_arr, uint32_t *out, int n) {
+    int i = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
+    if(i >= n) return;
+
+    float half_value = __half2float(half_arr[i]);
+    float float_value = float_arr[i];
+
+    uint32_t half_data = __float_as_int(half_value);
+    uint32_t float_data =  __float_as_int(float_value);
+
+    if (half_data > float_data)
+        out[i] = half_data - float_data;
+    else
+        out[i] = float_data - half_data;
+}
+
+void uint_error_gpu(half_host* half_arr, float* float_arr, uint32_t *out, int n) {
+    uint_error_kernel<<<cuda_gridsize(n), BLOCK>>>((half_device*)half_arr, float_arr, out, n);
+    check_error(cudaPeekAtLastError());
+}

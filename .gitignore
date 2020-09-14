@@ -31,3 +31,8 @@ Thumbs.db
 
 .vscode
 .push.settings.jsonc
+
+# Temp data / code
+mix-cfgs
+run*.sh
+std*.txt

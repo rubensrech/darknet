@@ -280,18 +280,27 @@ void test2(char *cfgfile, char *weightfile, int n) {
     float thresh = 0.3;
     float hier_thresh = 0.5;
 
-    double t1 = 0;
+    double timeAcc = 0;
+    double t1 = 0, ti;
 
     int i;
     for (i = 0; i < n; i++) {
-        if (i == 1) // Discard first frame (because of network push cost)
-            t1 = what_time_is_it_now();
+        // Discard first frame (because of network push cost)
+        if (i == 1) t1 = what_time_is_it_now();
 
         im = load_image_color(paths[i], 0, 0);
         sized = letterbox_image(im, net->w, net->h);
         float *X = sized.data;
 
+        
+        ti = what_time_is_it_now();
+        cudaDeviceSynchronize();
+
         network_predict(net, X);
+
+        // Discard first frame (because of network push cost)
+        cudaDeviceSynchronize();
+        if (i > 0) timeAcc += what_time_is_it_now() - ti;
 
         dets = get_network_boxes(net, im.w, im.h, thresh, hier_thresh, 0, 1, &nboxes, 1);
         if (nms)
@@ -308,6 +317,9 @@ void test2(char *cfgfile, char *weightfile, int n) {
     double t = what_time_is_it_now() - t1;
     printf("\nTotal time for %d frame(s): %f s\n", n, t);
     printf("Time per frame: %f ms\n", t/n * 1000);
+
+    printf("TOTAL PREDICTION TIME (%d frame(s)): %f s\n", n, timeAcc);
+    printf("AVG PREDICTION TIME PER FRAME: %f ms\n", timeAcc/n);
 
     free_network(net);
 }
@@ -1235,6 +1247,140 @@ void test11(char *cfgfile) {
     free_network(net);
 }
 
+
+uint32_t findMaximum(uint32_t *arr, int n) {
+    int i;
+    uint32_t max = arr[0];
+    for (i = 1; i < n; i++) {
+        if (arr[i] > max)
+            max = arr[i];
+    }
+    return max;
+}
+
+/* Test 9
+ * Description: Compare outputs of the last layer of YOLOv3. Calculate the error between FP32 and FP16 networks by interpreting the
+ *      output values as integers.
+ * Call: ./darknet detector rtest 9 [-n <images>] [-gpu <gpu-index>]
+ * Optionals: -n <images> - number of images from COCO dataset (max: 4999, min: 2, default: 4999)
+ *            -gpu <gpu-index> - index of GPU device
+ * Output: max-errors.txt file containing the maximum error found for each frame
+ * IMPORTANT: REAL=float (on Makefile)
+ */
+void test12(int n, int gpu) {
+    if (REAL != FLOAT) {
+        printf("Default REAL must be FLOAT (REAL=float on Makefile)!\n");
+        return;
+    }
+
+    cuda_set_device(gpu);
+
+    char *cfgfile_float = (char*)"cfg/yolov3.cfg";
+    char *cfgfile_half = (char*)"cfg/yolov3-half.cfg";
+    char *weightfile = (char*)"../yolov3.weights";
+
+    network *netFloat = load_network(cfgfile_float, weightfile, 0);
+    set_batch_network(netFloat, 1);
+    network *netHalf = load_network(cfgfile_half, weightfile, 0);
+    set_batch_network(netHalf, 1);
+    srand(2222222);
+
+    char *valid_images = (char*)"../coco_test/5k.txt";
+    list *plist = get_paths(valid_images);
+    char **paths = (char**)list_to_array(plist);
+    if (n > plist->size) {
+        fprintf(stderr, "Argument 'n' cannot be greater than %d!", plist->size);
+        return;
+    }
+
+    int nthreads = 4;
+    if (n < 4) nthreads = n;
+    image *val = (image*)calloc(nthreads, sizeof(image));
+    image *val_resized = (image*)calloc(nthreads, sizeof(image));
+    image *buf = (image*)calloc(nthreads, sizeof(image));
+    image *buf_resized = (image*)calloc(nthreads, sizeof(image));
+    pthread_t *thr = (pthread_t*)calloc(nthreads, sizeof(pthread_t));
+
+    load_args args = { 0 };
+    args.w = netFloat->w;
+    args.h = netFloat->h;
+    args.type = LETTERBOX_DATA;
+
+    int i = 0, t;
+
+    int lastLayerIndex = netFloat->n - 1;
+    int lastLayerOutputs = netFloat->layers[lastLayerIndex].outputs;
+
+    uint32_t *error_arr, *error_arr_gpu;
+    error_arr = (uint32_t*)calloc(lastLayerOutputs, sizeof(uint32_t));
+    cudaMalloc(&error_arr_gpu, lastLayerOutputs * sizeof(uint32_t));
+
+    uint32_t maxErrors[n];
+
+    double t1 = what_time_is_it_now();
+
+    for (t = 0; t < nthreads; ++t) {
+        args.path = paths[i + t];
+        args.im = &buf[t];
+        args.resized = &buf_resized[t];
+        thr[t] = load_data_in_thread(args);
+    }
+
+    for (i = nthreads; i < n + nthreads; i += nthreads) {
+        // > Load images data
+        for (t = 0; t < nthreads && i + t - nthreads < n; ++t) {
+            pthread_join(thr[t], 0);
+            val[t] = buf[t];
+            val_resized[t] = buf_resized[t];
+        }
+        for (t = 0; t < nthreads && i + t < n; ++t) {
+            args.path = paths[i + t];
+            args.im = &buf[t];
+            args.resized = &buf_resized[t];
+            thr[t] = load_data_in_thread(args);
+        }
+
+        for (t = 0; t < nthreads && i + t - nthreads < n; ++t) {
+            int image_index = i + t - nthreads;
+            float *X = val_resized[t].data;
+
+            network_predict(netFloat, X);
+            network_predict(netHalf, X);
+            
+            layer lF = netFloat->layers[lastLayerIndex];
+            layer lH = netHalf->layers[lastLayerIndex];
+
+            uint_error_gpu(lH.output_half_gpu, lF.output_gpu, error_arr_gpu, lastLayerOutputs);
+            cuda_pull_array(error_arr_gpu, error_arr, lastLayerOutputs);
+
+            maxErrors[image_index] = findMaximum(error_arr, lastLayerOutputs);
+
+            free_image(val[t]);
+            free_image(val_resized[t]);
+
+            fprintf(stderr, "\r%d ", image_index+1);
+        }
+    }
+
+    uint32_t max = maxErrors[0];
+    FILE *outFile = fopen("max-errors.txt", "w");
+    if (!outFile) {
+        perror("Could not create output file: ");
+        return;
+    }
+    for (i = 0; i < n; i++) {
+        fprintf(outFile, "%u\n", maxErrors[i]);
+        if (maxErrors[i] > max)
+            max = maxErrors[i];
+    }
+
+    printf("\nMax error found for all frames: %u\n", max);
+    printf("Total time for %d frame(s): %f seconds\n", n, what_time_is_it_now() - t1);
+
+    free_network(netFloat);
+    free_network(netHalf);
+}
+
 void run_rtest(int testID, int argc, char **argv) {
     if (testID == 1) {
         char *cfgfile = argv[4];
@@ -1294,6 +1440,10 @@ void run_rtest(int testID, int argc, char **argv) {
     } else if (testID == 11) {
         char *cfgfile = argv[4];
         test11(cfgfile);
+    } else if (testID == 12) {
+        int n = find_int_arg(argc, argv, (char*)"-n", 4999);
+        int gpu = find_int_arg(argc, argv, (char*)"-gpu", 0);
+        test12(n, gpu);
     } else {
         printf("Invalid test ID!\n");
     }

@@ -125,5 +125,7 @@ void upsample_gpu(half_host *in, int w, int h, int c, int batch, int stride, int
 void relative_error_gpu(float *arr1, half_host* arr2, int N, float *out);
 void relative_error_gpu(float *arr1, float* arr2, int N, float *out);
 
+void uint_error_gpu(half_host* half_arr, float* float_arr, uint32_t *out, int n);
+
 #endif
 #endif
