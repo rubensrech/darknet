@@ -1248,9 +1248,9 @@ void test11(char *cfgfile) {
 }
 
 
-uint32_t findMaximum(uint32_t *arr, int n) {
+float findMaximum(float *arr, int n) {
     int i;
-    uint32_t max = arr[0];
+    float max = arr[0];
     for (i = 1; i < n; i++) {
         if (arr[i] > max)
             max = arr[i];
@@ -1258,13 +1258,22 @@ uint32_t findMaximum(uint32_t *arr, int n) {
     return max;
 }
 
+float findMinumum(float *arr, int n) {
+    int i;
+    float min = arr[0];
+    for (i = 1; i < n; i++) {
+        if (arr[i] < min)
+            min = arr[i];
+    }
+    return min;
+}
+
 /* Test 9
- * Description: Compare outputs of the last layer of YOLOv3. Calculate the error between FP32 and FP16 networks by interpreting the
- *      output values as integers.
+ * Description: Compare outputs of the last layer of YOLOv3. Calculate the error between FP32 and FP16 networks (half-half sub abs).
  * Call: ./darknet detector rtest 9 [-n <images>] [-gpu <gpu-index>]
  * Optionals: -n <images> - number of images from COCO dataset (max: 4999, min: 2, default: 4999)
  *            -gpu <gpu-index> - index of GPU device
- * Output: max-errors.txt file containing the maximum error found for each frame
+ * Output: min-max-errors.txt file containing the minumum and maximum error found for each frame
  * IMPORTANT: REAL=float (on Makefile)
  */
 void test12(int n, int gpu) {
@@ -1311,11 +1320,11 @@ void test12(int n, int gpu) {
     int lastLayerIndex = netFloat->n - 1;
     int lastLayerOutputs = netFloat->layers[lastLayerIndex].outputs;
 
-    uint32_t *error_arr, *error_arr_gpu;
-    error_arr = (uint32_t*)calloc(lastLayerOutputs, sizeof(uint32_t));
-    cudaMalloc(&error_arr_gpu, lastLayerOutputs * sizeof(uint32_t));
+    float *error_arr, *error_arr_gpu;
+    error_arr = (float*)calloc(lastLayerOutputs, sizeof(float));
+    cudaMalloc(&error_arr_gpu, lastLayerOutputs * sizeof(float));
 
-    uint32_t maxErrors[n];
+    float maxErrors[n], minErrors[n];
 
     double t1 = what_time_is_it_now();
 
@@ -1350,10 +1359,11 @@ void test12(int n, int gpu) {
             layer lF = netFloat->layers[lastLayerIndex];
             layer lH = netHalf->layers[lastLayerIndex];
 
-            uint_error_gpu(lH.output_half_gpu, lF.output_gpu, error_arr_gpu, lastLayerOutputs);
+            half_float_arr_abs_sub_gpu(lH.output_half_gpu, lF.output_gpu, error_arr_gpu, lastLayerOutputs);
             cuda_pull_array(error_arr_gpu, error_arr, lastLayerOutputs);
 
             maxErrors[image_index] = findMaximum(error_arr, lastLayerOutputs);
+            minErrors[image_index] = findMinumum(error_arr, lastLayerOutputs);
 
             free_image(val[t]);
             free_image(val_resized[t]);
@@ -1362,19 +1372,21 @@ void test12(int n, int gpu) {
         }
     }
 
-    uint32_t max = maxErrors[0];
-    FILE *outFile = fopen("max-errors.txt", "w");
+    float max = maxErrors[0], min = minErrors[0];
+    FILE *outFile = fopen("min-max-errors.txt", "w");
     if (!outFile) {
         perror("Could not create output file: ");
         return;
     }
     for (i = 0; i < n; i++) {
-        fprintf(outFile, "%u\n", maxErrors[i]);
-        if (maxErrors[i] > max)
-            max = maxErrors[i];
+        fprintf(outFile, "%f,%f\n", minErrors[i], maxErrors[i]);
+        if (minErrors[i] < min) min = minErrors[i];
+        if (maxErrors[i] > max) max = maxErrors[i];
     }
 
-    printf("\nMax error found for all frames: %u\n", max);
+    printf("\n");
+    printf("Min error found for all frames: %f\n", min);
+    printf("Max error found for all frames: %f\n", max);
     printf("Total time for %d frame(s): %f seconds\n", n, what_time_is_it_now() - t1);
 
     free_network(netFloat);

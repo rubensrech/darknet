@@ -126,6 +126,7 @@ void relative_error_gpu(float *arr1, half_host* arr2, int N, float *out);
 void relative_error_gpu(float *arr1, float* arr2, int N, float *out);
 
 void uint_error_gpu(half_host* half_arr, float* float_arr, uint32_t *out, int n);
+void half_float_arr_abs_sub_gpu(half_host* half_arr, float* float_arr, float *out, int n);
 
 #endif
 #endif

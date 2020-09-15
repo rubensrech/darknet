@@ -1233,23 +1233,48 @@ void relative_error_gpu(float *arr1, float* arr2, int N, float *out) {
 }
 
 
-__global__ void uint_error_kernel(half_device* half_arr, float* float_arr, uint32_t *out, int n) {
-    int i = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
-    if(i >= n) return;
-
-    float half_value = __half2float(half_arr[i]);
-    float float_value = float_arr[i];
+__device__ __forceinline__ uint32_t uint_error_kernel(half_device half_v, float float_v) {
+    float half_value = __half2float(half_v);
+    float float_value = float_v;
 
     uint32_t half_data = __float_as_int(half_value);
     uint32_t float_data =  __float_as_int(float_value);
 
     if (half_data > float_data)
-        out[i] = half_data - float_data;
+        return half_data - float_data;
     else
-        out[i] = float_data - half_data;
+        return float_data - half_data;
+}
+
+__global__ void uint_error_arr_kernel(half_device* half_arr, float* float_arr, uint32_t *out, int n) {
+    int i = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
+    if(i >= n) return;
+    out[i] = uint_error_kernel(half_arr[i], float_arr[i]);
 }
 
 void uint_error_gpu(half_host* half_arr, float* float_arr, uint32_t *out, int n) {
-    uint_error_kernel<<<cuda_gridsize(n), BLOCK>>>((half_device*)half_arr, float_arr, out, n);
+    uint_error_arr_kernel<<<cuda_gridsize(n), BLOCK>>>((half_device*)half_arr, float_arr, out, n);
+    check_error(cudaPeekAtLastError());
+}
+
+
+__device__ __forceinline__ half_device half_float_abs_sub_kernel(half_device half_v, float float_v) {
+    half_device half_value = half_v;
+    half_device float_value = __float2half(float_v);
+
+    if (half_value > float_value)
+        return half_value - float_value;
+    else
+        return float_value - half_value;
+}
+
+__global__ void half_float_arr_abs_sub_kernel(half_device* half_arr, float* float_arr, float *out, int n) {
+    int i = (blockIdx.x + blockIdx.y*gridDim.x) * blockDim.x + threadIdx.x;
+    if(i >= n) return;
+    out[i] = __half2float(half_float_abs_sub_kernel(half_arr[i], float_arr[i]));
+}
+
+void half_float_arr_abs_sub_gpu(half_host* half_arr, float* float_arr, float *out, int n) {
+    half_float_arr_abs_sub_kernel<<<cuda_gridsize(n), BLOCK>>>((half_device*)half_arr, float_arr, out, n);
     check_error(cudaPeekAtLastError());
 }
