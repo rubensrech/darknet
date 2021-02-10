@@ -1015,14 +1015,16 @@ void test9(char *cfgfile_mix, int n, int *layers, int nlayers, int gpu) {
  * Call: ./darknet detector rtest 10 <cfgfile> <weightsfile> <frameslistfile> [-thresh <threshold>] [-timedebug 0|1]
  * Optionals: -thresh <threshold> - All detections with objectness under <threshold> will be droped (max: 1, min: 0, default: 0.5)
  *            -timedebug 0|1 - Whether the routine will print execution times (default: 0)
+ *            -maxN <maxN> - Max number of frames to be predicted
  */
-void test10(char *cfgfile, char *weightsfile, char *frameslistfile, float thresh, int timedebug) {
+void test10(char *cfgfile, char *weightsfile, char *frameslistfile, float thresh, int timedebug, int maxN) {
     double t0 = what_time_is_it_now();
 
     // Load frames list
     list *framesList = get_paths(frameslistfile);
     char **framesPaths = (char**)list_to_array(framesList);
     int nframes = framesList->size;
+    if (maxN && maxN < nframes) nframes = maxN;
 
     // Load network
     network *net = load_network(cfgfile, weightsfile, 0);
@@ -1138,7 +1140,8 @@ void run_rtest(int testID, int argc, char **argv) {
         char *frameslistfile = argv[6];
         float thresh = find_float_arg(argc, argv, (char*)"-thresh", .5);
         int timedebug = find_int_arg(argc, argv, (char*)"-timedebug", 0);
-        test10(cfgfile, weightsfile, frameslistfile, thresh, timedebug);
+        int maxN = find_int_arg(argc, argv, (char*)"-maxN", 0);
+        test10(cfgfile, weightsfile, frameslistfile, thresh, timedebug, maxN);
     } else {
         printf("Invalid test ID!\n");
     }

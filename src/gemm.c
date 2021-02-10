@@ -5,14 +5,21 @@
 #include <stdio.h>
 #include <math.h>
 
+#include "parse_gemm_layer.h"
+
 // > Mixed precision functions
 
 #ifdef GPU
+
     void gemm_gpu(int TA, int TB, int M, int N, int K, float ALPHA, float *A_gpu, int lda, float *B_gpu, int ldb, float BETA, float *C_gpu, int ldc) {
         cublasHandle_t handle = blas_handle();
         cudaError_t status = (cudaError_t)cublasSgemm(handle, (TB ? CUBLAS_OP_T : CUBLAS_OP_N), 
                 (TA ? CUBLAS_OP_T : CUBLAS_OP_N), N, M, K, &ALPHA, B_gpu, ldb, A_gpu, lda, &BETA, C_gpu, ldc);
         check_error(status);
+
+        #ifdef INJECT_REL_ERROR
+            parse_output_conv_layer_gpu(TA, TB, M, N, K, C_gpu);
+        #endif
     }
 
     void gemm_gpu(int TA, int TB, int M, int N, int K, float ALPHA, double *A_gpu, int lda, double *B_gpu, int ldb, float BETA, double *C_gpu, int ldc) {
@@ -22,6 +29,10 @@
         cudaError_t status = (cudaError_t)cublasDgemm(handle, (TB ? CUBLAS_OP_T : CUBLAS_OP_N), 
                 (TA ? CUBLAS_OP_T : CUBLAS_OP_N), N, M, K, &alpha, B_gpu, ldb, A_gpu, lda, &beta, C_gpu, ldc);
         check_error(status);
+
+        #ifdef INJECT_REL_ERROR
+            parse_output_conv_layer_gpu(TA, TB, M, N, K, C_gpu);
+        #endif
     }
 
     void gemm_gpu(int TA, int TB, int M, int N, int K, float ALPHA, half_host *A_gpu, int lda, half_host *B_gpu, int ldb, float BETA, half_host *C_gpu, int ldc) {
@@ -32,6 +43,10 @@
                 (TA ? CUBLAS_OP_T : CUBLAS_OP_N), N, M, K, (half_device*)(&alpha),
                 (half_device*)B_gpu, ldb, (half_device*)A_gpu, lda, (half_device*)(&beta), (half_device*)C_gpu, ldc);
         check_error(status);
+
+        #ifdef INJECT_REL_ERROR
+            parse_output_conv_layer_gpu(TA, TB, M, N, K, C_gpu);
+        #endif
     }
 #endif
 
