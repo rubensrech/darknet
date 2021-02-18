@@ -38,4 +38,4 @@ stderr.txt
 golden_stdout.txt
 golder_stderr.txt
 
-!rel_err_fault_model.csv
+!estebam_fault_model.csv

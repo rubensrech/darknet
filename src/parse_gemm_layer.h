@@ -115,7 +115,6 @@ void simulate_scheduler_fault(int M, int N, int layer_count_output, std::vector<
 				auto start_j = int_p_generator(gen);
 
 				if (fd.geometry_format == "RANDOM") {
-
 					for (auto i = start_i; i < M; i++) {
 						for (auto j = start_j; j < N; j++) {
 							auto is_necessary_to_inject = bool(
@@ -155,6 +154,13 @@ void simulate_scheduler_fault(int M, int N, int layer_count_output, std::vector<
 								N - 1);
 						auto j = int_n_generator_column(gen);
 						for (auto i = 0; i < M; i++) {
+							C[i * N + j] *= float_generator(gen);
+						}
+					}
+				} else if (fd.geometry_format == "BLOCK") {
+					int start = (N < M) ? start_j : start_i;
+					for (int i = start; i < (start + BLOCK_SIZE); i++) {
+						for (int j = start; j < (start + BLOCK_SIZE); j++) {
 							C[i * N + j] *= float_generator(gen);
 						}
 					}

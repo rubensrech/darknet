@@ -3,10 +3,11 @@ import os
 import random
 from csv import DictReader, DictWriter
 import sys
+import math
 
 CRASH_LOG = "panic.log"
 
-class YOLOv3CMDLine:
+class YOLOv3CmdLine:
     home_dir = "/home/rubens"
     # darknet_dir = f"{home_dir}/nvbitfi/test-apps/darknet_rlrj"
     darknet_dir = f"{home_dir}/darknet_rlrj"
@@ -14,83 +15,164 @@ class YOLOv3CMDLine:
     weights_file = f"{darknet_dir}/yolov3.weights"
     data_file = f"{darknet_dir}/data/coco_100.txt"
 
-    cmd = " ".join([
-        f"{darknet_dir}/darknet detector rtest 10",
-        cfg_file,
-        weights_file,
-        data_file,
-        # Flags
-        "-timedebug 1",
-        # "-maxN 1",
-    ])
-
     conv_layer_num = 75
-    csv_file = "rel_err_fault_model.csv"
-    temporary_parameter_file = f"/tmp/yolov3_rel_err_fault_descriptor.txt"
 
+    check_det_error_script = f"{darknet_dir}/check_detections_error.py"
+    golden_stdout = f"{darknet_dir}/golden_stdout.txt"
+
+    def createFaultDescriptorFile(self, fault_descriptor):
+        tmp_fault_descriptor_file = f"/tmp/yolov3_rel_err_fault_descriptor.txt"
+        with open(tmp_fault_descriptor_file, "w") as fp:
+            for info in fault_descriptor:
+                fp.write(f"{fault_descriptor[info]}\n")
+        fp.close()
+        return tmp_fault_descriptor_file
+
+    def peformInjection(self, injection_data, stdout_log):
+        # Create fault_descriptor
+        necessary_info = ['min_relative', 'max_relative', 'geometry_format']
+        fault_descriptor = { injection_data[info] for info in necessary_info }
+        fault_descriptor['layer'] = injection_data["layer"] if "layer" in injection_data else random.randint(0, self.conv_layer_num)
+        fault_descriptor_file = self.createFaultDescriptorFile(fault_descriptor)
+
+        # Set environment variables
+        export_vars = { "FAULT_PARAMETER_FILE": fault_descriptor_file }
+        for export, val in export_vars.items():
+            os.environ[export] = val
+
+        # Execute shell command
+        cmd = " ".join([
+            f"{self.darknet_dir}/darknet detector rtest 10",
+            self.cfg_file,
+            self.weights_file,
+            self.data_file,
+            # Flags
+            "-timedebug 1",
+            # "-maxN 1",
+        ])
+        execute(cmd, stdout_log)
+
+        return { "stdout_file": stdout_log, **fault_descriptor }
+
+    def checkDetectionsError(self, inj_stdout, out_file):
+        execute(f"python3 {self.check_det_error_script} {self.golden_stdout} {inj_stdout}", out_file)
 
 def execute(cmd, std_out_log="&1", log_info=None):
     print(f"EXECUTING: {cmd}")
-    ret = os.system(cmd + f" >{std_out_log}")
+    ret = os.system(cmd + f" > {std_out_log}")
     # Log any problem
     if ret != 0:
         with open(CRASH_LOG, 'a+') as fp:
             fp.write(f"Returning not zero: {ret}\nLog info: {log_info}\nCMD {cmd}\n")
+    return ret
 
-
-def run_yolov3_setup(std_out_log):
-    export_vars = {
-        "FAULT_PARAMETER_FILE": YOLOv3CMDLine.temporary_parameter_file,
-    }
-
-    for export, val in export_vars.items():
-        os.environ[export] = val
-
-    execute(YOLOv3CMDLine.cmd, std_out_log)
-
-
-def main():
-    # Create a tmp dir ./
+def performInjectionCampaign(faults_csv_file, injection_order="ORDERED"):
+    # Create/clean logs directory
     logs_path = "logs"
+    parser_log = "rel_err_injection_log.csv"
     execute(f"mkdir -p {logs_path}")
     execute(f"rm -f {logs_path}/*")
     execute(f"rm -f {CRASH_LOG}")
 
-    parser_log = "rel_err_injection_log.csv"
+    # Generate golden stdout
+    execute("make clean")
+    execute("make INJECT_REL_ERROR=0")
+    execute("make golden")
 
-    with open(YOLOv3CMDLine.csv_file, "r") as csv_input, open(parser_log, "w") as csv_output:
-        reader = DictReader(csv_input)
+    # Recompile for Relative Error injection
+    execute("make clean")
+    execute("make INJECT_REL_ERROR=1")
+
+    with open(faults_csv_file, "r") as faults_csv_input, open(parser_log, "w") as csv_output:
+        # Parse faults file
+        reader = DictReader(faults_csv_input)
         list_of_faults = list(reader)
-        header = ["log_filename", 'min_relative', 'max_relative', 'geometry_format', "selected_layer", "it"]
+
+        # Prepare output file
+        header = ["it", 'min_relative', 'max_relative', 'geometry_format', "layer", "stdout_file", "det_err_file", "detection_corrupted"]
         writer = DictWriter(csv_output, fieldnames=header)
         writer.writeheader()
+
         it = 0
+        YOLO = YOLOv3CmdLine()
         while list_of_faults:
-            injection_data = random.choice(list_of_faults)
-            necessary_info = ['min_relative', 'max_relative', 'geometry_format']
-            with open(YOLOv3CMDLine.temporary_parameter_file, "w") as fp:
-                # Write info related to flexgrip
-                for info in necessary_info:
-                    fp.write(f"{injection_data[info]}\n")
+            # Perform relative error injection
+            injection_data = random.choice(list_of_faults) if injection_order == "RANDOM" else list_of_faults[it]
+            stdout_log_file = f"{logs_path}/{it}_stdout.txt"
+            injection_log = YOLO.peformInjection(injection_data, stdout_log_file)
 
-                # Write layer
-                layer_random_choice = random.randint(0, YOLOv3CMDLine.conv_layer_num)
-                fp.write(f"{layer_random_choice}\n")
+            # Run detection errors check
+            det_error_out_file = f"{logs_path}/{it}_det_errors.txt"
+            YOLO.checkDetectionsError(stdout_log_file, det_error_out_file)
+            detection_corrupted = os.stat(det_error_out_file).st_size > 0
 
-            std_out_log_file = f"{logs_path}/{it}_stdout.txt"
-            # Injection fault for line
-            run_yolov3_setup(std_out_log_file)
+            # Write injection log to file
+            writer.writerow({
+                "it": it,
+                "stdout_file": stdout_log_file,
+                "det_err_file": det_error_out_file,
+                "detection_corrupted": detection_corrupted,
+                **injection_log,
+            })
+
             list_of_faults.remove(injection_data)
-
-            line_dict = {
-                **{"log_filename": std_out_log_file, "selected_layer": layer_random_choice, "it": it},
-                **{k: v for k, v in injection_data.items() if k in necessary_info},
-            }
-            writer.writerow(line_dict)
-
             it += 1
-            if it > 10: break
 
+def generateInjectionsFile(out_filename, mode="LINEAR"):
+    with open(out_filename, "w") as f:
+        header = ["layer", "min_relative", "max_relative", "geometry_format"]
+        writer = DictWriter(f, fieldnames=header)
+        writer.writeheader()
+
+        if mode == "LINEAR":
+            layer = 5 # [0, YOLOv3CmdLine.conv_layer_num - 1]
+            min   = 0.1
+            max   = 1.0
+            step  = 0.1
+            geometry = "BLOCK"
+            n = math.ceil((max - min) / step)+1
+            
+            for i in range(n):
+                rel_err = min + i*step
+                writer.writerow({
+                    "layer": layer,
+                    "min_relative": rel_err,
+                    "max_relative": rel_err,
+                    "geometry_format": geometry
+                })
+
+            print(f"LINEAR: {n} faults generated")
+            print(f"    - layer: {layer}")
+            print(f"    - relative error range: [{min},{max}]")
+            print(f"    - geometry: {geometry}")
+
+        f.close()
+
+def printUsage():
+    if (len(sys.argv) >= 2):
+        function = sys.argv[1]
+        if function == "inject": 
+            print(f"Usage: {sys.argv[0]} inject <faults-csv-file> [<injection-order=ORDERED|RANDOM>]")
+        elif function == "gen-injs-file":
+            print(f"Usage: {sys.argv[0]} gen-injs-file <out-filename> [<mode=LINEAR>]")
+    else:
+        print(f"Usage: {sys.argv[0]} <inject|gen-injs-file> <args>")
+
+def main():
+    if len(sys.argv) < 3:
+        printUsage()
+    else:
+        function = sys.argv[1]
+
+        if function == "inject":            
+            faults_csv_file = sys.argv[2]
+            injection_order = sys.argv[3] if len(sys.argv) >= 4 else "ORDERED"
+            performInjectionCampaign(faults_csv_file, injection_order)
+
+        elif function == "gen-injs-file":
+            out_filename = sys.argv[2]
+            mode = sys.argv[3] if len(sys.argv) >= 4 else "LINEAR"
+            generateInjectionsFile(out_filename, mode)
 
 if __name__ == '__main__':
     main()
