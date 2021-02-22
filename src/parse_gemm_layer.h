@@ -16,6 +16,9 @@
 #include <sstream>
 #include <unordered_map>
 #include <random>
+// #include <map>
+#include <bits/stdc++.h>
+
 
 #include "cuda_templates.h"
 
@@ -29,30 +32,25 @@ typedef enum {
 	SIMULATE_SCHEDULER_FAULT, INVALID_OPTION
 } LayerOperationType;
 
-#ifndef FLEX_GRIP_ANALYSIS
-#define FLEX_GRIP_ANALYSIS 1
-#endif
-
 LayerOperationType operation_type = SIMULATE_SCHEDULER_FAULT;
-auto reset_counters_var = false;
 
 #define MAX_FLOAT_THRESHOLD 1.0e-5f
 
 /**
  * Type that represents the fault description
  */
-
 struct FaultDescriptor {
 	float min_relative_error, max_relative_error;
-	int layer_i;
+	int frame_i, layer_i;
 	std::string geometry_format;
 
 	friend std::ostream& operator<<(std::ostream& os,
 			const FaultDescriptor& fd) {
 		os << "Min relative: " << fd.min_relative_error << std::endl;
 		os << "Max relative: " << fd.max_relative_error << std::endl;
-		os << "Layer i: " << fd.layer_i << " Layer format: "
-				<< fd.geometry_format;
+		os << "Frame: " << fd.frame_i << std::endl;
+		os << "Layer: " << fd.layer_i << std::endl;
+		os << "Geometry format: " << fd.geometry_format << std::endl;
 		return os;
 	}
 
@@ -61,6 +59,7 @@ struct FaultDescriptor {
 		is >> fd.min_relative_error;
 		is >> fd.max_relative_error;
 		is >> fd.geometry_format;
+		is >> fd.frame_i;
 		is >> fd.layer_i;
 		return is;
 	}
@@ -76,145 +75,168 @@ std::string get_enviroment_var(str_t& src) {
 	return ret;
 }
 
-template<typename real_t>
-void simulate_scheduler_fault(int M, int N, int layer_count_output, std::vector<real_t>& C) {
-	std::string fault_parameter_file_path = get_enviroment_var("FAULT_PARAMETER_FILE");
+std::map<std::pair<int, int>, FaultDescriptor> layersFaultDescriptors;
+bool faultParamFileRead = false;
 
-	if (!fault_parameter_file_path.empty()) {
-		// Open the fault injection file
-		std::ifstream parameter_file(fault_parameter_file_path);
-		/**
-		 * For random selection
-		 */
-		// Will be used to obtain a seed for the random number engine
-		std::random_device rd;
-		// Standard mersenne_twister_engine seeded with rd()
-		std::mt19937 gen(rd());
+void parse_fault_param_file() {
+	std::string faultParamFilePath = get_enviroment_var("FAULT_PARAMETER_FILE");
 
-		if (parameter_file.good()) {
+	if (!faultParamFilePath.empty()) {
+		if (DEBUG >= 1)
+			std::cout << "Parsing FAULT_PARAMETER_FILE" << std::endl;
+
+		std::ifstream faultParamFile(faultParamFilePath);
+
+		if (faultParamFile.good()) {
 			FaultDescriptor fd;
-			parameter_file >> fd;
-			parameter_file.close();
-
-			std::uniform_real_distribution<float> float_generator(
-					fd.min_relative_error, fd.max_relative_error);
-			std::uniform_int_distribution<int> bool_generator(0, 1);
-
-			if (fd.layer_i == layer_count_output) {
-				if (DEBUG >= 1) {
-					std::cout << "DEBUG" << std::endl;
-					std::cout << fd << std::endl;
-				}
-
-				//size selection
-				std::uniform_int_distribution<int> int_m_generator(0,
-						M - (BLOCK_SIZE < M ? BLOCK_SIZE : 0));
-				std::uniform_int_distribution<int> int_p_generator(0,
-						N - (BLOCK_SIZE < N ? BLOCK_SIZE : 0));
-				auto start_i = int_m_generator(gen);
-				auto start_j = int_p_generator(gen);
-
-				if (fd.geometry_format == "RANDOM") {
-					for (auto i = start_i; i < M; i++) {
-						for (auto j = start_j; j < N; j++) {
-							auto is_necessary_to_inject = bool(
-									bool_generator(gen));
-							if (is_necessary_to_inject) {
-								C[i * N + j] *= float_generator(gen);
-							}
-						}
-					}
-				} else if (fd.geometry_format == "SQUARE") {
-					for (auto i = start_i; i < M; i++) {
-						for (auto j = start_j; j < N; j++) {
-							C[i * N + j] *= float_generator(gen);
-						}
-					}
-				} else if (fd.geometry_format == "ALL") {
-					for (auto i = 0; i < M; i++) {
-						for (auto j = 0; j < N; j++) {
-							C[i * N + j] *= float_generator(gen);
-						}
-					}
-				} else if (fd.geometry_format == "LINE") {
-					auto col_or_line = bool(bool_generator(gen));
-
-					if (col_or_line) {
-						//select a line
-						std::uniform_int_distribution<int> int_m_generator_line(0,
-								M - 1);
-						auto i = int_m_generator_line(gen);
-
-						for (auto j = 0; j < N; j++) {
-							C[i * N + j] *= float_generator(gen);
-						}
-					} else {
-						//select a line
-						std::uniform_int_distribution<int> int_n_generator_column(0,
-								N - 1);
-						auto j = int_n_generator_column(gen);
-						for (auto i = 0; i < M; i++) {
-							C[i * N + j] *= float_generator(gen);
-						}
-					}
-				} else if (fd.geometry_format == "BLOCK") {
-					int start = (N < M) ? start_j : start_i;
-					for (int i = start; i < (start + BLOCK_SIZE); i++) {
-						for (int j = start; j < (start + BLOCK_SIZE); j++) {
-							C[i * N + j] *= float_generator(gen);
-						}
-					}
-				}
+			while (faultParamFile >> fd) {
+				layersFaultDescriptors[{ fd.frame_i, fd.layer_i }] = fd;
 			}
+
+			if (DEBUG >= 1)
+				std::cout << layersFaultDescriptors.size() <<  " faults parsed in FAULT_PARAMETER_FILE" << std::endl;
+			
+			faultParamFile.close();
 		} else {
-			throw std::runtime_error("COULD NOT OPEN FILE: " + fault_parameter_file_path);
+			throw std::runtime_error("COULD NOT OPEN FILE: " + faultParamFilePath);
 		}
 	} else {
-		if (DEBUG >= 2)
+		if (DEBUG >= 1)
 			std::cout << "FAULT_PARAMETER_FILE is not defined" << std::endl;
+	}
+
+	faultParamFileRead = true;
+}
+
+template<typename real_t>
+void simulate_scheduler_fault(int M, int N, int frame_index, int conv_layer_index, std::vector<real_t>& C) {
+	FaultDescriptor fd = layersFaultDescriptors.find({ frame_index, conv_layer_index })->second;
+	
+	std::random_device rd;
+	std::mt19937 gen(rd());
+
+	std::uniform_real_distribution<float> float_generator(fd.min_relative_error, fd.max_relative_error);
+	std::uniform_int_distribution<int> bool_generator(0, 1);
+
+	if (DEBUG >= 1) {
+		std::cout << "DEBUG" << std::endl;
+		std::cout << fd << std::endl;
+	}
+
+	// Size selection
+	std::uniform_int_distribution<int> int_m_generator(0, M - (BLOCK_SIZE < M ? BLOCK_SIZE : 0));
+	std::uniform_int_distribution<int> int_p_generator(0, N - (BLOCK_SIZE < N ? BLOCK_SIZE : 0));
+	auto start_i = int_m_generator(gen);
+	auto start_j = int_p_generator(gen);
+
+	if (fd.geometry_format == "RANDOM") {
+		for (auto i = start_i; i < M; i++) {
+			for (auto j = start_j; j < N; j++) {
+				auto is_necessary_to_inject = bool(
+						bool_generator(gen));
+				if (is_necessary_to_inject) {
+					C[i * N + j] *= float_generator(gen);
+				}
+			}
+		}
+	} else if (fd.geometry_format == "SQUARE") {
+		for (auto i = start_i; i < M; i++) {
+			for (auto j = start_j; j < N; j++) {
+				C[i * N + j] *= float_generator(gen);
+			}
+		}
+	} else if (fd.geometry_format == "ALL") {
+		for (auto i = 0; i < M; i++) {
+			for (auto j = 0; j < N; j++) {
+				C[i * N + j] *= float_generator(gen);
+			}
+		}
+	} else if (fd.geometry_format == "LINE") {
+		auto col_or_line = bool(bool_generator(gen));
+		if (col_or_line) {
+			// Select a line
+			std::uniform_int_distribution<int> int_m_generator_line(0, M - 1);
+			auto i = int_m_generator_line(gen);
+
+			for (auto j = 0; j < N; j++) {
+				C[i * N + j] *= float_generator(gen);
+			}
+		} else {
+			// Select a column
+			std::uniform_int_distribution<int> int_n_generator_column(0, N - 1);
+			auto j = int_n_generator_column(gen);
+			for (auto i = 0; i < M; i++) {
+				C[i * N + j] *= float_generator(gen);
+			}
+		}
+	} else if (fd.geometry_format == "BLOCK") {
+		int start = (N < M) ? start_j : start_i;
+
+		if (DEBUG >= 1)
+			std::cout << "Injection start position: (" << start << "," << start << ")" << std::endl;
+
+		for (int i = start; i < (start + BLOCK_SIZE); i++) {
+			for (int j = start; j < (start + BLOCK_SIZE); j++) {
+				C[i * N + j] *= float_generator(gen);
+			}
+		}
 	}
 }
 
 #ifdef GPU
 
 template<typename real_t>
-void parse_output_conv_layer_gpu(int TA, int TB, int M, int N, int K, real_t *C_gpu) {	
-	if (FLEX_GRIP_ANALYSIS != 1) {
-		return;
+void parse_output_conv_layer_gpu(int TA, int TB, int M, int N, int K, real_t *C_gpu) {
+	static int frame_index = 0;
+	static int conv_layer_index = 0;
+
+	if (!faultParamFileRead) {
+		parse_fault_param_file();
 	}
 
-	static int layer_count_output = 0;
-	if (reset_counters_var) {
-		layer_count_output = 0;
-		reset_counters_var = false;
-	}
-	layer_count_output++;
 	if (DEBUG >= 1)
-		std::cout << "Layer " << layer_count_output << std::endl;
-	/**
-	 * If A is an m × n matrix and B is an n × p matrix,
-	 * C is the m × p matrix
-	 */
-	auto size_c = M * N;
+		std::cout << "Frame " << frame_index << ", Layer " << conv_layer_index << std::endl;
 
-	std::vector<real_t> C_cpu(size_c);
-	cuda_pull_array(C_gpu, C_cpu.data(), size_c);
+	if (layersFaultDescriptors.size() > 0) {
+		if (layersFaultDescriptors.find({ frame_index, conv_layer_index }) != layersFaultDescriptors.end()) {
+			/**
+			 * If A is an m × n matrix and B is an n × p matrix,
+			 * C is the m × p matrix
+			 */
+			auto size_c = M * N;
 
-	switch (operation_type) {
-	case SIMULATE_SCHEDULER_FAULT: {
+			std::vector<real_t> C_cpu(size_c);
+			cuda_pull_array(C_gpu, C_cpu.data(), size_c);
+
+			switch (operation_type) {
+			case SIMULATE_SCHEDULER_FAULT: {
+				if (DEBUG >= 3)
+					std::cout << "Scheduler faults selected\n";
+				simulate_scheduler_fault(M, N, frame_index, conv_layer_index, C_cpu);
+				break;
+			}
+
+			case INVALID_OPTION:
+				if (DEBUG >= 1)
+					std::cout << "Invalid option\n";
+				break;
+			}
+
+			cuda_push_array(C_gpu, C_cpu.data(), size_c);
+		} else {
+			if (DEBUG >= 2)
+				std::cout << "No fault to be injected for layer " << conv_layer_index << " in frame " << frame_index << std::endl;
+		}
+	} else {
 		if (DEBUG >= 2)
-			std::cout << "Scheduler faults selected\n";
-		simulate_scheduler_fault(M, N, layer_count_output, C_cpu);
-		break;
+			std::cout << "No fault to be injected" << std::endl;
 	}
 
-	case INVALID_OPTION:
-		if (DEBUG >= 1)
-			std::cout << "Invalid option\n";
-		break;
+	conv_layer_index++;
+	if (conv_layer_index == 75) {
+		frame_index++;
+		conv_layer_index = 0;
 	}
-
-	cuda_push_array(C_gpu, C_cpu.data(), size_c);
 }
 
 #endif

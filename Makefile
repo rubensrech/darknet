@@ -141,7 +141,7 @@ clean:
 # Fault injection
 
 test:
-	./$(EXEC) detector rtest 10 cfg/yolov3.cfg yolov3.weights data/coco_100.txt -timedebug 1
+	./$(EXEC) detector rtest 10 cfg/yolov3.cfg yolov3.weights data/coco_frame_164_75x.txt -timedebug 1
 
 golden:
-	./$(EXEC) detector rtest 10 cfg/yolov3.cfg yolov3.weights data/coco_100.txt > golden_stdout.txt 2> golden_stderr.txt
+	./$(EXEC) detector rtest 10 cfg/yolov3.cfg yolov3.weights data/coco_frame_164_75x.txt > golden_stdout.txt 2> golden_stderr.txt
