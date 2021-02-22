@@ -11,7 +11,7 @@ class YOLOv3CmdLine:
     home_dir = "/home/rubens"
     # darknet_dir = f"{home_dir}/nvbitfi/test-apps/darknet_rlrj"
     darknet_dir = f"{home_dir}/darknet_rlrj"
-    cfg_file = f"{darknet_dir}/cfg/yolov3.cfg"
+    cfg_file = f"{darknet_dir}/cfg/yolov3-mix.cfg"
     weights_file = f"{darknet_dir}/yolov3.weights"
     data_file = f"{darknet_dir}/data/coco_100.txt"
 
@@ -30,9 +30,10 @@ class YOLOv3CmdLine:
 
     def peformInjection(self, injection_data, stdout_log):
         # Create fault_descriptor
-        necessary_info = ['min_relative', 'max_relative', 'geometry_format']
-        fault_descriptor = { injection_data[info] for info in necessary_info }
-        fault_descriptor['layer'] = injection_data["layer"] if "layer" in injection_data else random.randint(0, self.conv_layer_num)
+        necessary_info = ["min_relative", "max_relative", "geometry_format"]
+        fault_descriptor = {}
+        for info in necessary_info: fault_descriptor[info] = injection_data[info]
+        fault_descriptor["layer"] = injection_data["layer"] if "layer" in injection_data else random.randint(0, self.conv_layer_num)
         fault_descriptor_file = self.createFaultDescriptorFile(fault_descriptor)
 
         # Set environment variables
@@ -48,18 +49,18 @@ class YOLOv3CmdLine:
             self.data_file,
             # Flags
             "-timedebug 1",
-            # "-maxN 1",
+            "-maxN 10",
         ])
         execute(cmd, stdout_log)
 
         return { "stdout_file": stdout_log, **fault_descriptor }
 
     def checkDetectionsError(self, inj_stdout, out_file):
-        execute(f"python3 {self.check_det_error_script} {self.golden_stdout} {inj_stdout}", out_file)
+        execute(f"python {self.check_det_error_script} {self.golden_stdout} {inj_stdout}", out_file)
 
 def execute(cmd, std_out_log="&1", log_info=None):
     print(f"EXECUTING: {cmd}")
-    ret = os.system(cmd + f" > {std_out_log}")
+    ret = os.system(cmd + f" >{std_out_log}")
     # Log any problem
     if ret != 0:
         with open(CRASH_LOG, 'a+') as fp:
@@ -97,7 +98,7 @@ def performInjectionCampaign(faults_csv_file, injection_order="ORDERED"):
         YOLO = YOLOv3CmdLine()
         while list_of_faults:
             # Perform relative error injection
-            injection_data = random.choice(list_of_faults) if injection_order == "RANDOM" else list_of_faults[it]
+            injection_data = random.choice(list_of_faults) if injection_order == "RANDOM" else list_of_faults[0]
             stdout_log_file = f"{logs_path}/{it}_stdout.txt"
             injection_log = YOLO.peformInjection(injection_data, stdout_log_file)
 
@@ -126,8 +127,8 @@ def generateInjectionsFile(out_filename, mode="LINEAR"):
 
         if mode == "LINEAR":
             layer = 5 # [0, YOLOv3CmdLine.conv_layer_num - 1]
-            min   = 0.1
-            max   = 1.0
+            min   = 1.1
+            max   = 2.0
             step  = 0.1
             geometry = "BLOCK"
             n = math.ceil((max - min) / step)+1
@@ -148,31 +149,40 @@ def generateInjectionsFile(out_filename, mode="LINEAR"):
 
         f.close()
 
-def printUsage():
-    if (len(sys.argv) >= 2):
-        function = sys.argv[1]
+def printUsage(function=None):
+    if function == None:
+        print(f"Usage: {sys.argv[0]} <inject|gen-injs-file> <args>")
+    else:
         if function == "inject": 
             print(f"Usage: {sys.argv[0]} inject <faults-csv-file> [<injection-order=ORDERED|RANDOM>]")
         elif function == "gen-injs-file":
             print(f"Usage: {sys.argv[0]} gen-injs-file <out-filename> [<mode=LINEAR>]")
-    else:
-        print(f"Usage: {sys.argv[0]} <inject|gen-injs-file> <args>")
 
 def main():
-    if len(sys.argv) < 3:
-        printUsage()
-    else:
+    if len(sys.argv) >= 2:
         function = sys.argv[1]
 
-        if function == "inject":            
-            faults_csv_file = sys.argv[2]
-            injection_order = sys.argv[3] if len(sys.argv) >= 4 else "ORDERED"
-            performInjectionCampaign(faults_csv_file, injection_order)
+        if function == "inject":
+            if len(sys.argv) >= 3:
+                faults_csv_file = sys.argv[2]
+                injection_order = sys.argv[3] if len(sys.argv) >= 4 else "ORDERED"
+                performInjectionCampaign(faults_csv_file, injection_order)
+            else:
+                printUsage(function)
 
         elif function == "gen-injs-file":
-            out_filename = sys.argv[2]
-            mode = sys.argv[3] if len(sys.argv) >= 4 else "LINEAR"
-            generateInjectionsFile(out_filename, mode)
+            if len(sys.argv) >= 3:
+                out_filename = sys.argv[2]
+                mode = sys.argv[3] if len(sys.argv) >= 4 else "LINEAR"
+                generateInjectionsFile(out_filename, mode)
+            else:
+                printUsage(function)
+
+        else:
+            printUsage(function=None)
+    else:
+        printUsage()
+        
 
 if __name__ == '__main__':
     main()
