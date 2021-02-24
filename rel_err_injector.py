@@ -8,6 +8,7 @@ import math
 import re
 import argparse
 
+DFT_GEOMETRY = "BLOCK"
 CRASH_LOG = "panic.log"
 
 class FaultDescriptor:
@@ -121,9 +122,25 @@ def injectAllLayersOneLayerPerFrame(relative_error, geometry_format, stdout_file
     YOLO.peformInjection(fault_descriptors, stdout_file)
 
 
-def performInjectionCampaign(out_log_file, geometry_format="LINE", skip_golden=False, N_layers=5):
+def perfomSingleInjection(relative_error, geometry_format=DFT_GEOMETRY,
+                          stdout_file="/tmp/yolo_stdout.txt", dets_error_file="/tmp/det_errors_check_out.txt"):
     YOLO = YOLOv3CmdLine()
-    
+                        
+    # Perform error injection
+    injectAllLayersOneLayerPerFrame(relative_error, geometry_format, stdout_file)
+
+    # Run detection errors check
+    critCorruptedFrames = YOLO.checkDetectionsError(stdout_file, dets_error_file)
+
+    return {
+        "relative_error": relative_error,
+        "stdout_file": stdout_file,
+        "detections_error_file": dets_error_file,
+        "conv_layers_that_caused_critical_sdcs": critCorruptedFrames, # one layer corrupted per frame
+        "geometry_format": geometry_format,
+    }
+
+def performInjectionCampaign(out_log_file, geometry_format=DFT_GEOMETRY, skip_golden=False, N_layers=5):
     # Create/clean logs directory
     logs_path = "logs"
     execute(f"mkdir -p {logs_path}")
@@ -145,27 +162,17 @@ def performInjectionCampaign(out_log_file, geometry_format="LINE", skip_golden=F
         relative_error_list = [x/100 for x in range(100, 1000+1, 1)]
 
         for (it, relative_error) in enumerate(relative_error_list):
-            # Perform error injection
             stdout_file = f"{logs_path}/stdout_rel_err_{relative_error}.txt"
-            injectAllLayersOneLayerPerFrame(relative_error, geometry_format, stdout_file)
-
-            # Run detection errors check
             dets_error_file = f"{logs_path}/det_errors_{relative_error}.txt"
-            critCorruptedFrames = YOLO.checkDetectionsError(stdout_file, dets_error_file)
 
+            inj_log = perfomSingleInjection(relative_error, stdout_file=stdout_file, dets_error_file=dets_error_file)
+            
             for frame in critCorruptedFrames:
                 layer = frame
                 layersRelErrThreshMap[layer] = relative_error
 
             # Write injection log to file
-            inj_log_line = {
-                "it": it,
-                "relative_error": relative_error,
-                "stdout_file": stdout_file,
-                "detections_error_file": dets_error_file,
-                "conv_layers_that_caused_critical_sdcs": critCorruptedFrames, # one layer corrupted per frame
-                "geometry_format": geometry_format,
-            }
+            inj_log_line = { **inj_log, "it": it }
             writer.writerow(inj_log_line)
             print(inj_log_line)
 
@@ -182,6 +189,23 @@ def performInjectionCampaign(out_log_file, geometry_format="LINE", skip_golden=F
     else:
         exit(1)
     
+def binarySearchThresh(low=1.154156267, high=1.154156269, eps=1e-9):
+    while (high - low) > eps:
+        print("==================================================================")
+
+        middle = (high - low)/2 + low
+        inj_log = perfomSingleInjection(middle)
+        print(inj_log)
+
+        hasCriticalSDCs = len(inj_log["conv_layers_that_caused_critical_sdcs"]) > 0
+        if hasCriticalSDCs:
+            high = middle
+        else:
+            low = middle
+
+        print(f"{low} - {high}")
+        print("==================================================================\n")
+
 
 def printUsage():
     print(f"Usage: {sys.argv[0]} <log-out-filename> ")
@@ -189,15 +213,23 @@ def printUsage():
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('output_filename', action="store")
-    parser.add_argument('--geometry', action="store", dest="geometry_format", default="LINE")
+    parser.add_argument('function', action="store")
+    parser.add_argument('-e', action="store", dest="relative_error", default=1.0)
+    parser.add_argument('-o', action="store", dest="output_filename", default="rel_err_injection_log.csv")
+    parser.add_argument('--geometry', action="store", dest="geometry_format", default=DFT_GEOMETRY)
     parser.add_argument('--skipGolden', action="store_true", dest="skip_golden", default=False,
             help=("Whether or not the Golden stdout file should be generated. "
                   "This flag can be set to false if the Golden stdout file was already generated previously."))
 
     args = parser.parse_args()
 
-    performInjectionCampaign(args.output_filename, args.geometry_format, args.skip_golden)
+    if args.function == "campaign":
+        performInjectionCampaign(args.output_filename, args.geometry_format, args.skip_golden)
+    elif args.function == "single":
+        inj_log_line = perfomSingleInjection(args.relative_error)
+        print(inj_log_line)
+    elif args.function == "binary-search":
+        binarySearchThresh()
 
 if __name__ == '__main__':
     main()
