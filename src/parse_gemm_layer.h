@@ -16,7 +16,6 @@
 #include <sstream>
 #include <unordered_map>
 #include <random>
-// #include <map>
 #include <bits/stdc++.h>
 
 
@@ -123,64 +122,72 @@ void simulate_scheduler_fault(int M, int N, int frame_index, int conv_layer_inde
 		std::cout << fd << std::endl;
 	}
 
-	// Size selection
-	std::uniform_int_distribution<int> int_m_generator(0, M - (BLOCK_SIZE < M ? BLOCK_SIZE : 0));
-	std::uniform_int_distribution<int> int_p_generator(0, N - (BLOCK_SIZE < N ? BLOCK_SIZE : 0));
-	auto start_i = int_m_generator(gen);
-	auto start_j = int_p_generator(gen);
+    if (fd.geometry_format == "BLOCK") {
+		int x_start = std::max((M - BLOCK_SIZE)/2, 0), x_end = x_start + BLOCK_SIZE;
+        int y_start = std::max((N - BLOCK_SIZE)/2, 0), y_end = y_start + BLOCK_SIZE;
+        float rel_err = float_generator(gen);
 
-	if (fd.geometry_format == "RANDOM") {
-		for (auto i = start_i; i < M; i++) {
-			for (auto j = start_j; j < N; j++) {
-				auto is_necessary_to_inject = bool(
-						bool_generator(gen));
-				if (is_necessary_to_inject) {
-					C[i * N + j] *= float_generator(gen);
-				}
-			}
-		}
-	} else if (fd.geometry_format == "SQUARE") {
-		for (auto i = start_i; i < M; i++) {
-			for (auto j = start_j; j < N; j++) {
-				C[i * N + j] *= float_generator(gen);
-			}
-		}
-	} else if (fd.geometry_format == "ALL") {
-		for (auto i = 0; i < M; i++) {
-			for (auto j = 0; j < N; j++) {
-				C[i * N + j] *= float_generator(gen);
-			}
-		}
-	} else if (fd.geometry_format == "LINE") {
-		auto col_or_line = bool(bool_generator(gen));
-		if (col_or_line) {
-			// Select a line
-			std::uniform_int_distribution<int> int_m_generator_line(0, M - 1);
-			auto i = int_m_generator_line(gen);
+		if (DEBUG >= 1) {
+			std::cout << "Injecting into BLOCK " << BLOCK_SIZE << "x" << BLOCK_SIZE << std::endl;
+			std::cout << "  Relative error: " << rel_err << std::endl;
+			std::cout << "  Position: (" << x_start << "," << y_start << ")" << std::endl;
+            std::cout << "  Matrix size: " << M << "x" << N << std::endl;
+        }
 
-			for (auto j = 0; j < N; j++) {
-				C[i * N + j] *= float_generator(gen);
-			}
-		} else {
-			// Select a column
-			std::uniform_int_distribution<int> int_n_generator_column(0, N - 1);
-			auto j = int_n_generator_column(gen);
-			for (auto i = 0; i < M; i++) {
-				C[i * N + j] *= float_generator(gen);
+		for (int i = x_start; i < x_end; i++) {
+			for (int j = y_start; j < y_end; j++) {
+				C[i * N + j] *= rel_err;
 			}
 		}
-	} else if (fd.geometry_format == "BLOCK") {
-		int start = (N < M) ? start_j : start_i;
+	} else {
+        // Size selection
+        std::uniform_int_distribution<int> int_m_generator(0, M - (BLOCK_SIZE < M ? BLOCK_SIZE : 0));
+        std::uniform_int_distribution<int> int_p_generator(0, N - (BLOCK_SIZE < N ? BLOCK_SIZE : 0));
+        auto start_i = int_m_generator(gen);
+        auto start_j = int_p_generator(gen);
 
-		if (DEBUG >= 1)
-			std::cout << "Injection start position: (" << start << "," << start << ")" << std::endl;
+        if (fd.geometry_format == "RANDOM") {
+            for (auto i = start_i; i < M; i++) {
+                for (auto j = start_j; j < N; j++) {
+                    auto is_necessary_to_inject = bool(
+                            bool_generator(gen));
+                    if (is_necessary_to_inject) {
+                        C[i * N + j] *= float_generator(gen);
+                    }
+                }
+            }
+        } else if (fd.geometry_format == "SQUARE") {
+            for (auto i = start_i; i < M; i++) {
+                for (auto j = start_j; j < N; j++) {
+                    C[i * N + j] *= float_generator(gen);
+                }
+            }
+        } else if (fd.geometry_format == "ALL") {
+            for (auto i = 0; i < M; i++) {
+                for (auto j = 0; j < N; j++) {
+                    C[i * N + j] *= float_generator(gen);
+                }
+            }
+        } else if (fd.geometry_format == "LINE") {
+            auto col_or_line = bool(bool_generator(gen));
+            if (col_or_line) {
+                // Select a line
+                std::uniform_int_distribution<int> int_m_generator_line(0, M - 1);
+                auto i = int_m_generator_line(gen);
 
-		for (int i = start; i < (start + BLOCK_SIZE); i++) {
-			for (int j = start; j < (start + BLOCK_SIZE); j++) {
-				C[i * N + j] *= float_generator(gen);
-			}
-		}
-	}
+                for (auto j = 0; j < N; j++) {
+                    C[i * N + j] *= float_generator(gen);
+                }
+            } else {
+                // Select a column
+                std::uniform_int_distribution<int> int_n_generator_column(0, N - 1);
+                auto j = int_n_generator_column(gen);
+                for (auto i = 0; i < M; i++) {
+                    C[i * N + j] *= float_generator(gen);
+                }
+            }
+        }
+    }
 }
 
 #ifdef GPU
