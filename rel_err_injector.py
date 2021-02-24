@@ -44,7 +44,7 @@ class YOLOv3CmdLine:
     home_dir = "/home/rubens"
     # darknet_dir = f"{home_dir}/nvbitfi/test-apps/darknet_rlrj"
     darknet_dir = f"{home_dir}/darknet_rlrj"
-    cfg_file = f"{darknet_dir}/cfg/yolov3-mix.cfg"
+    cfg_file = f"{darknet_dir}/cfg/yolov3-half.cfg"
     weights_file = f"{darknet_dir}/yolov3.weights"
     data_file = f"{darknet_dir}/data/coco_frame_164_75x.txt"
 
@@ -189,7 +189,9 @@ def performInjectionCampaign(out_log_file, geometry_format=DFT_GEOMETRY, skip_go
     else:
         exit(1)
     
-def binarySearchThresh(low=1.154156267, high=1.154156269, eps=1e-9):
+# Limits FP32 network: 1.154156267 - 1.154156269
+# Limits FP16 network: 1.000244557 - 1.000244559
+def binarySearchThresh(low=1.0, high=10.0, eps=1e-9):
     while (high - low) > eps:
         print("==================================================================")
 
